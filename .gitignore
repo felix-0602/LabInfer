@@ -1,0 +1,31 @@
+# 各会话的 worktree
+.worktrees/
+
+# 密钥
+.env
+.env.*
+!.env.example
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 模型权重
+*.safetensors
+*.bin
+*.gguf
+*.pt
+*.pth
+
+# 用户上传的临时文件
+uploads/
+
+# 系统与编辑器
+.DS_Store
+.idea/
+.vscode/
