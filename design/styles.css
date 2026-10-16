@@ -686,7 +686,6 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 /* ---------- 8. 意象锚点物件 ----------
    每一步一件科学仪器（GEN-06～10），放在功能区之外的空白处，配博物馆标签式的说明。 */
 .anchor { position: relative; margin: 0; }
-.anchor > .slot { position: absolute; inset: 0 0 40px 0; }
 .anchor figcaption {
   position: absolute; left: 0; bottom: 0;
   font-family: var(--f-mono); font-size: 10px; line-height: 1.7; letter-spacing: 0.08em; color: var(--ink-3);
@@ -707,18 +706,147 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .tag-s.cobalt { background: var(--cobalt); color: #fff; box-shadow: none; }
 
 /* S2 / S3b：填满表格与底栏之间的空白 */
-.s2 .s2-anchor > .slot { inset: 24px 24px 48px; }
-.s3b .s3-anchor > .slot { inset: 8px 0 48px; }
+.s2 .s2-anchor > .vignette { inset: 8px 0 40px; }
+.s3b .s3-anchor > .vignette { inset: 20px 0 44px; }
+.s3b .s3-anchor .v-word { --ws: 92px; }
 
 /* S4：标题行的空隙 */
 .s4 .s4-anchor { width: 250px; height: 150px; margin: -10px 0 0 auto; flex: none; }
 .s4 .legend.in-plot { position: absolute; right: 28px; top: 52px; margin: 0; padding: 10px 14px; z-index: 1;
   background: rgba(246, 247, 249, 0.92); box-shadow: 0 0 0 0.5px rgba(10, 11, 16, 0.18); border-radius: 4px; white-space: nowrap; }
-.s4 .s4-anchor > .slot { inset: 0 70px 0 0; }
+.s4 .s4-anchor > .vignette { inset: 0 70px 0 0; }
+.s4 .s4-anchor .v-word { --ws: 120px; -webkit-text-stroke-color: var(--silver-2); }
+.s4 .s4-anchor .v-serial { display: none; }
 .s4 .s4-anchor figcaption { left: auto; right: 0; bottom: 14px; width: 64px; }
 
 /* S5：笔尖在上，墨线向下流到导出按钮 */
 .s5 .s5-anchor { display: flex; flex-direction: column; }
-.s5 .s5-anchor > .slot { position: relative; inset: auto; flex: none; width: 168px; height: 172px; margin-left: auto; }
+.s5 .s5-anchor > .vignette { position: relative; inset: auto; flex: none; height: 200px; }
+.s5 .s5-anchor .v-serial { display: none; }
+.s5 .s5-anchor .ink-line { min-height: 40px; }
+.s5 .s5-anchor .v-stage { inset: 14% 0 0 40%; }
+.s5 .s5-anchor .v-word { --ws: 96px; }
 .s5 .s5-anchor .ink-line { flex: 1 1 0; min-height: 0; height: 0; width: 100%; display: block; overflow: visible; }
 .s5 .s5-anchor figcaption { bottom: auto; top: 40px; }
+
+/* ---------- 9. 锚点构图：秩序 × 破坏 ----------
+   图层由 storyboard.js 的 buildVignette() 生成，全部从 --img（物件透明 PNG）派生。 */
+.vignette { position: absolute; inset: 0 0 40px 0; isolation: isolate; --v-bg: var(--paper-0); }
+.vignette .v-stage { position: absolute; inset: 6% 4%; container-type: size; }
+.vignette .v-box {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: min(100cqw, calc(100cqh * var(--ar))); aspect-ratio: var(--ar);
+  color: var(--ink-3);
+}
+.vignette .v-obj { position: absolute; inset: 0; z-index: 3; }
+.vignette .v-obj .slot-ph { font-size: 10px; }
+
+/* 秩序：超大描边词，压在一切之下，可越出构图框 */
+.v-word {
+  position: absolute; z-index: 0; white-space: nowrap; pointer-events: none;
+  font-family: var(--f-display); font-variation-settings: "wdth" 125; font-weight: 800;
+  font-size: var(--ws, 150px); line-height: 0.8; letter-spacing: -0.03em;
+  color: transparent; -webkit-text-stroke: 1px var(--silver);
+}
+/* 秩序：过物件中心的刻度轴，两端渐隐 */
+.v-axis-h, .v-axis-v { position: absolute; z-index: 1; pointer-events: none; color: var(--silver); }
+.v-axis-h { left: -12%; right: -12%; top: 50%; height: 9px;
+  background: linear-gradient(currentColor, currentColor) 0 0 / 100% 0.5px no-repeat,
+              repeating-linear-gradient(to right, currentColor 0 0.5px, transparent 0.5px 12px) 0 0 / 100% 5px no-repeat,
+              repeating-linear-gradient(to right, currentColor 0 0.5px, transparent 0.5px 60px) 0 0 / 100% 9px no-repeat;
+  -webkit-mask: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); mask: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); }
+.v-axis-v { top: -12%; bottom: -12%; left: 50%; width: 9px;
+  background: linear-gradient(currentColor, currentColor) 0 0 / 0.5px 100% no-repeat,
+              repeating-linear-gradient(to bottom, currentColor 0 0.5px, transparent 0.5px 12px) 0 0 / 5px 100% no-repeat;
+  -webkit-mask: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent); mask: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent); }
+.v-box > .corners { z-index: 1; inset: -6px; color: var(--ink-3); }
+
+/* 破坏：半调网点剪影 / 钴蓝剪影，都用物件 PNG 做遮罩，相对本体错位 */
+.v-half, .v-sil, .v-scan {
+  position: absolute; inset: 0; pointer-events: none;
+  -webkit-mask: var(--img) center / contain no-repeat; mask: var(--img) center / contain no-repeat;
+}
+.v-half { z-index: 1; background: radial-gradient(circle, var(--cobalt) 0 1.2px, transparent 1.7px) 0 0 / 6px 6px; opacity: 0.75; }
+.v-sil { z-index: 2; background: var(--cobalt); opacity: 0.85; mix-blend-mode: multiply; }
+.v-scan { z-index: 5; background: repeating-linear-gradient(to bottom, rgba(30, 59, 255, 0.55) 0 1px, transparent 1px 4px);
+  clip-path: inset(38% 0 44% 0); mix-blend-mode: multiply; }
+
+/* 破坏：钴蓝压印色块（R3 R4 的蓝色块） */
+.v-block { position: absolute; z-index: 4; background: var(--cobalt); mix-blend-mode: multiply; opacity: 0.9; }
+
+/* 破坏：水平切片错位。切片底色先压住原图这一带，再把这一带的图平移 */
+.v-slice {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  background: var(--img) center / contain no-repeat;
+  transform: translateX(var(--shift));
+  animation: v-jitter 7s steps(1) infinite;
+}
+.v-slice::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--v-bg); transform: translateX(calc(var(--shift) * -1)); }
+@keyframes v-jitter {
+  0%, 90%, 100% { transform: translateX(var(--shift)); }
+  92% { transform: translateX(calc(var(--shift) * -1.8)); }
+  95% { transform: translateX(calc(var(--shift) * 2.4)); }
+}
+/* 破坏：碎片，从物件上剥下一块并移位 */
+.v-shard { position: absolute; inset: 0; z-index: 4; background: var(--img) center / contain no-repeat;
+  filter: drop-shadow(0 6px 8px rgba(10, 11, 16, 0.25)); }
+
+/* 秩序：引线标注 */
+.v-tag { position: absolute; z-index: 6; width: 0; height: 0; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; }
+.v-tag .dot { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 1.5px var(--cobalt); z-index: 1; }
+.v-tag .lead { position: absolute; left: 0; top: 0; height: 0.75px; background: var(--ink-2); transform-origin: 0 0; }
+.v-tag span { position: absolute; translate: 4px -50%; padding: 1px 5px; background: rgba(255, 255, 255, 0.88); box-shadow: inset 0 0 0 0.5px rgba(10, 11, 16, 0.25); }
+.v-tag.left span { translate: calc(-100% - 4px) -50%; }
+
+/* 秩序：编号 + 条码 */
+.v-serial { position: absolute; right: 0; bottom: -2px; z-index: 6; display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.1em; color: var(--ink-3); }
+.barcode { display: inline-block; width: 46px; height: 12px;
+  background: repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 3px, var(--ink) 3px 5px, transparent 5px 6px, var(--ink) 6px 7px, transparent 7px 10px, var(--ink) 10px 13px, transparent 13px 14px); }
+
+/* 暗场版本（S0 若使用） */
+.night .vignette { --v-bg: var(--night); }
+
+/* ---------- 10. 印刷秩序纹样：套准标记、色条、裁切线 ---------- */
+.reg { position: absolute; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 0.75px currentColor; color: var(--ink-3); pointer-events: none; }
+.reg::before, .reg::after { content: ""; position: absolute; background: currentColor; }
+.reg::before { left: 50%; top: -5px; bottom: -5px; width: 0.75px; }
+.reg::after { top: 50%; left: -5px; right: -5px; height: 0.75px; }
+.colorbar { position: absolute; display: flex; pointer-events: none; }
+.colorbar i { width: 12px; height: 12px; }
+.colorbar i:nth-child(1) { background: var(--ink); } .colorbar i:nth-child(2) { background: var(--ink-2); }
+.colorbar i:nth-child(3) { background: var(--silver); } .colorbar i:nth-child(4) { background: var(--paper-3); }
+.colorbar i:nth-child(5) { background: var(--cobalt); } .colorbar i:nth-child(6) { background: var(--cobalt-soft); }
+.crops { position: absolute; pointer-events: none; color: var(--ink-3); }
+.crops::before, .crops::after { content: ""; position: absolute; inset: -14px; }
+.crops::before { background:
+  linear-gradient(currentColor, currentColor) 0 14px / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) 14px 0 / 0.75px 10px no-repeat,
+  linear-gradient(currentColor, currentColor) 100% 14px / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) calc(100% - 14px) 0 / 0.75px 10px no-repeat; }
+.crops::after { background:
+  linear-gradient(currentColor, currentColor) 0 calc(100% - 14px) / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) 14px 100% / 0.75px 10px no-repeat,
+  linear-gradient(currentColor, currentColor) 100% calc(100% - 14px) / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) calc(100% - 14px) 100% / 0.75px 10px no-repeat; }
+.mat { background-color: var(--paper-2);
+  background-image: linear-gradient(rgba(10, 11, 16, 0.05) 0.5px, transparent 0.5px), linear-gradient(90deg, rgba(10, 11, 16, 0.05) 0.5px, transparent 0.5px),
+                    linear-gradient(rgba(10, 11, 16, 0.06) 0.75px, transparent 0.75px), linear-gradient(90deg, rgba(10, 11, 16, 0.06) 0.75px, transparent 0.75px);
+  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px; }
+.statusbar .barcode { width: 40px; height: 10px; opacity: 0.55; }
+
+.s1 .s1-anchor .v-word { --ws: 150px; }
+.s2 .s2-anchor .v-word { --ws: 140px; }
+.s3a .drop .orb .vignette { inset: 0; }
+.s3a .drop .orb .v-stage { inset: 0; }
+
+/* 颗粒只在物件周围柔和出现，不画出矩形边界 */
+.vignette.tex-grain::after { -webkit-mask: radial-gradient(closest-side, #000 40%, transparent); mask: radial-gradient(closest-side, #000 40%, transparent); --grain: 0.5; }
+/* 锚点区裁切：超大字只在锚点区内越界，不压到功能文字 */
+.anchor.fill, .s1 .s1-anchor { overflow: hidden; }
+.s1 .s1-anchor { height: 400px; }
+.s4 .chart-area .vignette { --v-bg: var(--paper-1); }
+.s4 .s4-anchor { overflow: hidden; }
+.s4 .s4-anchor .v-word { --ws: 110px; }
+.s4 .s4-anchor > .vignette { inset: 0; }
+.s4 .s4-anchor figcaption { display: none; }
+.s5 .s5-anchor figcaption { top: auto; bottom: 0; }

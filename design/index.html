@@ -130,6 +130,8 @@
     </div>
     <h3 style="margin:56px 0 8px;font-size:18px">质感层：三种来源，只用在情绪区</h3>
     <p style="margin:0;color:var(--ink-2);font-size:14px;max-width:760px">功能区（表格、校准画布、图表、结论卡片）保持干净，信息优先。质感只放在封面、侧栏底部、空状态、页面留白和导出页，负责情绪和审美锚点。</p>
+    <p style="margin:12px 0 0;color:var(--ink-2);font-size:14px;max-width:760px"><b>锚点构图</b>：每件锚点物件都按同一套图层构图，全部由一张透明 PNG 实时派生（storyboard.js 的 ANCHOR_FX）。秩序层是超大描边词、过中心的刻度轴、角标框、引线标注、编号与条码；破坏层是钴蓝剪影套印错位、半调网点剪影、水平切片错位（偶尔抖动）、碎片、钴蓝压印色块、扫描线。破坏只发生在锚点区内，不碰功能文字。</p>
+    <p style="margin:12px 0 0;color:var(--ink-2);font-size:14px;max-width:760px"><b>印刷秩序纹样</b>：功能区的边缘用印刷品的生产标记，包括套准标记、色条、裁切线、切割垫网格，以及状态栏的条码。它们让页面像一份被精确制作出来的文件，但不进入内容本身。</p>
     <div class="tex-demo">
       <div style="background:var(--night)"><figure class="slot contain" data-slot="GEN-01" style="position:absolute;inset:8px"></figure><span class="lbl">GEN · Blender 渲染物体</span></div>
       <div class="tex-grain" style="background:linear-gradient(135deg,#0b1fb8,#04050a);--grain:.6"><div class="crease-v" style="left:50%"></div><div class="crease-h" style="top:50%"></div><span class="lbl">CSS · 颗粒 + 折痕</span></div>
@@ -217,6 +219,8 @@
               <div class="s1">
                 <div class="left">
                   <div class="ghost-num" style="right:-24px;bottom:56px;font-size:360px">01</div>
+                  <div class="reg" style="right:64px;top:52px"></div>
+                  <div class="colorbar" style="right:96px;top:55px"><i></i><i></i><i></i><i></i><i></i><i></i></div>
                   <div class="eyebrow">STEP 01 · 实验上下文 · 预置模板</div>
                   <h1>银镜反应动力学</h1>
                   <div class="en display">TOLLENS · ARRHENIUS</div>
@@ -235,8 +239,7 @@
                 </div>
                 <div class="right tex-grain" style="--grain:.25">
                   <figure class="anchor s1-anchor">
-                    <div class="halftone fade-radial" style="inset:10% 15%;color:var(--cobalt-soft)"></div>
-                    <div class="slot contain" data-slot="GEN-06"></div>
+                    <div class="vignette" data-fx="GEN-06"></div>
                     <figcaption><b>OBJ. 01</b> MOLECULAR MODEL<br>建模 · 把实验抽象成结构与公式</figcaption>
                   </figure>
                   <div class="templates">
@@ -250,7 +253,7 @@
                 </div>
               </div>
             </main>
-            <footer class="statusbar"><span>M3 · 实验上下文</span><span class="sp"></span><span>模板 <b>tollens-arrhenius</b></span></footer>
+            <footer class="statusbar"><i class="barcode"></i><span>M3 · 实验上下文</span><span class="sp"></span><span>模板 <b>tollens-arrhenius</b></span></footer>
           </div>
         </div></div>
         <aside class="beat-notes">
@@ -286,6 +289,10 @@
               <div class="s2">
                 <div class="photo">
                   <figure class="slot" data-slot="DEMO-01"></figure>
+                  <div class="crops" style="inset:32px 32px 72px"></div>
+                  <div class="reg" style="left:50%;top:9px;margin-left:-9px"></div>
+                  <div class="reg" style="left:9px;top:50%;margin-top:-9px"></div>
+                  <div class="colorbar" style="right:32px;bottom:34px"><i></i><i></i><i></i><i></i><i></i><i></i></div>
                   <div style="position:absolute;inset:32px 32px 72px;pointer-events:none">
                     <div class="bbox" style="top:30%"><span>p1</span></div>
                     <div class="bbox" style="top:40%"><span>p2</span></div>
@@ -310,15 +317,14 @@
                     </tbody>
                   </table>
                   <figure class="anchor fill s2-anchor">
-                    <div class="halftone fade-radial" style="inset:0 10%;color:var(--silver-2)"></div>
-                    <div class="slot contain" data-slot="GEN-07"></div>
+                    <div class="vignette" data-fx="GEN-07"></div>
                     <figcaption><b>OBJ. 02</b> VERNIER CALIPER<br>读数 · 把刻度变成数字</figcaption>
                   </figure>
                   <div class="foot"><span class="count">5 行 · 1 处待确认</span><button class="btn ghost">添加一行</button><button class="btn primary">确认数据 →</button></div>
                 </div>
               </div>
             </main>
-            <footer class="statusbar"><span>M1 · 记录识别</span><span>VLM · 开源视觉模型</span><span class="sp"></span><span>点击照片中的识别框，可定位到表格对应行</span></footer>
+            <footer class="statusbar"><i class="barcode"></i><span>M1 · 记录识别</span><span>VLM · 开源视觉模型</span><span class="sp"></span><span>点击照片中的识别框，可定位到表格对应行</span></footer>
           </div>
         </div></div>
         <aside class="beat-notes">
@@ -358,7 +364,7 @@
                 <div class="drop">
                   <div class="cross" style="left:16px;top:16px"></div>
                   <div class="cross" style="right:16px;top:16px"></div>
-                  <figure class="slot contain orb" data-slot="GEN-03"></figure>
+                  <div class="orb"><div class="vignette" data-fx="GEN-03"></div></div>
                   <div class="copy">
                     <h2>拖入论文中的曲线图</h2>
                     <p>也可以直接粘贴截图 <span class="mono">Ctrl + V</span> · PNG / JPG · 建议宽度 ≥ 1200 px</p>
@@ -376,7 +382,7 @@
                 </div>
               </div>
             </main>
-            <footer class="statusbar"><span>M2 · 曲线取数</span><span class="sp"></span><span>文献来源会随数据一起保存</span></footer>
+            <footer class="statusbar"><i class="barcode"></i><span>M2 · 曲线取数</span><span class="sp"></span><span>文献来源会随数据一起保存</span></footer>
           </div>
         </div></div>
         <aside class="beat-notes">
@@ -437,9 +443,10 @@
                     </li>
                   </ol>
                 </div>
-                <div class="canvas">
+                <div class="canvas mat">
                   <div class="toolbar"><span class="seg"><span>原图</span><span>提取层</span><span class="on">叠加</span></span><span class="mono" style="font-size:11px;color:var(--ink-3)">100%</span></div>
                   <div class="fig">
+                    <div class="crops" style="inset:0"></div>
                     <figure class="slot contain" data-slot="DEMO-02"></figure>
                     <div class="overlay">
                       <div class="guide-y" style="left:8%;top:22%;bottom:12%"></div>
@@ -486,15 +493,14 @@
                     </table>
                   </div>
                   <figure class="anchor fill s3-anchor">
-                    <div class="halftone fade-radial" style="inset:0 0 40px;color:var(--cobalt-wash)"></div>
-                    <div class="slot contain" data-slot="GEN-08"></div>
+                    <div class="vignette" data-fx="GEN-08"></div>
                     <figcaption><b>OBJ. 03</b> PRISM<br>分离 · 把曲线从图里剥离出来</figcaption>
                   </figure>
                   <div class="foot"><button class="btn ghost">导出 CSV</button><button class="btn primary">加入对比 →</button></div>
                 </div>
               </div>
             </main>
-            <footer class="statusbar"><span>光标 px (96, 132) → y = <b>−4.02</b></span><span>刻度识别 4 / 4</span><span class="sp"></span><span>坐标换算由确定性代码完成，不由模型估计</span></footer>
+            <footer class="statusbar"><i class="barcode"></i><span>光标 px (96, 132) → y = <b>−4.02</b></span><span>刻度识别 4 / 4</span><span class="sp"></span><span>坐标换算由确定性代码完成，不由模型估计</span></footer>
           </div>
         </div></div>
         <aside class="beat-notes">
@@ -544,7 +550,7 @@
                       <span>R² 0.978 · n = 5</span>
                     </div>
                     <figure class="anchor s4-anchor">
-                      <div class="slot contain" data-slot="GEN-09"></div>
+                      <div class="vignette" data-fx="GEN-09"></div>
                       <figcaption><b>OBJ. 04</b><br>ARMILLARY<br>规律</figcaption>
                     </figure>
 
@@ -593,7 +599,7 @@
                 </div>
               </div>
             </main>
-            <footer class="statusbar"><span>M4 · Arrhenius 线性拟合</span><span>M5 · AI 解读</span><span>M6 · 推演</span><span class="sp"></span><span>点击结论，图上高亮对应的数据点</span></footer>
+            <footer class="statusbar"><i class="barcode"></i><span>M4 · Arrhenius 线性拟合</span><span>M5 · AI 解读</span><span>M6 · 推演</span><span class="sp"></span><span>点击结论，图上高亮对应的数据点</span></footer>
           </div>
         </div></div>
         <aside class="beat-notes">
@@ -634,6 +640,7 @@
               <div class="s5">
                 <div class="desk tex-grain" style="--grain:.3">
                   <figure class="slot desk-bg" data-slot="GEN-05"></figure>
+                  <div class="crops" style="left:calc(50% - 340px);width:680px;top:40px;height:980px;color:var(--ink-2)"></div>
                   <article class="page">
                     <figure class="slot band" data-slot="GEN-04"></figure>
                     <div class="body">
@@ -657,19 +664,18 @@
                     <div class="check on"><i></i>标注数据来源（DOI、图号）</div>
                   </div>
                   <figure class="anchor fill s5-anchor">
-                    <div class="halftone fade-b" style="inset:30% 0 0 30%;color:var(--cobalt-wash)"></div>
-                    <div class="slot contain" data-slot="GEN-10"></div>
+                    <div class="vignette" data-fx="GEN-10"></div>
                     <!-- 墨线：从笔尖墨滴出发，落到「导出」按钮正上方，引导视线 -->
                     <svg class="ink-line" viewBox="0 0 312 100" preserveAspectRatio="none" aria-hidden="true">
-                      <path d="M152 0 C 150 34, 104 42, 132 66 S 206 84, 204 100" fill="none" stroke="#1e3bff" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                      <path d="M136 0 C 134 34, 96 42, 128 66 S 206 84, 204 100" fill="none" stroke="#1e3bff" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
                     </svg>
-                    <figcaption><b>OBJ. 05</b> NIB<br>成文 · 落成一段能交的文字</figcaption>
+                    <figcaption><b>OBJ. 05</b> NIB<br>成文</figcaption>
                   </figure>
                   <div style="display:flex;gap:8px"><button class="btn ghost">复制段落</button><button class="btn primary" style="flex:1;justify-content:center">导出 Markdown</button></div>
                 </div>
               </div>
             </main>
-            <footer class="statusbar"><span>M7 · 报告导出</span><span class="sp"></span><span>正文中的每个数字都可追溯到 M4 计算结果</span></footer>
+            <footer class="statusbar"><i class="barcode"></i><span>M7 · 报告导出</span><span class="sp"></span><span>正文中的每个数字都可追溯到 M4 计算结果</span></footer>
           </div>
         </div></div>
         <aside class="beat-notes">
