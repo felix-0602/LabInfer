@@ -247,17 +247,7 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .cover .specimen > img { object-position: center; }
 .cover .specimen-cap { position: absolute; right: 56px; top: 300px; width: 150px; font-family: var(--f-mono); font-size: 10px; line-height: 1.7; letter-spacing: 0.1em; color: rgba(231, 233, 240, 0.6); }
 
-/* S1 剖面图与样片卡 */
 .s1 .left { isolation: isolate; overflow: hidden; }
-.s1 .right .drawing { position: absolute; inset: 40px 40px 120px; }
-.s1 .right .drawing svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.s1 .right .specimen-card {
-  position: absolute; inset: auto; left: 40px; top: 40px; width: 116px; height: 145px; z-index: 2;
-  box-shadow: 0 0 0 4px #fff, 0 0 0 4.5px rgba(10, 11, 16, 0.15), 0 16px 32px -16px rgba(10, 11, 16, 0.5);
-  transform: rotate(-3deg);
-}
-.drawing text { font-family: var(--f-mono); font-size: 10px; fill: var(--ink-2); }
-.drawing .t-cobalt { fill: var(--cobalt); }
 
 /* S3a 期刊微距底纹 */
 .s3a .s3a-photo { position: absolute; left: 0; top: 0; bottom: 0; width: 520px; opacity: 0.4;
@@ -475,8 +465,6 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .s1 .actions { position: absolute; left: 64px; right: 64px; bottom: 40px; display: flex; gap: 12px; align-items: center; }
 .s1 .actions .hint { margin-left: auto; font-size: 12px; color: var(--ink-3); }
 .s1 .right { position: relative; border-left: var(--hair); background: var(--paper-0); }
-.s1 .right .slot { position: absolute; inset: 40px 40px 120px; }
-.s1 .right .cap { position: absolute; left: 40px; right: 40px; bottom: 40px; font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); line-height: 1.8; border-top: var(--hair); padding-top: 12px; }
 
 /* S2 我的数据 */
 .s2 { display: grid; grid-template-columns: 1fr 560px; height: 100%; }
@@ -620,9 +608,7 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .mini-table th:first-child, .mini-table td:first-child { text-align: left; }
 .mini-table td { text-align: right; padding: 7px 0; border-bottom: var(--hair); }
 .mini-table td:first-child { color: var(--ink-3); }
-.rp .grow { flex: 1; min-height: 0; overflow: hidden; margin-top: 20px;
-  -webkit-mask: linear-gradient(to bottom, #000 80%, transparent);
-          mask: linear-gradient(to bottom, #000 80%, transparent); }
+.rp .grow { margin-top: 20px; }
 .rp .foot { display: flex; gap: 8px; padding-top: 16px; border-top: var(--hair); }
 
 /* S4 分析 */
@@ -632,14 +618,14 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .s4 .ea .lbl { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.1em; }
 .s4 .ea .big { font-size: 112px; color: var(--ink); }
 .s4 .ea .big small { font-family: var(--f-mono); font-size: 16px; font-weight: 400; letter-spacing: 0; color: var(--ink-3); margin-left: 8px; font-variation-settings: normal; }
-.s4 .vs { padding-bottom: 14px; display: grid; gap: 4px; font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); }
+.s4 .vs { padding-bottom: 14px; display: grid; gap: 4px; font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
 .s4 .vs b { color: var(--ink); font-weight: 500; }
 .s4 .vs .delta { color: var(--cobalt); }
 .s4 .legend { margin-left: auto; padding-bottom: 14px; display: grid; gap: 6px; font-size: 12px; color: var(--ink-2); }
 .s4 .legend span { display: flex; align-items: center; gap: 8px; }
 .s4 .legend svg { overflow: visible; }
 .s4 .chart { flex: 1; min-height: 0; margin-top: 12px; position: relative; }
-.s4 .chart svg { width: 100%; height: 100%; display: block; }
+.s4 .chart > svg { width: 100%; height: 100%; display: block; }
 .s4 .findings { border-left: var(--hair); background: var(--paper-0); padding: 20px 24px; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
 .f-card { position: relative; padding: 11px 14px; border-radius: var(--r-panel); box-shadow: inset 0 0 0 0.5px rgba(10, 11, 16, 0.18); background: var(--paper-0); }
 .f-card .type { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--ink-3); display: flex; gap: 8px; align-items: center; }
@@ -696,3 +682,43 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 /* 扫描动效（S3a 识别中示意，仅用于 notes 中提到的状态） */
 @keyframes scan { from { transform: translateY(0); } to { transform: translateY(560px); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- 8. 意象锚点物件 ----------
+   每一步一件科学仪器（GEN-06～10），放在功能区之外的空白处，配博物馆标签式的说明。 */
+.anchor { position: relative; margin: 0; }
+.anchor > .slot { position: absolute; inset: 0 0 40px 0; }
+.anchor figcaption {
+  position: absolute; left: 0; bottom: 0;
+  font-family: var(--f-mono); font-size: 10px; line-height: 1.7; letter-spacing: 0.08em; color: var(--ink-3);
+}
+.anchor figcaption b { color: var(--cobalt); font-weight: 500; margin-right: 6px; }
+.anchor.fill { flex: 1; min-height: 0; margin: 12px 0; }
+
+/* S1 */
+.s1 .s1-anchor { position: absolute; left: 40px; right: 40px; top: 32px; height: 330px; }
+.s1 .templates { position: absolute; left: 40px; right: 40px; bottom: 32px; }
+.tpl { display: grid; gap: 2px; padding: 10px 12px; border-bottom: var(--hair); }
+.tpl .nm { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.tpl .fx { font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); }
+.tpl.on { background: var(--cobalt-wash); box-shadow: inset 2px 0 0 var(--cobalt); }
+.tpl.on .fx { color: var(--cobalt-deep); }
+.tpl.add { margin-top: 8px; border: 1px dashed var(--silver); border-radius: var(--r-btn); color: var(--ink-3); font-size: 12px; }
+.tag-s { font-style: normal; font-family: var(--f-mono); font-size: 10px; font-weight: 400; padding: 0 6px; border-radius: 2px; box-shadow: inset 0 0 0 0.5px var(--silver); color: var(--ink-3); }
+.tag-s.cobalt { background: var(--cobalt); color: #fff; box-shadow: none; }
+
+/* S2 / S3b：填满表格与底栏之间的空白 */
+.s2 .s2-anchor > .slot { inset: 24px 24px 48px; }
+.s3b .s3-anchor > .slot { inset: 8px 0 48px; }
+
+/* S4：标题行的空隙 */
+.s4 .s4-anchor { width: 250px; height: 150px; margin: -10px 0 0 auto; flex: none; }
+.s4 .legend.in-plot { position: absolute; right: 28px; top: 52px; margin: 0; padding: 10px 14px; z-index: 1;
+  background: rgba(246, 247, 249, 0.92); box-shadow: 0 0 0 0.5px rgba(10, 11, 16, 0.18); border-radius: 4px; white-space: nowrap; }
+.s4 .s4-anchor > .slot { inset: 0 70px 0 0; }
+.s4 .s4-anchor figcaption { left: auto; right: 0; bottom: 14px; width: 64px; }
+
+/* S5：笔尖在上，墨线向下流到导出按钮 */
+.s5 .s5-anchor { display: flex; flex-direction: column; }
+.s5 .s5-anchor > .slot { position: relative; inset: auto; flex: none; width: 168px; height: 172px; margin-left: auto; }
+.s5 .s5-anchor .ink-line { flex: 1 1 0; min-height: 0; height: 0; width: 100%; display: block; overflow: visible; }
+.s5 .s5-anchor figcaption { bottom: auto; top: 40px; }

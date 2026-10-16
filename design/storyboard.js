@@ -76,10 +76,70 @@ const ASSET_SLOTS = [
     note: "脚本 render/smoke.py（day）",
   },
   {
+    id: "GEN-06",
+    kind: "GEN",
+    name: "锚点 01：高分子链球棍模型",
+    where: "S1 实验上下文，右栏上部",
+    ratio: "约 1:1（已裁边）",
+    size: "≈ 1000 px",
+    format: "WebP，透明背景",
+    content: "螺旋主链：铬银原子 + 钴蓝釉面侧基。寓意「建模」，把实验抽象成结构与公式。",
+    style: "鲍林、沃森–克里克搭模型推结构的意象；暗场反射，放在浅色页面上黑白分明。",
+    note: "脚本 render/anchors.py polymer",
+  },
+  {
+    id: "GEN-07",
+    kind: "GEN",
+    name: "锚点 02：游标卡尺",
+    where: "S2 我的数据，表格下方空白",
+    ratio: "约 3:2（已裁边）",
+    size: "≈ 1400 px 宽",
+    format: "WebP，透明背景",
+    content: "拉丝钢主尺 + 镜面游标滑块，主尺与游标刻度为几何建模。寓意「读数」。",
+    style: "维尼尔（1631）游标；拉丝与镜面两种金属对比。",
+    note: "脚本 render/anchors.py caliper",
+  },
+  {
+    id: "GEN-08",
+    kind: "GEN",
+    name: "锚点 03：三棱镜分光",
+    where: "S3b 文献取数，右栏提取结果下方",
+    ratio: "约 3:2（已裁边）",
+    size: "≈ 1500 px 宽",
+    format: "WebP，透明背景",
+    content: "一束白光射入三棱镜，另一侧散成由白到钴蓝的扇形光束。寓意「分离」，把曲线从图里剥离出来。",
+    style: "牛顿 1666 年棱镜实验；光谱只用白到钴蓝，不用彩虹色。",
+    note: "脚本 render/anchors.py prism",
+  },
+  {
+    id: "GEN-09",
+    kind: "GEN",
+    name: "锚点 04：浑天仪",
+    where: "S4 分析，标题行 Ea 数值与图例之间",
+    ratio: "约 1:1（已裁边）",
+    size: "≈ 1000 px",
+    format: "WebP，透明背景",
+    content: "赤道环、子午环、倾斜 23.4° 的刻度黄道带，中心钴蓝玻璃球，贯穿地轴与底座。寓意「从观测数据推出规律」。",
+    style: "第谷的观测数据 → 开普勒定律，正是本产品要讲的故事。",
+    note: "脚本 render/anchors.py armilla",
+  },
+  {
+    id: "GEN-10",
+    kind: "GEN",
+    name: "锚点 05：钢笔尖与钴蓝墨滴",
+    where: "S5 导出，右栏选项与按钮之间",
+    ratio: "约 1:1（已裁边）",
+    size: "≈ 900 px",
+    format: "WebP，透明背景",
+    content: "镜面钢笔尖（笔缝、导气孔），笔尖挂着一滴钴蓝墨水；页面上再从墨滴画一条点线流向导出按钮。寓意「成文」。",
+    style: "实验记录本与论文手稿的意象。",
+    note: "脚本 render/anchors.py nib",
+  },
+  {
     id: "PHOTO-01",
     kind: "PHOTO",
     name: "真实银镜反应照片",
-    where: "S0 封面左下角小样片；S1 右栏「SPECIMEN」卡片",
+    where: "S0 封面右上角样片（演示案例专属）",
     ratio: "4:5 竖幅（页面会居中裁切）",
     size: "≥ 1000 × 1250 px",
     format: "JPG",
@@ -326,85 +386,7 @@ function drawArrhenius(svg, { w, h, compact = false }) {
   });
 }
 
-/* S1 实验装置剖面图：工程图式的矢量绘制。钴蓝只用于银镜层和与它相关的标注。 */
-function drawApparatus(svg) {
-  const ink = "#0a0b10", ink3 = "#6b7180", cobalt = "#1e3bff", hair = "rgba(10,11,16,.35)";
-  svg.innerHTML = `
-  <defs>
-    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="6" stroke="${ink}" stroke-width="0.8"/>
-    </pattern>
-  </defs>
-  <g fill="none" stroke="${ink}" stroke-width="1">
-    <!-- 铁架台与夹子（在水浴锅外） -->
-    <line x1="432" y1="60" x2="432" y2="564" stroke-width="2"/>
-    <path d="M199 140 H432 M199 132 H207 V148 H199"/>
-    <!-- 水浴锅：剖面墙体用斜线填充 -->
-    <rect x="40" y="280" width="10" height="260" fill="url(#hatch)"/>
-    <rect x="290" y="280" width="10" height="260" fill="url(#hatch)"/>
-    <rect x="40" y="530" width="260" height="10" fill="url(#hatch)"/>
-    <rect x="50" y="312" width="240" height="218" fill="rgba(30,59,255,.045)" stroke="none"/>
-    <path d="M50 312 ${Array.from({ length: 10 }, (_, i) => (i ? "t 24 0" : "q 12 -5 24 0")).join(" ")}" stroke="${hair}"/>
-    <!-- 加热板 -->
-    <rect x="30" y="548" width="280" height="16"/>
-    <path d="M46 551 ${Array.from({ length: 31 }, (_, i) => (i % 2 ? "l8 -10" : "l8 10")).join(" ")}" stroke="${ink3}" stroke-width="0.75"/>
-    <!-- 试管：外壁、内壁、管口翻边 -->
-    <path d="M151 110 V450 A24 24 0 0 0 199 450 V110"/>
-    <path d="M155 110 V450 A20 20 0 0 0 195 450 V110" stroke="${hair}"/>
-    <path d="M145 106 H155 M195 106 H205"/>
-    <!-- 管内溶液 -->
-    <path d="M155 332 V450 A20 20 0 0 0 195 450 V332 Z" fill="rgba(30,59,255,.08)" stroke="none"/>
-    <line x1="155" y1="332" x2="195" y2="332" stroke="${hair}" stroke-dasharray="2 2"/>
-    <!-- 银镜层：不均匀的上沿 -->
-    <path d="M156.6 366 V450 A18.4 18.4 0 0 0 193.4 450 V392" stroke="${cobalt}" stroke-width="3"/>
-    <circle cx="157" cy="356" r="1.2" fill="${cobalt}" stroke="none"/>
-    <circle cx="193" cy="380" r="1.4" fill="${cobalt}" stroke="none"/>
-    <circle cx="157" cy="344" r="0.9" fill="${cobalt}" stroke="none"/>
-    <!-- 温度计 -->
-    <rect x="96" y="160" width="8" height="312" rx="4" fill="#fff"/>
-    <line x1="100" y1="300" x2="100" y2="470" stroke-width="2"/>
-    <circle cx="100" cy="478" r="8" fill="${ink}"/>
-    ${Array.from({ length: 18 }, (_, i) => `<line x1="104" x2="${i % 5 ? 108 : 112}" y1="${190 + i * 15}" y2="${190 + i * 15}" stroke-width="0.75"/>`).join("")}
-  </g>
-
-  <!-- 标注：文字都放在锅体外或锅体上方 -->
-  <g fill="none" stroke="${ink3}" stroke-width="0.75">
-    <path d="M151 88 V100 M199 88 V100 M151 94 H199"/>
-    <polyline points="185,344 240,236 410,236"/>
-    <polyline points="96,250 60,214 8,214"/>
-    <path d="M14 500 H32 M14 500 V488 M308 500 H326 M326 500 V488"/>
-  </g>
-  <polyline points="194,420 316,420 420,420" fill="none" stroke="${cobalt}" stroke-width="0.75"/>
-  <circle cx="194" cy="420" r="2.5" fill="${cobalt}"/>
-  <g transform="translate(360 96)" fill="none" stroke="${ink}" stroke-width="1">
-    <circle r="15"/><path d="M0 -15 V-19 M-4 -21 H4 M0 0 V-9 M0 0 L7 4"/>
-  </g>
-
-  <text x="175" y="84" text-anchor="middle">Ø 16</text>
-  <text x="244" y="230">Ag(NH₃)₂⁺ + C₆H₁₂O₆</text>
-  <text x="244" y="252" style="fill:${ink3}">ammoniacal Ag · glucose</text>
-  <text x="316" y="414" class="t-cobalt" style="font-weight:500">Ag⁰ · MIRROR</text>
-  <text x="316" y="436" class="t-cobalt">uneven edge</text>
-  <text x="8" y="208">T · 30–70 °C</text>
-  <text x="360" y="128" text-anchor="middle">t · ONSET</text>
-  <text x="18" y="482">A</text><text x="316" y="482">A</text>
-
-  <!-- 十字角标 -->
-  <g stroke="${ink3}" stroke-width="0.75">
-    <path d="M424 10 h12 M430 4 v12"/><path d="M4 604 h12 M10 598 v12"/><path d="M424 604 h12 M430 598 v12"/>
-  </g>
-  <!-- 图框 -->
-  <g>
-    <line x1="0" y1="582" x2="440" y2="582" stroke="${ink}" stroke-width="1"/>
-    <text x="24" y="602" style="fill:${ink};font-weight:500">FIG. A</text>
-    <text x="84" y="602">SECTION A–A · SCALE 1:2</text>
-    <text x="416" y="602" text-anchor="end">CTX_01</text>
-  </g>`;
-}
-
 function initCharts() {
-  const d = document.getElementById("drawing-apparatus");
-  if (d) drawApparatus(d);
   const a = document.getElementById("chart-analysis");
   if (a) drawArrhenius(a, { w: 860, h: 600 });
   const b = document.getElementById("chart-report");

@@ -92,6 +92,19 @@
         <tr><td>克制（P6 · OCU）</td><td class="arrow">→</td><td>工作台用发丝线分区、单层边框、4 级表面；动效用 OCU 的手感参数：校准点吸附 120ms、面板滑入 300ms、按钮按下回弹。</td></tr>
       </tbody>
     </table>
+    <h3 style="margin:48px 0 16px;font-size:18px">意象系统：每一步一件科学仪器</h3>
+    <table class="map-table">
+      <thead><tr><th>步骤</th><th></th><th>锚点物件 · 寓意 · 典故</th></tr></thead>
+      <tbody>
+        <tr><td>S0 封面</td><td class="arrow">→</td><td><b>银镜试管</b>（GEN-01）· 演示案例 001 的专属物件，只出现在封面</td></tr>
+        <tr><td>S1 上下文</td><td class="arrow">→</td><td><b>高分子链球棍模型</b>（GEN-06）· 建模：把实验抽象成结构与公式 · 鲍林、沃森–克里克搭模型推结构</td></tr>
+        <tr><td>S2 我的数据</td><td class="arrow">→</td><td><b>游标卡尺</b>（GEN-07）· 读数：把刻度变成数字 · 维尼尔 1631</td></tr>
+        <tr><td>S3 文献取数</td><td class="arrow">→</td><td><b>三棱镜</b>（GEN-03 玻璃球 + GEN-08）· 分离：把曲线从图里剥离出来 · 牛顿 1666</td></tr>
+        <tr><td>S4 分析</td><td class="arrow">→</td><td><b>浑天仪</b>（GEN-09）· 规律：第谷的观测数据让开普勒推出了定律，这正是本产品的故事</td></tr>
+        <tr><td>S5 导出</td><td class="arrow">→</td><td><b>钢笔尖与钴蓝墨滴</b>（GEN-10）· 成文：落成一段能交的文字</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--ink-2);font-size:14px;margin:12px 0 0">除封面外，物件都是通用的科研意象，不绑定银镜反应；换成任何实验模板，画面都成立。物件统一用铬银 + 钴蓝两种材质，放在功能区之外，配「OBJ. 编号 + 英文名 + 寓意」的博物馆标签。</p>
     <div class="callout"><b>总判断：海报在边缘，工具在中心。</b>参考图都是海报，海报要的是冲击力；工具要的是长时间看不累。所以强烈的表达只放在封面、空状态、关键数字和导出页这几处，工作区保持安静，仪器语言只在承担功能的地方出现。</div>
   </section>
 
@@ -221,9 +234,19 @@
                   </div>
                 </div>
                 <div class="right tex-grain" style="--grain:.25">
-                  <div class="drawing"><svg id="drawing-apparatus" viewBox="0 0 440 620" role="img" aria-label="水浴中的银镜试管剖面示意"></svg></div>
-                  <figure class="slot duo-day specimen-card" data-slot="PHOTO-01"></figure>
-                  <div class="cap">FIG. A — 实验装置剖面示意<br>水浴 30–70 °C · 5 个梯度 · 左上为真实银镜样片</div>
+                  <figure class="anchor s1-anchor">
+                    <div class="halftone fade-radial" style="inset:10% 15%;color:var(--cobalt-soft)"></div>
+                    <div class="slot contain" data-slot="GEN-06"></div>
+                    <figcaption><b>OBJ. 01</b> MOLECULAR MODEL<br>建模 · 把实验抽象成结构与公式</figcaption>
+                  </figure>
+                  <div class="templates">
+                    <div class="panel-h"><b>实验模板</b> 变量 + 公式 + 拟合方式</div>
+                    <div class="tpl on"><span class="nm">银镜反应动力学<i class="tag-s cobalt">演示</i></span><span class="fx">ln(1/t) = ln A − Eₐ/RT</span></div>
+                    <div class="tpl"><span class="nm">粘度法测分子量<i class="tag-s">规划</i></span><span class="fx">[η] = K · M^α</span></div>
+                    <div class="tpl"><span class="nm">自由基聚合动力学<i class="tag-s">规划</i></span><span class="fx">Rₚ = kₚ[M]·(f·k_d[I]/kₜ)^½</span></div>
+                    <div class="tpl"><span class="nm">一级反应速率<i class="tag-s">规划</i></span><span class="fx">ln c = ln c₀ − k·t</span></div>
+                    <div class="tpl add">+ 新模板：声明变量、写公式、选拟合方式</div>
+                  </div>
                 </div>
               </div>
             </main>
@@ -238,7 +261,7 @@
             <dt>用户操作</dt><dd>确认预置模板，进入 S2。</dd>
             <dt>模块 / 契约</dt><dd>M3 → <code>ExperimentContext</code></dd>
             <dt>交互</dt><dd>公式里的 <i>T</i>、<i>t</i> 与变量卡片联动高亮。左侧步骤栏可随时回跳，已完成的步骤打勾。</dd>
-            <dt>素材位</dt><dd>剖面图为页面内矢量绘制（storyboard.js），<code>PHOTO-01</code> 样片卡</dd><dt>质感层</dt><dd>左侧超大描边编号「01」，右栏胶片颗粒。剖面图里的银镜层用钴蓝，与「钴蓝 = 被测量的对象」一致。</dd>
+            <dt>素材位</dt><dd><code>GEN-06</code> 锚点物件</dd><dt>质感层</dt><dd>左侧超大描边编号「01」，右栏胶片颗粒，锚点背后的半调光斑。</dd><dt>通用性</dt><dd>右栏下部是实验模板库：每个模板 = 变量 + 公式 + 拟合方式。演示只做银镜一个，其余标为「规划」，告诉评审换实验只是加一个模板。</dd>
           </dl>
         </aside>
       </div>
@@ -286,6 +309,11 @@
                       <tr><td class="id">p5</td><td>70</td><td>51</td><td><span class="conf-bar"><i style="width:91%"></i></span></td></tr>
                     </tbody>
                   </table>
+                  <figure class="anchor fill s2-anchor">
+                    <div class="halftone fade-radial" style="inset:0 10%;color:var(--silver-2)"></div>
+                    <div class="slot contain" data-slot="GEN-07"></div>
+                    <figcaption><b>OBJ. 02</b> VERNIER CALIPER<br>读数 · 把刻度变成数字</figcaption>
+                  </figure>
                   <div class="foot"><span class="count">5 行 · 1 处待确认</span><button class="btn ghost">添加一行</button><button class="btn primary">确认数据 →</button></div>
                 </div>
               </div>
@@ -301,7 +329,7 @@
             <dt>用户操作</dt><dd>点低置信度格子 → 选候选值或直接输入 → 确认数据。</dd>
             <dt>模块 / 契约</dt><dd>M1 → <code>Dataset</code>（<code>confidence</code>、<code>verified</code>）</dd>
             <dt>交互</dt><dd>照片中的识别框与表格行双向联动。待确认格子用钴蓝斜纹，不用黄色或红色：红色只留给异常。<kbd>Tab</kbd> 跳到下一个待确认格子。</dd>
-            <dt>素材位</dt><dd><code>DEMO-01</code>（识别框位置为示意，接入真图后按真实识别结果绘制）</dd>
+            <dt>素材位</dt><dd><code>DEMO-01</code>（识别框位置为示意，接入真图后按真实识别结果绘制），<code>GEN-07</code> 锚点物件</dd><dt>质感层</dt><dd>表格与底栏之间的空白放游标卡尺，配博物馆标签式说明；不进入表格本身。</dd>
           </dl>
         </aside>
       </div>
@@ -457,6 +485,11 @@
                       </tbody>
                     </table>
                   </div>
+                  <figure class="anchor fill s3-anchor">
+                    <div class="halftone fade-radial" style="inset:0 0 40px;color:var(--cobalt-wash)"></div>
+                    <div class="slot contain" data-slot="GEN-08"></div>
+                    <figcaption><b>OBJ. 03</b> PRISM<br>分离 · 把曲线从图里剥离出来</figcaption>
+                  </figure>
                   <div class="foot"><button class="btn ghost">导出 CSV</button><button class="btn primary">加入对比 →</button></div>
                 </div>
               </div>
@@ -476,7 +509,7 @@
               「原图 / 提取层 / 叠加」：提取层会隐藏截图，只留钴蓝数据点和坐标轴，直观地表现「把曲线剥离出来」。<br>
               提取的点可以拖动修正，也可以点选删除。
             </dd>
-            <dt>素材位</dt><dd><code>DEMO-02</code>（校准点和数据点位置为示意，接入真图后按真实刻度标注）</dd>
+            <dt>素材位</dt><dd><code>DEMO-02</code>（校准点和数据点位置为示意，接入真图后按真实刻度标注），<code>GEN-08</code> 锚点物件</dd><dt>质感层</dt><dd>右栏表格下方的三棱镜。校准画布保持干净。</dd>
           </dl>
         </aside>
       </div>
@@ -510,14 +543,20 @@
                       <span>偏差 <span class="delta">+7.6%</span></span>
                       <span>R² 0.978 · n = 5</span>
                     </div>
-                    <div class="legend">
+                    <figure class="anchor s4-anchor">
+                      <div class="slot contain" data-slot="GEN-09"></div>
+                      <figcaption><b>OBJ. 04</b><br>ARMILLARY<br>规律</figcaption>
+                    </figure>
+
+                  </div>
+                  <div class="chart">
+                    <div class="legend in-plot">
                       <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#1e3bff"/></svg>我的数据 · 拟合</span>
                       <span><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="#fff" stroke="#0a0b10" stroke-width="1.2"/></svg>文献 · 拟合（虚线）</span>
                       <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#fff" stroke="#1e3bff" stroke-width="1.5" stroke-dasharray="2 2"/></svg>推演</span>
                       <span><svg width="14" height="14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="#e5242b" stroke-width="1.5"/></svg>异常点</span>
                     </div>
-                  </div>
-                  <div class="chart"><svg id="chart-analysis" role="img" aria-label="ln(1/t) 对 1/T 的 Arrhenius 图"></svg></div>
+                    <svg id="chart-analysis" role="img" aria-label="ln(1/t) 对 1/T 的 Arrhenius 图"></svg></div>
                 </div>
                 <div class="findings">
                   <div class="panel-h"><b>AI 解读</b> 5 条 · 每条都标注了依据的数据点</div>
@@ -570,7 +609,7 @@
               推演只对 <code>simulatable: true</code> 的建议显示滑块。<br>
               结论列表超出高度时，底部用渐隐遮罩（OCU 的 7 段渐隐）。
             </dd>
-            <dt>素材位</dt><dd>无。这一屏是功能核心，不加质感层：视觉主体就是数据本身，唯一的「海报」元素是 Ea 数字。</dd>
+            <dt>素材位</dt><dd><code>GEN-09</code> 锚点物件</dd><dt>质感层</dt><dd>这一屏是功能核心，图表和结论卡片不加任何质感；只在标题行 Ea 与图例之间的空隙放浑天仪，和 Ea 数字一起构成这一屏的「海报」。</dd>
           </dl>
         </aside>
       </div>
@@ -617,7 +656,16 @@
                     <div class="check on"><i></i>包含改进建议</div>
                     <div class="check on"><i></i>标注数据来源（DOI、图号）</div>
                   </div>
-                  <div style="margin-top:auto;display:flex;gap:8px"><button class="btn ghost">复制段落</button><button class="btn primary" style="flex:1;justify-content:center">导出 Markdown</button></div>
+                  <figure class="anchor fill s5-anchor">
+                    <div class="halftone fade-b" style="inset:30% 0 0 30%;color:var(--cobalt-wash)"></div>
+                    <div class="slot contain" data-slot="GEN-10"></div>
+                    <!-- 墨线：从笔尖墨滴出发，落到「导出」按钮正上方，引导视线 -->
+                    <svg class="ink-line" viewBox="0 0 312 100" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M152 0 C 150 34, 104 42, 132 66 S 206 84, 204 100" fill="none" stroke="#1e3bff" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                    </svg>
+                    <figcaption><b>OBJ. 05</b> NIB<br>成文 · 落成一段能交的文字</figcaption>
+                  </figure>
+                  <div style="display:flex;gap:8px"><button class="btn ghost">复制段落</button><button class="btn primary" style="flex:1;justify-content:center">导出 Markdown</button></div>
                 </div>
               </div>
             </main>
@@ -632,7 +680,7 @@
             <dt>用户操作</dt><dd>勾选导出内容 → 选择格式 → 导出或复制。</dd>
             <dt>模块</dt><dd>M7 · M8</dd>
             <dt>交互</dt><dd>勾选项变化时，左侧预览实时增删对应段落（300ms 高度过渡）。悬停正文中的数字，显示它来自哪个计算字段。</dd>
-            <dt>素材位</dt><dd><code>GEN-04</code> 页眉，<code>GEN-05</code> 桌面</dd><dt>质感层</dt><dd>桌面是钴蓝墨迹纸底 + 颗粒，报告页本身保持干净。</dd>
+            <dt>素材位</dt><dd><code>GEN-04</code> 页眉，<code>GEN-05</code> 桌面，<code>GEN-10</code> 锚点物件</dd><dt>质感层</dt><dd>桌面是钴蓝墨迹纸底 + 颗粒，报告页本身保持干净。右栏空白处放钢笔尖，墨滴拉出一条点线流向「导出」按钮：既填了空，又是视觉引导。</dd>
           </dl>
         </aside>
       </div>

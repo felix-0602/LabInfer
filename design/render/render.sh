@@ -28,8 +28,13 @@ grain() { # 在 50% 灰上加高斯噪声，再用叠加模式压到图上，得
     -compose Overlay -composite "$1"
 }
 
+anchor() { # 锚点物件：裁掉透明留白，四周留 3% 边
+  magick "$TMP/$ID.png" -trim +repage -bordercolor none -border 3% \
+    -quality 90 -define webp:alpha-quality=100 "$OUT/$ID.webp"
+}
+
 ARGS=("$@")
-for ID in GEN-01 GEN-02 GEN-03 GEN-04 GEN-05; do
+for ID in GEN-01 GEN-02 GEN-03 GEN-04 GEN-05 GEN-06 GEN-07 GEN-08 GEN-09 GEN-10; do
   want "${ARGS[@]}" || continue
   echo "== $ID"
   case $ID in
@@ -45,6 +50,11 @@ for ID in GEN-01 GEN-02 GEN-03 GEN-04 GEN-05; do
     GEN-05) render smoke.py 2880 1800 16 day
             grain "$TMP/$ID.png" 0.35
             magick "$TMP/$ID.png" -quality 86 "$OUT/$ID.webp" ;;
+    GEN-06) render anchors.py 1200 1200 384 polymer; anchor ;;
+    GEN-07) render anchors.py 1600 1000 384 caliper; anchor ;;
+    GEN-08) render anchors.py 1600 1000 384 prism;   anchor ;;
+    GEN-09) render anchors.py 1200 1200 384 armilla; anchor ;;
+    GEN-10) render anchors.py 1000 1000 384 nib;     anchor ;;
   esac
 done
 ls -la "$OUT"
