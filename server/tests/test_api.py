@@ -13,7 +13,7 @@ def make_client(tmp_path):
 
 def test_health_and_templates(tmp_path):
     c = make_client(tmp_path)
-    assert c.get("/api/health").json()["contract_version"] == "0.3.0"
+    assert c.get("/api/health").json()["contract_version"] == "0.4.0"
     templates = c.get("/api/m3/templates").json()
     ids = {t["id"] for t in templates}
     assert {"tpl_ammonia_nessler", "tpl_iodine_clock"} <= ids
@@ -68,3 +68,28 @@ def test_m1_without_cache_returns_503(tmp_path):
     )
     assert r.status_code == 503
     assert r.json()["error"]["code"] == "VLM_UNAVAILABLE"
+
+
+def test_export_docx(tmp_path):
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    c.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    r = c.post("/api/m7/export", json={"context_id": "ctx_demo", "format": "docx"})
+    assert r.status_code == 200
+    assert r.content[:2] == b"PK"
+    assert "msword" in r.headers["content-type"] or "wordprocessingml" in r.headers["content-type"]
+
+
+def test_snapshot_full_chain(tmp_path):
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    c.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    r = c.get("/api/snapshot/ctx_demo")
+    assert r.status_code == 200
+    snap = r.json()
+    assert snap["schema_version"] == "0.4.0"
+    assert {s["id"] for s in snap["datasets"]} >= {"ds_mine_demo", "ds_lit_dxhx"}
+    assert snap["analysis"]["fits"] and snap["findings"]
+
+    miss = c.get("/api/snapshot/nope")
+    assert miss.status_code == 404
