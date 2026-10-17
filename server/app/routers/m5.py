@@ -4,6 +4,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from ..llm import LlmError, llm_configured
+from ..prompts import llm_findings
 from ..services.findings import compose_findings
 
 router = APIRouter(prefix="/api/m5", tags=["m5"])
@@ -14,7 +16,7 @@ class FindingsRequest(BaseModel):
 
 
 @router.post("/findings")
-def findings(body: FindingsRequest, request: Request):
+async def findings(body: FindingsRequest, request: Request):
     store = request.app.state.store
     ctx = store.get_context(body.context_id)
     if ctx is None:
@@ -27,8 +29,14 @@ def findings(body: FindingsRequest, request: Request):
                       "message": "先调用 POST /api/m4/analyze", "detail": {}}})
     mine = store.get_dataset(ctx["datasets"]["mine"])
 
-    # 模板结论（确定性）。LLM（glm-5.3 + 数字溯源校验器）接入后作为主路径，本函数为降级与保底。
-    items = compose_findings(analysis, ctx, mine)
+    items = None
+    if llm_configured():
+        try:
+            items, _dropped = await llm_findings(analysis, ctx, mine)
+        except (LlmError, ValueError):
+            items = None
+    if not items:
+        items = compose_findings(analysis, ctx, mine)
     store.put_findings(ctx["id"], items)
 
     def gen():
