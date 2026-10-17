@@ -1,10 +1,10 @@
 # 数据契约
 
-**当前版本：0.1.0（草案，开发启动前定稿）**
+**当前版本：0.2.0（草案，开发启动前定稿）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
-传输方式（HTTP 接口路径等）在开发启动时补充到本文件。
+前半部分定义数据结构，后半部分定义 [HTTP 接口](#http-接口)。
 
 ## 通用约定
 
@@ -19,7 +19,7 @@ M1、M2 输出，M4 读取。
 
 ```jsonc
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "ds_mine_01",
   "source": "my_experiment",          // my_experiment | literature
   "meta": {
@@ -50,7 +50,7 @@ M3 输出，M4、M5 读取。
 
 ```jsonc
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "ctx_01",
   "name": "银镜反应动力学",
   "purpose": "测定表观活化能 Ea，验证 Arrhenius 规律",
@@ -75,7 +75,7 @@ M4 输出，M5、M6、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "context_id": "ctx_01",
   "model": "arrhenius",
   "transformed": [                     // 换算后的作图数据
@@ -112,7 +112,7 @@ M5 输出一个数组，M6、M7、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "id": "f3",
   "type": "anomaly",                   // pattern 规律 | conclusion 能证明什么 | anomaly 异常 | suggestion 建议
   "text": "50°C 处出镜时间明显偏离拟合直线……",
@@ -134,11 +134,174 @@ M6 的请求和返回，M8 调用。
 
 ```jsonc
 // 请求
-{ "schema_version": "0.1.0", "context_id": "ctx_01", "finding_id": "f5",
+{ "schema_version": "0.2.0", "context_id": "ctx_01", "finding_id": "f5",
   "param": "T", "from": 40, "to": 60, "unit": "°C" }
 
 // 返回
-{ "schema_version": "0.1.0", "finding_id": "f5",
+{ "schema_version": "0.2.0", "finding_id": "f5",
   "predicted": { "T": 60, "t": 118 },
   "curve": [{ "x": 0.003193, "y": -5.743 }] }   // 与 transformed 相同的坐标系
 ```
+
+---
+
+## HTTP 接口
+
+### 约定
+
+- 基础路径 `/api`，请求和返回都是 UTF-8 JSON；上传图片用 `multipart/form-data`。
+- 请求和返回里的契约对象都带 `schema_version`。主版本号不一致时返回 409。
+- 出错时统一返回：
+
+  ```jsonc
+  { "error": { "code": "VLM_UNAVAILABLE", "message": "视觉模型暂时不可用", "detail": {} } }
+  ```
+
+  | 状态码 | 含义 |
+  |---|---|
+  | 400 | 参数缺失或格式错误 |
+  | 404 | 资源不存在 |
+  | 409 | `schema_version` 主版本不一致 |
+  | 422 | 参数合法，但处理失败（例如校准点重合、无法换算） |
+  | 503 | 依赖的服务不可用（VLM、LLM） |
+
+- **像素坐标**：指原图上的像素，不是屏幕像素。原点在左上角，u 向右、v 向下，可以是小数，写作 `[u, v]`。
+- 图片地址由后端在返回里给出，前端不自己拼路径。
+
+### M2 曲线取数
+
+负责人 Claude，状态：**已定**。边界见 [architecture.md](architecture.md#m2-曲线取数)。
+
+| 方法与路径 | 作用 | 返回 |
+|---|---|---|
+| `POST /api/m2/figures` | 上传截图和文献信息 | Figure |
+| `GET /api/m2/figures/{id}/image` | 取原图 | 图片文件 |
+| `POST /api/m2/figures/{id}/detect` | 识别坐标轴和图例，给出校准建议 | FigureDetection |
+| `POST /api/m2/figures/{id}/extract` | 按确认的校准提取一条曲线，写入共享存储 | ExtractResult |
+
+#### 上传：`POST /api/m2/figures`
+
+表单字段：`image`（必填，PNG / JPG）、`doi`（选填）、`figure`（选填，如 `Fig. 3b`）。
+
+```jsonc
+// 返回 201：Figure
+{
+  "schema_version": "0.2.0",
+  "id": "fig_01",
+  "image_url": "/api/m2/figures/fig_01/image",
+  "width": 1280, "height": 960,                // 原图像素
+  "sha256": "9f2c…",                            // 演示保底按它命中缓存
+  "meta": { "doi": "10.xxxx/xxxxx", "figure": "Fig. 3b" }
+}
+```
+
+#### 识别：`POST /api/m2/figures/{id}/detect`
+
+请求体为空。VLM 不可用或识别失败时返回 503，M8 转入手动校准。
+
+```jsonc
+// 返回 200：FigureDetection
+{
+  "schema_version": "0.2.0",
+  "figure_id": "fig_01",
+  "plot_area": { "u0": 96, "v0": 40, "u1": 680, "v1": 512 },  // 绘图区边框
+  "axes": {
+    "x": {
+      "label": "1000/T", "unit": "K^-1", "scale": "linear",   // scale: linear | log10
+      "ticks": [                                              // 识别到的全部刻度
+        { "px": [118, 512], "value": 2.9, "confidence": 0.97 },
+        { "px": [380, 512], "value": 3.15, "confidence": 0.93 },
+        { "px": [642, 512], "value": 3.4, "confidence": 0.95 }
+      ]
+    },
+    "y": { "label": "ln(1/t)", "unit": "", "scale": "linear", "ticks": [ /* 同上 */ ] }
+  },
+  "calibration": { /* Calibration，见下，取每个轴相距最远的两个刻度 */ },
+  "series": [
+    { "id": "A", "label": "Exp.", "color": "#1f1f1f", "marker": "square", "confidence": 0.88 },
+    { "id": "B", "label": "Fit",  "color": "#9aa1ad", "marker": "line",   "confidence": 0.74 }
+  ],
+  "warnings": [],                                   // 例如 "y 轴只识别到 2 个刻度，无法计算残差"
+  "engine": { "vlm": "qwen2.5-vl-7b", "cached": false }  // cached=true 表示命中演示缓存
+}
+```
+
+#### Calibration 校准
+
+每个轴用两个参考点：参考点的像素位置和它在坐标轴上代表的数值。由 M2 给出建议，用户在 M8 里确认或拖动后提交。
+
+```jsonc
+{
+  "x": { "scale": "linear", "p1": { "px": [118, 512], "value": 2.9 }, "p2": { "px": [642, 512], "value": 3.4 } },
+  "y": { "scale": "linear", "p1": { "px": [96, 470], "value": -6.5 }, "p2": { "px": [96, 132], "value": -4.0 } }
+}
+```
+
+#### 坐标换算
+
+M2 和 M8 共用这一份定义（M8 只用于光标读数的显示）。假设截图里的坐标轴是水平、竖直的，没有旋转，所以 x 只用 u，y 只用 v。以 x 轴为例，p1、p2 分别是 (u₁, a₁)、(u₂, a₂)：
+
+- 线性轴：`x = a₁ + (u − u₁) · (a₂ − a₁) / (u₂ − u₁)`
+- 对数轴（log10）：`x = 10 ^ ( lg a₁ + (u − u₁) · (lg a₂ − lg a₁) / (u₂ − u₁) )`
+
+y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u₂）或对数轴上出现 a ≤ 0 时，返回 422。
+
+**校准残差** `residual_px`：用这组校准把识别到的其余刻度的数值反算成像素位置，与实际位置之差的均方根。每个轴都只有两个刻度时，残差为 `null`。
+
+#### 提取：`POST /api/m2/figures/{id}/extract`
+
+```jsonc
+// 请求：ExtractRequest
+{
+  "schema_version": "0.2.0",
+  "calibration": { /* Calibration */ },
+  "mode": "auto",                  // auto：按曲线颜色自动提取；manual：使用 points_px
+  "series_id": "A",                // auto 时必填
+  "points_px": null,               // manual 时必填：[[u, v], …]
+  "columns": {                     // 写进数据集的列名和单位，默认取识别到的轴标题
+    "x": { "name": "1/T", "unit": "10^-3 K^-1" },
+    "y": { "name": "ln(1/t)", "unit": "" }
+  }
+}
+```
+
+```jsonc
+// 返回 200：ExtractResult
+{
+  "schema_version": "0.2.0",
+  "dataset": {                     // Dataset，source = literature，已写入共享存储
+    "schema_version": "0.2.0",
+    "id": "ds_lit_01",
+    "source": "literature",
+    "meta": { "title": "Fig. 3b · 曲线 A", "doi": "10.xxxx/xxxxx", "figure": "Fig. 3b",
+              "image_ref": "/api/m2/figures/fig_01/image" },
+    "columns": [ { "key": "x", "name": "1/T", "unit": "10^-3 K^-1" }, { "key": "y", "name": "ln(1/t)", "unit": "" } ],
+    "rows": [ { "id": "L1", "series": "A", "values": { "x": 3.354, "y": -6.459 }, "verified": false } ]
+  },
+  "points_px": [ { "point_id": "L1", "px": [608.4, 455.1] } ],   // M8 用来在原图上叠加数据点
+  "residual_px": 0.4,
+  "warnings": []                   // auto 模式没找到点时 rows 为空，并在这里说明原因
+}
+```
+
+- 同一张图、同一条曲线重复提取，覆盖同一个 `dataset_id`。
+- 用户在 M8 里拖动或删除提取出的点后，以 `mode: "manual"` 和修正后的 `points_px` 再提交一次，结果会覆盖原数据。
+- 换算只发生在 M2。M8 不会自己算出数值再写入数据集。
+
+### M8 依赖的其他接口
+
+状态：**提议，待负责人确认**。这些接口由 zcode 负责的模块提供，这里只列 M8 需要什么，路径和细节以负责人确认为准；确认后把状态改成「已定」。
+
+| 模块 | 方法与路径 | 请求 | 返回 |
+|---|---|---|---|
+| 共享存储 | `GET /api/datasets/{id}` | — | Dataset |
+| 共享存储 | `PUT /api/datasets/{id}` | Dataset（用户校正后，`verified: true`） | Dataset |
+| M3 | `GET /api/m3/templates` | — | 模板列表：id、名称、模型、公式、状态（演示 / 规划） |
+| M3 | `POST /api/m3/contexts` | `{ template_id }` | ExperimentContext |
+| M3 | `GET` / `PUT /api/m3/contexts/{id}` | ExperimentContext | ExperimentContext |
+| M1 | `POST /api/m1/records` | 表单：`image`、`context_id` | Dataset（`source: my_experiment`，带 `confidence`） |
+| M4 | `POST /api/m4/analyze` | `{ context_id }` | AnalysisResult |
+| M5 | `POST /api/m5/findings` | `{ context_id }` | Finding[]；如能流式返回（SSE），M8 会逐条显示 |
+| M6 | `POST /api/m6/simulate` | Simulation 请求 | Simulation 返回 |
+| M7 | `POST /api/m7/export` | `{ context_id, format: "md" \| "docx" \| "png", include: { figure, anomalies, suggestions, sources } }` | 文件 |
+
