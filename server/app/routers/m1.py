@@ -3,8 +3,11 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse
 
-from ..cache import cache_get, sha256_bytes
+from ..cache import cache_get, cache_put, sha256_bytes
 from ..config import CONTRACT_VERSION
+from ..llm import LlmError, llm_configured
+from ..storage import new_id
+from ..vlm import recognize_record
 
 router = APIRouter(prefix="/api/m1", tags=["m1"])
 
@@ -24,19 +27,27 @@ async def create_record(request: Request, image: UploadFile = File(...),
     digest = sha256_bytes(data)
 
     cached = cache_get("m1", digest)
-    if cached is None:
-        # VLM（glm-5.3-flash）接入点：识别手写记录为 Dataset。未接入或不可用即 503，
-        # M8 引导用户手动录入（契约约定的兜底）。
+    if cached is not None:
+        ds = cached
+        ds.setdefault("cached", True)
+    elif llm_configured():
+        try:
+            ds = await recognize_record(data, ctx)
+        except (LlmError, ValueError) as e:
+            return JSONResponse(status_code=503, content={
+                "error": {"code": "VLM_UNAVAILABLE", "message": f"视觉识别失败: {e}", "detail": {}}})
+        bake = dict(ds)
+        cache_put("m1", digest, bake)
+    else:
         return JSONResponse(status_code=503, content={
             "error": {"code": "VLM_UNAVAILABLE",
-                      "message": "视觉模型未接入或不可用，且未命中演示缓存", "detail": {}}})
+                      "message": "视觉模型未配置且未命中演示缓存", "detail": {}}})
 
-    ds = cached
     ds.setdefault("schema_version", CONTRACT_VERSION)
     ds.setdefault("source", "my_experiment")
     ds.setdefault("meta", {})
+    ds.setdefault("id", new_id("ds"))
     ds["meta"]["image_ref"] = str(path)
-    ds.setdefault("cached", True)
     store.put_dataset(ds)
     ctx["datasets"]["mine"] = ds["id"]
     store.put_context(ctx)
