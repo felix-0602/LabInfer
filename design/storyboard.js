@@ -280,6 +280,9 @@ function h(tag, cls, style) {
   return n;
 }
 
+const ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+
 function buildVignette(v) {
   const id = v.dataset.fx;
   const fx = ANCHOR_FX[id];
@@ -346,12 +349,22 @@ function initVignettes() {
 function placeholder(slot, def) {
   const ph = document.createElement("div");
   ph.className = "slot-ph";
-  ph.innerHTML = def
-    ? `<span class="badge">${def.kind}</span>
-       <span class="sid">${def.id}</span>
-       <span class="sname">${def.name}</span>
-       <span class="sspec">${def.ratio} · ${def.size} · ${def.format}</span>`
-    : `<span class="sid">未登记的素材位 ${slot.dataset.slot}</span>`;
+  const span = (cls, text) => {
+    const s = document.createElement("span");
+    s.className = cls;
+    s.textContent = text;
+    return s;
+  };
+  if (def) {
+    ph.append(
+      span("badge", def.kind),
+      span("sid", def.id),
+      span("sname", def.name),
+      span("sspec", `${def.ratio} · ${def.size} · ${def.format}`)
+    );
+  } else {
+    ph.append(span("sid", `未登记的素材位 ${slot.dataset.slot}`));
+  }
   slot.appendChild(ph);
 }
 
@@ -403,16 +416,16 @@ function renderManifest(loaded) {
   if (!body) return;
   body.innerHTML = ASSET_SLOTS.map(
     (d) => `<tr>
-      <td>${d.id}</td>
-      <td><span class="kind ${d.kind}">${d.kind}</span></td>
-      <td><b>${d.name}</b><br><span style="color:var(--ink-3)">${d.where}</span></td>
-      <td>${d.ratio}<br>${d.size}<br>${d.format}</td>
-      <td>${d.content}</td>
-      <td>${d.style}</td>
-      <td>${d.note}</td>
+      <td>${esc(d.id)}</td>
+      <td><span class="kind ${esc(d.kind)}">${esc(d.kind)}</span></td>
+      <td><b>${esc(d.name)}</b><br><span style="color:var(--ink-3)">${esc(d.where)}</span></td>
+      <td>${esc(d.ratio)}<br>${esc(d.size)}<br>${esc(d.format)}</td>
+      <td>${esc(d.content)}</td>
+      <td>${esc(d.style)}</td>
+      <td>${esc(d.note)}</td>
       <td>${
         loaded[d.id]
-          ? `<span class="status-ok">已填入<br>${loaded[d.id]}</span>`
+          ? `<span class="status-ok">已填入<br>${esc(loaded[d.id])}</span>`
           : `<span class="status-miss">待填入</span>`
       }</td>
     </tr>`
