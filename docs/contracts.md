@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.3.0（氨氮演示案例定稿）**
+**当前版本：0.4.0（演示快照接口）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -21,7 +21,7 @@ M1、M2 输出，M4 读取。列不限制名称，行用 `series` 标注类别�
 
 ```jsonc
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "id": "ds_mine_01",
   "source": "my_experiment",          // my_experiment | literature
   "meta": {
@@ -58,7 +58,7 @@ M3 输出，M4、M5 读取。
 
 ```jsonc
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "id": "ctx_01",
   "name": "水质氨氮检测（HJ 535-2009 纳氏试剂法）",
   "purpose": "测定水样氨氮浓度，判定是否达到 GB 3838-2002 III 类限值",
@@ -117,7 +117,7 @@ M4 输出，M5、M6、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "context_id": "ctx_01",
   "model": "linear_calibration",
   "transformed": [                     // 拟合空间的作图数据（linear 为恒等；M8 直接绘制）
@@ -172,7 +172,7 @@ M5 输出一个数组，M6、M7、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "id": "f1",
   "type": "anomaly",                   // pattern | conclusion | anomaly | suggestion
   "text": "标曲第 5 点（c=0.80）残差 0.0038，格拉布斯检验未判为离群……",
@@ -195,11 +195,11 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 
 ```jsonc
 // 请求
-{ "schema_version": "0.3.0", "context_id": "ctx_01", "finding_id": "f2",
+{ "schema_version": "0.4.0", "context_id": "ctx_01", "finding_id": "f2",
   "param": "dilution_factor", "from": 1, "to": 10, "unit": "" }
 
 // 返回（curve 在拟合空间，与 transformed 同坐标系）
-{ "schema_version": "0.3.0", "finding_id": "f2",
+{ "schema_version": "0.4.0", "finding_id": "f2",
   "predicted": { "dilution_factor": 5, "A": 0.112 },
   "curve": [{ "x": 0.556, "y": 0.226 }] }
 ```
@@ -248,7 +248,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 201：Figure
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "id": "fig_01",
   "image_url": "/api/m2/figures/fig_01/image",
   "width": 1280, "height": 960,                // 原图像素
@@ -264,7 +264,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 200：FigureDetection
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "figure_id": "fig_01",
   "plot_area": { "u0": 96, "v0": 40, "u1": 680, "v1": 512 },  // 绘图区边框
   "axes": {
@@ -314,7 +314,7 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 请求：ExtractRequest
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "calibration": { /* Calibration */ },
   "mode": "auto",                  // auto：按曲线颜色自动提取；manual：使用 points_px
   "series_id": "A",                // auto 时必填
@@ -329,9 +329,9 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 返回 200：ExtractResult
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "dataset": {                     // Dataset，source = literature，已写入共享存储
-    "schema_version": "0.3.0",
+    "schema_version": "0.4.0",
     "id": "ds_lit_01",
     "source": "literature",
     "meta": { "title": "图1(b) · 纳氏试剂法标准曲线", "doi": "10.3866/PKU.DXHX201807034", "figure": "图1(b)",
@@ -365,12 +365,19 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 | M5 | `POST /api/m5/findings` | `{ context_id }` | SSE 流：`event: finding` 逐条推 Finding JSON，`event: done` 收尾，`event: error` 带 error 对象 |
 | M6 | `POST /api/m6/simulate` | Simulation 请求 | Simulation 返回 |
 | M7 | `POST /api/m7/export` | `{ context_id, format: "md" \| "docx" \| "png", include: { figure, anomalies, suggestions, quality_control, sources } }` | 文件 |
+| 演示保底 | `GET /api/snapshot/{context_id}` | — | 全链路快照 JSON：`{ schema_version, context, datasets: [...], analysis, findings }` |
 
 M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
+
+`GET /api/snapshot/{context_id}` 返回演示保底所需的全部状态（我的数据集 + 参照数据集 + 分析结果 + 结论）。M8 在构建时拉取一次存为本地影子文件，后端整体不可用时加载影子数据走完界面流程。
 
 ---
 
 ## 变更记录
+
+### 0.4.0（2026-10-17）
+
+兼容新增：M8 依赖接口表增加演示保底快照 `GET /api/snapshot/{context_id}`（M8 构建时拉取存影子文件，后端不可用时本地加载）；M7 的 docx 格式落地实现。
 
 ### 0.3.0（2026-10-17）
 
