@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabInfer 设计稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="doc">
+
+  <!-- ===================== 文档头 ===================== -->
+  <header class="doc-hero">
+    <div class="meta">DESIGN STORYBOARD · M2 / M8<br>CANVAS 1440 × 900<br>SCHEMA 0.1.0</div>
+    <div class="display">LAB<em>INFER</em></div>
+    <p>这份设计稿同时是故事板：前半部分说明视觉从哪里来、为什么这样用；后半部分按演示顺序给出 7 个画面。所有图片位置都已留空，需求写在页面最后的「素材位清单」里。</p>
+  </header>
+
+  <nav class="doc-nav">
+    <a href="#aesthetic">01 审美拆解</a>
+    <a href="#mapping">02 逻辑匹配</a>
+    <a href="#system">03 视觉规范</a>
+    <a href="#board">04 故事板</a>
+    <a href="#assets">05 素材位清单</a>
+  </nav>
+
+  <!-- ===================== 01 审美拆解 ===================== -->
+  <section class="doc-section" id="aesthetic">
+    <div class="sec-head">
+      <span class="num">01</span><h2>审美拆解：这些图为什么高级</h2>
+      <p>参考图按你发送的顺序编号 R1–R13；open-claude-ui 记为 OCU。</p>
+    </div>
+    <div class="principles">
+      <div class="principle">
+        <div class="k">P1 · COLOR</div>
+        <h3>无彩为底，只留一种强调色</h3>
+        <p>画面九成是黑、白、银，饱和色只有一种钴蓝。颜色少，所以每一处蓝都被看见；R5 只用一抹红，红就成了视觉焦点。</p>
+        <div class="refs">R1 R2 R3 R4 R5 R8 R9 R13</div>
+      </div>
+      <div class="principle">
+        <div class="k">P2 · SCALE</div>
+        <h3>超大字当结构，极小字当肌理</h3>
+        <p>标题被放大到撑满画面、被裁切、被描边、压在主体后面；旁边配 6–8px 的微型说明字。两种尺度同时出现，产生张力和层次。</p>
+        <div class="refs">R1 R2 R3 R4 R6</div>
+      </div>
+      <div class="principle">
+        <div class="k">P3 · INSTRUMENT</div>
+        <h3>测量仪器的语言</h3>
+        <p>十字准星、刻度尺、坐标编号、序列号、角标框。画面因此显得「被测量过」，带着理性和精确感，这也是科技感的真正来源，而不是霓虹光效。</p>
+        <div class="refs">R2 R3 R5 R7 R10 R11 R12</div>
+      </div>
+      <div class="principle">
+        <div class="k">P4 · MATERIAL</div>
+        <h3>一个高质感物体当锚点</h3>
+        <p>铬银、液态金属、玻璃球、碎晶。反射材质本身就带光影和细节，一个物体就能撑起整张画面，其余元素都围绕它排布。</p>
+        <div class="refs">R2 R6 R10 R11 R13</div>
+      </div>
+      <div class="principle">
+        <div class="k">P5 · ORDER / BREAK</div>
+        <h3>秩序与破坏并置</h3>
+        <p>严格的网格和对齐，叠加碎裂、故障、半调、折痕。只有秩序会显得呆板，只有破坏会显得混乱，两者并置才有节奏。</p>
+        <div class="refs">R3 R4 R5 R9</div>
+      </div>
+      <div class="principle">
+        <div class="k">P6 · RESTRAINT</div>
+        <h3>克制：字体少、边框少、留白多</h3>
+        <p>R6 只有白字、黑底和一个物体。OCU 的做法与之相通：0.5px 发丝线、4 级低对比表面、单层闭合边框，不叠框、不堆阴影。</p>
+        <div class="refs">R6 R7 · OCU</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 02 逻辑匹配 ===================== -->
+  <section class="doc-section" id="mapping">
+    <div class="sec-head">
+      <span class="num">02</span><h2>逻辑匹配：手法对应到我们的功能</h2>
+      <p>原则：每个视觉手法都要对应一个真实功能，不放纯装饰。</p>
+    </div>
+    <table class="map-table">
+      <thead><tr><th>参考里的手法</th><th></th><th>在 LabInfer 中对应什么</th></tr></thead>
+      <tbody>
+        <tr><td>铬银 / 液态金属物体（P4）</td><td class="arrow">→</td><td>银镜反应就是在玻璃上镀出一层银镜。所以主视觉物体就是<b>银镜试管</b>（GEN-01，Blender 渲染）：材质不是装饰，而是实验本身。</td></tr>
+        <tr><td>十字准星、刻度尺（P3）</td><td class="arrow">→</td><td>M2 坐标校准的<b>真实操作对象</b>：校准点就是十字准星，坐标轴就是刻度尺，分析图顶部的温度尺把 1/T 换回 °C。仪器语言在这里不是装饰，而是功能。</td></tr>
+        <tr><td>玻璃球 + 球心十字（R10–R12）</td><td class="arrow">→</td><td>M2 拖动校准点时出现的<b>放大镜</b>，用来精确对准刻度。</td></tr>
+        <tr><td>单一强调色（P1）</td><td class="arrow">→</td><td>颜色有固定语义：<b style="color:var(--cobalt)">钴蓝 = 机器读出或代码算出的数据</b>（识别结果、提取点、拟合线、推演），墨黑 = 原始资料和文献，<b style="color:var(--signal)">红 = 异常，且只用于异常</b>（取自 R5 的那一抹红）。</td></tr>
+        <tr><td>超大字（P2）</td><td class="arrow">→</td><td>每屏最多一个海报尺度的元素，必须是这一屏最重要的信息：封面的 LABINFER，分析页的 <b>Ea 数值</b>。</td></tr>
+        <tr><td>微字、序列号（P2 / P3）</td><td class="arrow">→</td><td>微字全部用<b>真实元数据</b>：point_id、DOI、图号、schema 版本、像素坐标读数。参考图里的伪文字放在工具里就是噪音，所以不用。</td></tr>
+        <tr><td>秩序与破坏（P5）</td><td class="arrow">→</td><td>M2 的「原图 / 提取层 / 叠加」切换，就是把曲线从截图里<b>剥离</b>出来。碎裂质感只出现在封面和导出页头图。</td></tr>
+        <tr><td>克制（P6 · OCU）</td><td class="arrow">→</td><td>工作台用发丝线分区、单层边框、4 级表面；动效用 OCU 的手感参数：校准点吸附 120ms、面板滑入 300ms、按钮按下回弹。</td></tr>
+      </tbody>
+    </table>
+    <h3 style="margin:48px 0 16px;font-size:18px">意象系统：每一步一件科学仪器</h3>
+    <table class="map-table">
+      <thead><tr><th>步骤</th><th></th><th>锚点物件 · 寓意 · 典故</th></tr></thead>
+      <tbody>
+        <tr><td>S0 封面</td><td class="arrow">→</td><td><b>银镜试管</b>（GEN-01）· 演示案例 001 的专属物件，只出现在封面</td></tr>
+        <tr><td>S1 上下文</td><td class="arrow">→</td><td><b>高分子链球棍模型</b>（GEN-06）· 建模：把实验抽象成结构与公式 · 鲍林、沃森–克里克搭模型推结构</td></tr>
+        <tr><td>S2 我的数据</td><td class="arrow">→</td><td><b>游标卡尺</b>（GEN-07）· 读数：把刻度变成数字 · 维尼尔 1631</td></tr>
+        <tr><td>S3 文献取数</td><td class="arrow">→</td><td><b>三棱镜</b>（GEN-03 玻璃球 + GEN-08）· 分离：把曲线从图里剥离出来 · 牛顿 1666</td></tr>
+        <tr><td>S4 分析</td><td class="arrow">→</td><td><b>浑天仪</b>（GEN-09）· 规律：第谷的观测数据让开普勒推出了定律，这正是本产品的故事</td></tr>
+        <tr><td>S5 导出</td><td class="arrow">→</td><td><b>钢笔尖与钴蓝墨滴</b>（GEN-10）· 成文：落成一段能交的文字</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--ink-2);font-size:14px;margin:12px 0 0">除封面外，物件都是通用的科研意象，不绑定银镜反应；换成任何实验模板，画面都成立。物件统一用铬银 + 钴蓝两种材质，放在功能区之外，配「OBJ. 编号 + 英文名 + 寓意」的博物馆标签。</p>
+    <div class="callout"><b>总判断：海报在边缘，工具在中心。</b>参考图都是海报，海报要的是冲击力；工具要的是长时间看不累。所以强烈的表达只放在封面、空状态、关键数字和导出页这几处，工作区保持安静，仪器语言只在承担功能的地方出现。</div>
+  </section>
+
+  <!-- ===================== 03 视觉规范 ===================== -->
+  <section class="doc-section" id="system">
+    <div class="sec-head">
+      <span class="num">03</span><h2>视觉规范</h2>
+      <p>变量定义在 styles.css 的 :root 中，这里只做展示。</p>
+    </div>
+    <div class="tokens">
+      <div class="swatch"><div class="chip" style="background:var(--ink)"></div><b>墨</b><div>--ink #0a0b10</div><div>正文、文献数据</div></div>
+      <div class="swatch"><div class="chip" style="background:var(--silver)"></div><b>银</b><div>--silver #a8afbb</div><div>次要信息、刻度</div></div>
+      <div class="swatch"><div class="chip" style="background:var(--paper-1);box-shadow:inset 0 -0.5px 0 rgba(0,0,0,.15)"></div><b>纸</b><div>--paper-0…3</div><div>4 级表面</div></div>
+      <div class="swatch"><div class="chip" style="background:var(--cobalt)"></div><b>钴蓝</b><div>--cobalt #1e3bff</div><div>机器读出 / 计算数据</div></div>
+      <div class="swatch"><div class="chip" style="background:var(--cobalt-wash)"></div><b>钴蓝浅</b><div>--cobalt-wash</div><div>选中、待确认底色</div></div>
+      <div class="swatch"><div class="chip" style="background:var(--signal)"></div><b>信号红</b><div>--signal #e5242b</div><div>只用于异常</div></div>
+      <div class="swatch"><div class="chip" style="background:var(--night)"></div><b>夜</b><div>--night #04050a</div><div>封面暗场</div></div>
+    </div>
+    <div class="type-specimen">
+      <div><div class="display" style="font-size:88px">Ea 53.8</div><div class="label">DISPLAY · Archivo 宽体 125 / 800 · 每屏最多一处</div></div>
+      <div><div style="font-size:22px;font-weight:600">核对识别结果</div><div style="color:var(--ink-2)">低置信度格子已标出，点击即可修改。</div><div class="label">SANS · IBM Plex Sans + 系统中文黑体</div></div>
+      <div><div class="mono" style="font-size:13px">p3 · px (412, 288) → y = −5.43<br>DOI 10.xxxx/xxxxx · Fig. 3b</div><div class="label">MONO · IBM Plex Mono · 数据、坐标、元数据</div></div>
+    </div>
+    <h3 style="margin:56px 0 8px;font-size:18px">质感层：三种来源，只用在情绪区</h3>
+    <p style="margin:0;color:var(--ink-2);font-size:14px;max-width:760px">功能区（表格、校准画布、图表、结论卡片）保持干净，信息优先。质感只放在封面、侧栏底部、空状态、页面留白和导出页，负责情绪和审美锚点。</p>
+    <p style="margin:12px 0 0;color:var(--ink-2);font-size:14px;max-width:760px"><b>锚点构图</b>：每件锚点物件都按同一套图层构图，全部由一张透明 PNG 实时派生（storyboard.js 的 ANCHOR_FX）。秩序层是超大描边词、过中心的刻度轴、角标框、引线标注、编号与条码；破坏层是钴蓝剪影套印错位、半调网点剪影、水平切片错位（偶尔抖动）、碎片、钴蓝压印色块、扫描线。破坏只发生在锚点区内，不碰功能文字。</p>
+    <p style="margin:12px 0 0;color:var(--ink-2);font-size:14px;max-width:760px"><b>印刷秩序纹样</b>：功能区的边缘用印刷品的生产标记，包括套准标记、色条、裁切线、切割垫网格，以及状态栏的条码。它们让页面像一份被精确制作出来的文件，但不进入内容本身。</p>
+    <div class="tex-demo">
+      <div style="background:var(--night)"><figure class="slot contain" data-slot="GEN-01" style="position:absolute;inset:8px"></figure><span class="lbl">GEN · Blender 渲染物体</span></div>
+      <div class="tex-grain" style="background:linear-gradient(135deg,#0b1fb8,#04050a);--grain:.6"><div class="crease-v" style="left:50%"></div><div class="crease-h" style="top:50%"></div><span class="lbl">CSS · 颗粒 + 折痕</span></div>
+      <div><div class="halftone fade-radial" style="inset:0;color:var(--cobalt)"></div><span class="lbl">CSS · 半调网点</span></div>
+      <div><figure class="slot duo-day" data-slot="PHOTO-01" style="position:absolute;inset:0"></figure><span class="lbl">PHOTO · 自动双色调</span></div>
+      <div style="background:var(--night);display:grid;place-items:center"><span class="display glitch" data-text="INFER" style="font-size:54px;color:var(--night-text)">INFER</span><span class="lbl">CSS · 故障切片</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== 04 故事板 ===================== -->
+  <section class="doc-section" id="board">
+    <div class="sec-head">
+      <span class="num">04</span><h2>故事板：演示顺序的 7 个画面</h2>
+      <p>画面中的数据为示意数据，非真实实验；接入真实数据后替换。</p>
+    </div>
+
+    <div class="board">
+
+      <!-- ========== S0 封面 ========== -->
+      <div class="beat" id="s0">
+        <div class="frame"><div class="screen night">
+          <div class="cover tex-grain" style="--grain:.45">
+            <figure class="slot bg" data-slot="GEN-02"></figure>
+            <div class="vignette"></div>
+            <div class="topline"><span>LABINFER — RESEARCH INSTRUMENT</span><span>HACKATHON 2026 · 科研创新赛道</span><span>N° 001</span></div>
+            <div class="halftone fade-radial" style="left:880px;top:420px;width:420px;height:420px;color:rgba(140,155,255,.35)"></div>
+            <div class="giant display"><div>LAB</div><div class="fill glitch" data-text="INFER">INFER</div></div>
+            <figure class="slot contain hero-obj" data-slot="GEN-01"></figure>
+            <div class="crease-v" style="left:50%"></div>
+            <div class="crease-h" style="top:58%"></div>
+            <figure class="slot duo-night specimen" data-slot="PHOTO-01"></figure>
+            <div class="specimen-cap">SPECIMEN 001<br>Ag MIRROR · 50 °C</div>
+            <span class="side-label">SILVER MIRROR · TOLLENS REACTION</span>
+            <div class="ruler-v" style="left:24px;top:120px;height:180px"></div>
+            <div class="cross" style="left:44px;top:96px"></div>
+            <div class="cross" style="right:44px;top:96px"></div>
+            <div class="cross" style="left:44px;bottom:84px"></div>
+            <div class="cross" style="right:44px;bottom:84px"></div>
+            <div class="tagline">
+              <h1>拍下数据，截下文献。<br>得到的不只是结果，<b>还有结论。</b></h1>
+              <p>规律、能证明什么、哪里不对、下次怎么改。</p>
+              <button class="btn primary">载入演示案例 · 银镜反应动力学 →</button>
+              <button class="btn ghost" style="margin-left:8px">新建实验</button>
+            </div>
+            <div class="readout" style="top:auto;bottom:96px">
+              CASE&nbsp;&nbsp;&nbsp;<b>001 · TOLLENS</b><br>
+              MODEL&nbsp;&nbsp;<b>ARRHENIUS</b><br>
+              Ea&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="q">? kJ·mol⁻¹</span><br>
+              REF&nbsp;&nbsp;&nbsp;&nbsp;DOI 10.xxxx/xxxxx<br>
+              SCHEMA 0.1.0
+            </div>
+            <div class="bottomline"><span>01 CONTEXT — 02 DATA — 03 LITERATURE — 04 ANALYSIS — 05 EXPORT</span><span>FROM DATA TO CONCLUSION</span></div>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S0 · 封面</div>
+          <h3>开场：从数据到结论</h3>
+          <dl>
+            <dt>剧情</dt><dd>答辩第一屏。超大字 LABINFER 被银镜试管压住，右下角读数里的 Ea 是一个问号，整场演示就是把这个问号填上。</dd>
+            <dt>用户操作</dt><dd>点「载入演示案例」进入 S1；「新建实验」走空白模板。</dd>
+            <dt>模块</dt><dd>M8</dd>
+            <dt>动效</dt><dd>进场：背景先亮起，大字描边由左向右描出（600ms），试管从下方 24px 弹入（弹簧曲线）。Ea 的「?」在 S4 得出结果后回到封面时替换为 53.8。</dd>
+            <dt>素材位</dt><dd><code>GEN-01</code> 主视觉，<code>GEN-02</code> 背景，<code>PHOTO-01</code> 右上样片</dd><dt>质感层</dt><dd>胶片颗粒、居中的对折折痕（R5）、「INFER」的钴蓝故障切片、主视觉背后的半调网点光斑。</dd>
+          </dl>
+        </aside>
+      </div>
+
+      <!-- ========== S1 实验上下文 ========== -->
+      <div class="beat" id="s1">
+        <div class="frame"><div class="screen">
+          <div class="app">
+            <nav class="rail">
+              <div class="logo">L<i>I</i></div>
+              <ol class="steps">
+                <li class="on"><span class="n">01</span><span class="t">上下文</span></li>
+                <li><span class="n">02</span><span class="t">我的数据</span></li>
+                <li><span class="n">03</span><span class="t">文献取数</span></li>
+                <li><span class="n">04</span><span class="t">分析</span></li>
+                <li><span class="n">05</span><span class="t">导出</span></li>
+              </ol>
+              <div class="halftone fade-t rail-mood"></div><div class="rail-foot">SCHEMA 0.1.0</div>
+            </nav>
+            <header class="topbar"><span class="exp">银镜反应动力学</span><span class="ctx">ctx_01</span><span class="sp"></span><span class="tag demo">示意数据</span></header>
+            <main class="main">
+              <div class="s1">
+                <div class="left">
+                  <div class="ghost-num" style="right:-24px;bottom:56px;font-size:360px">01</div>
+                  <div class="reg" style="right:64px;top:52px"></div>
+                  <div class="colorbar" style="right:96px;top:55px"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="eyebrow">STEP 01 · 实验上下文 · 预置模板</div>
+                  <h1>银镜反应动力学</h1>
+                  <div class="en display">TOLLENS · ARRHENIUS</div>
+                  <div class="fields">
+                    <div class="k">目的</div><div>测定表观活化能 Ea，验证出镜速率是否符合 Arrhenius 规律</div>
+                    <div class="k">模型</div><div class="formula">ln(1/<var>t</var>) = ln A − E<sub>a</sub> / (R·<var>T</var>)</div>
+                    <div class="k">变量</div><div class="var-pair"><span class="var">x · <b>T</b> 水浴温度 °C</span><span style="color:var(--ink-3)">→</span><span class="var">y · <b>t</b> 出镜时间 s</span></div>
+                    <div class="k">关联文献</div><div class="mono" style="font-size:13px">DOI 10.xxxx/xxxxx · Fig. 3b <span style="color:var(--ink-3)">（待补充真实文献）</span></div>
+                    <div class="k">数据集</div><div class="mono" style="font-size:13px">我的 ds_mine_01 <span style="color:var(--ink-3)">未上传</span> · 参照 ds_lit_01 <span style="color:var(--ink-3)">未上传</span></div>
+                  </div>
+                  <div class="actions">
+                    <button class="btn primary">确认，上传我的数据 →</button>
+                    <button class="btn ghost">修改模板</button>
+                    <span class="hint">字段对应 contracts.md · ExperimentContext</span>
+                  </div>
+                </div>
+                <div class="right tex-grain" style="--grain:.25">
+                  <figure class="anchor s1-anchor">
+                    <div class="vignette" data-fx="GEN-06"></div>
+                    <figcaption><b>OBJ. 01</b> MOLECULAR MODEL<br>建模 · 把实验抽象成结构与公式</figcaption>
+                  </figure>
+                  <div class="templates">
+                    <div class="panel-h"><b>实验模板</b> 变量 + 公式 + 拟合方式</div>
+                    <div class="tpl on"><span class="nm">银镜反应动力学<i class="tag-s cobalt">演示</i></span><span class="fx">ln(1/t) = ln A − Eₐ/RT</span></div>
+                    <div class="tpl"><span class="nm">粘度法测分子量<i class="tag-s">规划</i></span><span class="fx">[η] = K · M^α</span></div>
+                    <div class="tpl"><span class="nm">自由基聚合动力学<i class="tag-s">规划</i></span><span class="fx">Rₚ = kₚ[M]·(f·k_d[I]/kₜ)^½</span></div>
+                    <div class="tpl"><span class="nm">一级反应速率<i class="tag-s">规划</i></span><span class="fx">ln c = ln c₀ − k·t</span></div>
+                    <div class="tpl add">+ 新模板：声明变量、写公式、选拟合方式</div>
+                  </div>
+                </div>
+              </div>
+            </main>
+            <footer class="statusbar"><i class="barcode"></i><span>M3 · 实验上下文</span><span class="sp"></span><span>模板 <b>tollens-arrhenius</b></span></footer>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S1 · 实验上下文</div>
+          <h3>先说清楚在做什么实验</h3>
+          <dl>
+            <dt>剧情</dt><dd>这是和通用大模型的第一个区别：先确定目的、模型和变量，AI 后面的解读才有依据。演示时停留不超过 10 秒。</dd>
+            <dt>用户操作</dt><dd>确认预置模板，进入 S2。</dd>
+            <dt>模块 / 契约</dt><dd>M3 → <code>ExperimentContext</code></dd>
+            <dt>交互</dt><dd>公式里的 <i>T</i>、<i>t</i> 与变量卡片联动高亮。左侧步骤栏可随时回跳，已完成的步骤打勾。</dd>
+            <dt>素材位</dt><dd><code>GEN-06</code> 锚点物件</dd><dt>质感层</dt><dd>左侧超大描边编号「01」，右栏胶片颗粒，锚点背后的半调光斑。</dd><dt>通用性</dt><dd>右栏下部是实验模板库：每个模板 = 变量 + 公式 + 拟合方式。演示只做银镜一个，其余标为「规划」，告诉评审换实验只是加一个模板。</dd>
+          </dl>
+        </aside>
+      </div>
+
+      <!-- ========== S2 我的数据 ========== -->
+      <div class="beat" id="s2">
+        <div class="frame"><div class="screen">
+          <div class="app">
+            <nav class="rail">
+              <div class="logo">L<i>I</i></div>
+              <ol class="steps">
+                <li class="done"><span class="n">01</span><span class="t">上下文</span></li>
+                <li class="on"><span class="n">02</span><span class="t">我的数据</span></li>
+                <li><span class="n">03</span><span class="t">文献取数</span></li>
+                <li><span class="n">04</span><span class="t">分析</span></li>
+                <li><span class="n">05</span><span class="t">导出</span></li>
+              </ol>
+              <div class="halftone fade-t rail-mood"></div><div class="rail-foot">SCHEMA 0.1.0</div>
+            </nav>
+            <header class="topbar"><span class="exp">银镜反应动力学</span><span class="ctx">ds_mine_01</span><span class="sp"></span><span class="tag demo">示意数据</span></header>
+            <main class="main">
+              <div class="s2">
+                <div class="photo">
+                  <figure class="slot" data-slot="DEMO-01"></figure>
+                  <div class="crops" style="inset:32px 32px 72px"></div>
+                  <div class="reg" style="left:50%;top:9px;margin-left:-9px"></div>
+                  <div class="reg" style="left:9px;top:50%;margin-top:-9px"></div>
+                  <div class="colorbar" style="right:32px;bottom:34px"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div style="position:absolute;inset:32px 32px 72px;pointer-events:none">
+                    <div class="bbox" style="top:30%"><span>p1</span></div>
+                    <div class="bbox" style="top:40%"><span>p2</span></div>
+                    <div class="bbox warn" style="top:50%"><span>p3 · 待确认</span></div>
+                    <div class="bbox" style="top:60%"><span>p4</span></div>
+                    <div class="bbox" style="top:70%"><span>p5</span></div>
+                  </div>
+                  <div class="tools"><span class="seg"><span>原图</span><span class="on">识别框</span></span><button class="btn ghost sm">旋转</button><button class="btn ghost sm">重新识别</button></div>
+                </div>
+                <div class="data">
+                  <h2>核对识别结果</h2>
+                  <div class="sub">低置信度的格子已标出，点击即可修改。确认后数据会被锁定。</div>
+                  <table class="grid-table">
+                    <thead><tr><th>ID</th><th>T 水浴温度 °C</th><th>t 出镜时间 s</th><th>置信度</th></tr></thead>
+                    <tbody>
+                      <tr><td class="id">p1</td><td>30</td><td>619</td><td><span class="conf-bar"><i style="width:97%"></i></span></td></tr>
+                      <tr><td class="id">p2</td><td>40</td><td>312</td><td><span class="conf-bar"><i style="width:95%"></i></span></td></tr>
+                      <tr><td class="id">p3</td><td>50</td><td class="low editing">228<span class="conf">62%</span>
+                        <div class="cand"><span class="on">228</span><span>778</span><span>223</span></div></td><td><span class="conf-bar low"><i style="width:62%"></i></span></td></tr>
+                      <tr><td class="id">p4</td><td>60</td><td>90</td><td><span class="conf-bar"><i style="width:93%"></i></span></td></tr>
+                      <tr><td class="id">p5</td><td>70</td><td>51</td><td><span class="conf-bar"><i style="width:91%"></i></span></td></tr>
+                    </tbody>
+                  </table>
+                  <figure class="anchor fill s2-anchor">
+                    <div class="vignette" data-fx="GEN-07"></div>
+                    <figcaption><b>OBJ. 02</b> VERNIER CALIPER<br>读数 · 把刻度变成数字</figcaption>
+                  </figure>
+                  <div class="foot"><span class="count">5 行 · 1 处待确认</span><button class="btn ghost">添加一行</button><button class="btn primary">确认数据 →</button></div>
+                </div>
+              </div>
+            </main>
+            <footer class="statusbar"><i class="barcode"></i><span>M1 · 记录识别</span><span>VLM · 开源视觉模型</span><span class="sp"></span><span>点击照片中的识别框，可定位到表格对应行</span></footer>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S2 · 我的数据</div>
+          <h3>手写记录变成表格</h3>
+          <dl>
+            <dt>剧情</dt><dd>手写的「228」被识别成低置信度：可能是 228，也可能是 778。用户一键选中候选值。这一步要让评审看到：AI 会出错，但产品知道自己哪里没把握。</dd>
+            <dt>用户操作</dt><dd>点低置信度格子 → 选候选值或直接输入 → 确认数据。</dd>
+            <dt>模块 / 契约</dt><dd>M1 → <code>Dataset</code>（<code>confidence</code>、<code>verified</code>）</dd>
+            <dt>交互</dt><dd>照片中的识别框与表格行双向联动。待确认格子用钴蓝斜纹，不用黄色或红色：红色只留给异常。<kbd>Tab</kbd> 跳到下一个待确认格子。</dd>
+            <dt>素材位</dt><dd><code>DEMO-01</code>（识别框位置为示意，接入真图后按真实识别结果绘制），<code>GEN-07</code> 锚点物件</dd><dt>质感层</dt><dd>表格与底栏之间的空白放游标卡尺，配博物馆标签式说明；不进入表格本身。</dd>
+          </dl>
+        </aside>
+      </div>
+
+      <!-- ========== S3a 文献取数 · 空状态 ========== -->
+      <div class="beat" id="s3a">
+        <div class="frame"><div class="screen">
+          <div class="app">
+            <nav class="rail">
+              <div class="logo">L<i>I</i></div>
+              <ol class="steps">
+                <li class="done"><span class="n">01</span><span class="t">上下文</span></li>
+                <li class="done"><span class="n">02</span><span class="t">我的数据</span></li>
+                <li class="on"><span class="n">03</span><span class="t">文献取数</span></li>
+                <li><span class="n">04</span><span class="t">分析</span></li>
+                <li><span class="n">05</span><span class="t">导出</span></li>
+              </ol>
+              <div class="halftone fade-t rail-mood"></div><div class="rail-foot">SCHEMA 0.1.0</div>
+            </nav>
+            <header class="topbar"><span class="exp">银镜反应动力学</span><span class="ctx">ds_lit_01 · 空</span><span class="sp"></span><span class="tag demo">示意数据</span></header>
+            <main class="main">
+              <div class="s3a tex-grain" style="--grain:.2">
+                <figure class="slot duo-day s3a-photo" data-slot="PHOTO-02"></figure>
+                <div class="halftone fade-r" style="left:0;top:0;bottom:0;width:360px;color:var(--silver-2)"></div>
+                <div class="bgword display">FIGURE → DATA</div>
+                <div class="drop">
+                  <div class="cross" style="left:16px;top:16px"></div>
+                  <div class="cross" style="right:16px;top:16px"></div>
+                  <div class="orb"><div class="vignette" data-fx="GEN-03"></div></div>
+                  <div class="copy">
+                    <h2>拖入论文中的曲线图</h2>
+                    <p>也可以直接粘贴截图 <span class="mono">Ctrl + V</span> · PNG / JPG · 建议宽度 ≥ 1200 px</p>
+                  </div>
+                  <div class="meta-in"><div class="input">DOI&nbsp;&nbsp;10.xxxx/xxxxx</div><div class="input">图号 Fig. 3b</div><button class="btn ghost">从剪贴板粘贴</button></div>
+                </div>
+                <div class="side">
+                  <b>AI 会做什么</b>
+                  识别坐标轴刻度，生成 4 个校准点<br>
+                  识别图例，分离各条曲线<br>
+                  你确认后，由代码完成像素到数据的换算
+                  <br><br>
+                  <b>什么时候需要你</b>
+                  曲线重叠或颜色相近时，切换到手动点取
+                </div>
+              </div>
+            </main>
+            <footer class="statusbar"><i class="barcode"></i><span>M2 · 曲线取数</span><span class="sp"></span><span>文献来源会随数据一起保存</span></footer>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S3a · 文献取数 · 空状态</div>
+          <h3>把论文里的图交给它</h3>
+          <dl>
+            <dt>剧情</dt><dd>过渡画面。背景的超大字「FIGURE → DATA」直接说出这一步要做的事。</dd>
+            <dt>用户操作</dt><dd>拖入或粘贴截图，填写 DOI 和图号。</dd>
+            <dt>模块</dt><dd>M2 · M8</dd>
+            <dt>识别中状态</dt><dd>上传后进入 S3b 的画布，截图上有一条钴蓝扫描线自上而下扫过（约 1.2 秒）。识别出的刻度依次亮起，再弹出 4 个校准十字。等待时间较长时，扫描线循环，不显示转圈加载。</dd>
+            <dt>素材位</dt><dd><code>GEN-03</code> 玻璃球，<code>PHOTO-02</code> 背景底纹</dd><dt>质感层</dt><dd>左侧期刊微距双色调底纹 + 半调网点渐隐，暗示「印刷在纸上的图」。</dd>
+          </dl>
+        </aside>
+      </div>
+
+      <!-- ========== S3b 文献取数 · 校准 ========== -->
+      <div class="beat" id="s3b">
+        <div class="frame"><div class="screen">
+          <div class="app">
+            <nav class="rail">
+              <div class="logo">L<i>I</i></div>
+              <ol class="steps">
+                <li class="done"><span class="n">01</span><span class="t">上下文</span></li>
+                <li class="done"><span class="n">02</span><span class="t">我的数据</span></li>
+                <li class="on"><span class="n">03</span><span class="t">文献取数</span></li>
+                <li><span class="n">04</span><span class="t">分析</span></li>
+                <li><span class="n">05</span><span class="t">导出</span></li>
+              </ol>
+              <div class="halftone fade-t rail-mood"></div><div class="rail-foot">SCHEMA 0.1.0</div>
+            </nav>
+            <header class="topbar"><span class="exp">银镜反应动力学</span><span class="ctx">ds_lit_01 · DOI 10.xxxx/xxxxx · Fig. 3b</span><span class="sp"></span><span class="tag demo">示意数据</span></header>
+            <main class="main">
+              <div class="s3b">
+                <div class="lp">
+                  <ol class="stepper">
+                    <li class="on">
+                      <h4>校准坐标轴</h4>
+                      <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px">AI 已识别 4 个刻度，请核对数值。拖动画布上的十字可以微调。</div>
+                      <div class="calib-list">
+                        <div class="calib-row"><span class="h">X1</span><span class="px">(118, 512)</span><span class="val">2.90</span></div>
+                        <div class="calib-row"><span class="h">X2</span><span class="px">(642, 512)</span><span class="val">3.40</span></div>
+                        <div class="calib-row"><span class="h">Y1</span><span class="px">(96, 470)</span><span class="val">−6.5</span></div>
+                        <div class="calib-row active"><span class="h">Y2</span><span class="px">(96, 132)</span><span class="val">−4.0</span></div>
+                      </div>
+                      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:12px;color:var(--ink-3)">X 轴 <span class="seg"><span class="on">线性</span><span>对数</span></span></div>
+                      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;color:var(--ink-3)">Y 轴 <span class="seg"><span class="on">线性</span><span>对数</span></span></div>
+                    </li>
+                    <li>
+                      <h4>选择曲线</h4>
+                      <div class="series">
+                        <div class="on"><i style="background:var(--ink)"></i>曲线 A · 文献实验值<span class="n">5 点</span></div>
+                        <div><i style="background:var(--silver)"></i>曲线 B · 理论线<span class="n">连续</span></div>
+                      </div>
+                    </li>
+                    <li>
+                      <h4>提取数据点</h4>
+                      <span class="seg"><span class="on">自动</span><span>手动点取</span></span>
+                    </li>
+                  </ol>
+                </div>
+                <div class="canvas mat">
+                  <div class="toolbar"><span class="seg"><span>原图</span><span>提取层</span><span class="on">叠加</span></span><span class="mono" style="font-size:11px;color:var(--ink-3)">100%</span></div>
+                  <div class="fig">
+                    <div class="crops" style="inset:0"></div>
+                    <figure class="slot contain" data-slot="DEMO-02"></figure>
+                    <div class="overlay">
+                      <div class="guide-y" style="left:8%;top:22%;bottom:12%"></div>
+                      <div class="guide-x" style="left:8%;right:4%;top:88%"></div>
+                      <div class="handle" style="left:14%;top:88%"><div class="cross"></div><div class="ring"></div><span class="lbl">X1 · 2.90</span></div>
+                      <div class="handle" style="left:86%;top:88%"><div class="cross"></div><div class="ring"></div><span class="lbl">X2 · 3.40</span></div>
+                      <div class="handle" style="left:8%;top:78%"><div class="cross"></div><div class="ring"></div><span class="lbl">Y1 · −6.5</span></div>
+                      <div class="handle active" style="left:8%;top:22%"><div class="cross"></div><div class="ring"></div><span class="lbl">Y2 · −4.0</span></div>
+                      <div class="pt" style="left:79%;top:31%"></div>
+                      <div class="pt" style="left:65%;top:42%"></div>
+                      <div class="pt" style="left:50%;top:53%"></div>
+                      <div class="pt" style="left:36%;top:63%"></div>
+                      <div class="pt" style="left:21%;top:74%"></div>
+                      <div class="loupe" style="left:12%;top:-2%">
+                        <div class="axis" style="top:auto;left:72px;right:auto;width:2px;height:100%;top:0"></div>
+                        <div class="tick" style="left:60px;top:74px;width:14px;height:2px"></div>
+                        <div class="cross" style="left:62px;top:64px"></div>
+                        <div class="gloss"></div>
+                        <span class="zoom">× 4</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="banner"><span class="dot"></span><span>4 个校准点中已确认 3 个 · 换算残差 0.4 px</span><span class="sp"></span><button class="btn ghost sm">全部确认</button><button class="btn primary sm">提取数据点 →</button></div>
+                </div>
+                <div class="rp">
+                  <div class="panel-h"><b>提取结果</b> ds_lit_01</div>
+                  <dl class="kv">
+                    <dt>DOI</dt><dd>10.xxxx/xxxxx</dd>
+                    <dt>图号</dt><dd>Fig. 3b</dd>
+                    <dt>曲线</dt><dd>A · 文献实验值</dd>
+                    <dt>坐标</dt><dd>线性 / 线性</dd>
+                    <dt>点数</dt><dd>5</dd>
+                  </dl>
+                  <div class="grow">
+                    <table class="mini-table">
+                      <thead><tr><th>ID</th><th>1/T ×10⁻³</th><th>ln(1/t)</th></tr></thead>
+                      <tbody>
+                        <tr><td>L1</td><td>3.354</td><td>−6.459</td></tr>
+                        <tr><td>L2</td><td>3.245</td><td>−5.805</td></tr>
+                        <tr><td>L3</td><td>3.143</td><td>−5.191</td></tr>
+                        <tr><td>L4</td><td>3.047</td><td>−4.615</td></tr>
+                        <tr><td>L5</td><td>2.957</td><td>−4.073</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <figure class="anchor fill s3-anchor">
+                    <div class="vignette" data-fx="GEN-08"></div>
+                    <figcaption><b>OBJ. 03</b> PRISM<br>分离 · 把曲线从图里剥离出来</figcaption>
+                  </figure>
+                  <div class="foot"><button class="btn ghost">导出 CSV</button><button class="btn primary">加入对比 →</button></div>
+                </div>
+              </div>
+            </main>
+            <footer class="statusbar"><i class="barcode"></i><span>光标 px (96, 132) → y = <b>−4.02</b></span><span>刻度识别 4 / 4</span><span class="sp"></span><span>坐标换算由确定性代码完成，不由模型估计</span></footer>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S3b · 文献取数 · 校准</div>
+          <h3>全场亮点：截图进，数据出</h3>
+          <dl>
+            <dt>剧情</dt><dd>用户拖动 Y2 校准十字，玻璃球放大镜跟着出现，十字吸附到刻度线上。确认后点「提取数据点」，钴蓝色的点从原图上逐个亮起，右侧表格同步填入数据。</dd>
+            <dt>用户操作</dt><dd>核对 4 个刻度数值 → 选择曲线 → 提取 → 加入对比。</dd>
+            <dt>模块 / 契约</dt><dd>M2 → <code>Dataset</code>（<code>source: literature</code>，带 DOI 和图号）</dd>
+            <dt>交互</dt><dd>
+              拖动校准点时显示 ×4 放大镜，靠近刻度线时 120ms 吸附并轻微回弹。<br>
+              「原图 / 提取层 / 叠加」：提取层会隐藏截图，只留钴蓝数据点和坐标轴，直观地表现「把曲线剥离出来」。<br>
+              提取的点可以拖动修正，也可以点选删除。
+            </dd>
+            <dt>素材位</dt><dd><code>DEMO-02</code>（校准点和数据点位置为示意，接入真图后按真实刻度标注），<code>GEN-08</code> 锚点物件</dd><dt>质感层</dt><dd>右栏表格下方的三棱镜。校准画布保持干净。</dd>
+          </dl>
+        </aside>
+      </div>
+
+      <!-- ========== S4 分析 ========== -->
+      <div class="beat" id="s4">
+        <div class="frame"><div class="screen">
+          <div class="app">
+            <nav class="rail">
+              <div class="logo">L<i>I</i></div>
+              <ol class="steps">
+                <li class="done"><span class="n">01</span><span class="t">上下文</span></li>
+                <li class="done"><span class="n">02</span><span class="t">我的数据</span></li>
+                <li class="done"><span class="n">03</span><span class="t">文献取数</span></li>
+                <li class="on"><span class="n">04</span><span class="t">分析</span></li>
+                <li><span class="n">05</span><span class="t">导出</span></li>
+              </ol>
+              <div class="halftone fade-t rail-mood"></div><div class="rail-foot">SCHEMA 0.1.0</div>
+            </nav>
+            <header class="topbar"><span class="exp">银镜反应动力学</span><span class="ctx">ctx_01 · ds_mine_01 vs ds_lit_01</span><span class="sp"></span><span class="seg"><span class="on">叠加</span><span>仅我的</span><span>仅文献</span></span><span class="tag demo">示意数据</span></header>
+            <main class="main">
+              <div class="s4">
+                <div class="chart-area">
+                  <div class="headline">
+                    <div class="ea">
+                      <div class="lbl">表观活化能 Ea · 我的数据</div>
+                      <div class="big display">53.8<small>kJ·mol⁻¹</small></div>
+                    </div>
+                    <div class="vs">
+                      <span>文献 <b>50.0</b> kJ·mol⁻¹</span>
+                      <span>偏差 <span class="delta">+7.6%</span></span>
+                      <span>R² 0.978 · n = 5</span>
+                    </div>
+                    <figure class="anchor s4-anchor">
+                      <div class="vignette" data-fx="GEN-09"></div>
+                      <figcaption><b>OBJ. 04</b><br>ARMILLARY<br>规律</figcaption>
+                    </figure>
+
+                  </div>
+                  <div class="chart">
+                    <div class="legend in-plot">
+                      <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#1e3bff"/></svg>我的数据 · 拟合</span>
+                      <span><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="#fff" stroke="#0a0b10" stroke-width="1.2"/></svg>文献 · 拟合（虚线）</span>
+                      <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#fff" stroke="#1e3bff" stroke-width="1.5" stroke-dasharray="2 2"/></svg>推演</span>
+                      <span><svg width="14" height="14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="#e5242b" stroke-width="1.5"/></svg>异常点</span>
+                    </div>
+                    <svg id="chart-analysis" role="img" aria-label="ln(1/t) 对 1/T 的 Arrhenius 图"></svg></div>
+                </div>
+                <div class="findings">
+                  <div class="panel-h"><b>AI 解读</b> 5 条 · 每条都标注了依据的数据点</div>
+                  <div class="f-card">
+                    <div class="type"><i></i>规律</div>
+                    <p>5 个温度点中有 4 个落在同一条直线附近，ln(1/t) 随 1/T 线性下降（R² = 0.978）。</p>
+                    <div class="ev"><span class="chip-ev">p1</span><span class="chip-ev">p2</span><span class="chip-ev">p4</span><span class="chip-ev">p5</span></div>
+                  </div>
+                  <div class="f-card">
+                    <div class="type"><i></i>能证明什么</div>
+                    <p>出镜速率符合 Arrhenius 规律，表观活化能 Ea = 53.8 kJ·mol⁻¹，比文献值 50.0 高 7.6%。</p>
+                    <div class="ev"><span class="chip-ev">拟合 ds_mine_01</span><span class="chip-ev">ds_lit_01</span></div>
+                  </div>
+                  <div class="f-card anomaly selected">
+                    <div class="type"><i></i>异常</div>
+                    <p>50 °C 的出镜时间 228 s，比拟合预测的 176 s 长约 30%，残差 z = −2.0。可能原因：</p>
+                    <ul class="causes"><li>银氨溶液放置过久，有效浓度下降</li><li>试管内壁未洗净，银镜成核变慢</li><li>水浴温度未稳定就开始计时</li></ul>
+                    <div class="ev"><span class="chip-ev">p3</span></div>
+                  </div>
+                  <div class="f-card">
+                    <div class="type"><i></i>建议</div>
+                    <p>在 50 °C 用现配的银氨溶液重测一次，判断 p3 是否为操作误差。</p>
+                    <div class="ev"><span class="chip-ev">p3</span></div>
+                  </div>
+                  <div class="f-card sim">
+                    <div class="type"><i></i>建议 · 可推演</div>
+                    <p>补测 80 °C，扩大温度跨度，可以收窄 Ea 的置信区间。</p>
+                    <div class="sim-ctl">
+                      <div class="slider"><div class="track"></div><div class="ticks"></div><div class="fill" style="width:66%"></div><div class="knob" style="left:66%"></div></div>
+                      <div class="sim-read"><span>T = <b>80 °C</b></span><span>预测 t ≈ <b>32 s</b></span></div>
+                    </div>
+                  </div>
+                  <div class="f-note">所有数字均来自 M4 计算结果，已通过数字校验 ✓</div>
+                </div>
+              </div>
+            </main>
+            <footer class="statusbar"><i class="barcode"></i><span>M4 · Arrhenius 线性拟合</span><span>M5 · AI 解读</span><span>M6 · 推演</span><span class="sp"></span><span>点击结论，图上高亮对应的数据点</span></footer>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S4 · 分析</div>
+          <h3>结论、异常、改进：闭环在这里合上</h3>
+          <dl>
+            <dt>剧情</dt><dd>两条曲线叠在同一张图上，Ea 用海报尺度展示：封面上的问号在这里有了答案。点「异常」卡片，图上的 p3 被红圈标出并画出残差。拖动推演滑块，图上沿拟合线外推出 80 °C 的预测点。</dd>
+            <dt>用户操作</dt><dd>点结论卡片 ↔ 图上高亮；拖动推演滑块；切换「叠加 / 仅我的 / 仅文献」。</dd>
+            <dt>模块 / 契约</dt><dd>M4 → <code>AnalysisResult</code>；M5 → <code>Finding[]</code>；M6 → <code>Simulation</code></dd>
+            <dt>交互</dt><dd>
+              卡片和数据点双向联动：悬停数据点时，引用它的卡片也高亮。<br>
+              结论卡片逐条流式出现，每条出现时它引用的点同步闪一下。<br>
+              推演只对 <code>simulatable: true</code> 的建议显示滑块。<br>
+              结论列表超出高度时，底部用渐隐遮罩（OCU 的 7 段渐隐）。
+            </dd>
+            <dt>素材位</dt><dd><code>GEN-09</code> 锚点物件</dd><dt>质感层</dt><dd>这一屏是功能核心，图表和结论卡片不加任何质感；只在标题行 Ea 与图例之间的空隙放浑天仪，和 Ea 数字一起构成这一屏的「海报」。</dd>
+          </dl>
+        </aside>
+      </div>
+
+      <!-- ========== S5 导出 ========== -->
+      <div class="beat" id="s5">
+        <div class="frame"><div class="screen">
+          <div class="app">
+            <nav class="rail">
+              <div class="logo">L<i>I</i></div>
+              <ol class="steps">
+                <li class="done"><span class="n">01</span><span class="t">上下文</span></li>
+                <li class="done"><span class="n">02</span><span class="t">我的数据</span></li>
+                <li class="done"><span class="n">03</span><span class="t">文献取数</span></li>
+                <li class="done"><span class="n">04</span><span class="t">分析</span></li>
+                <li class="on"><span class="n">05</span><span class="t">导出</span></li>
+              </ol>
+              <div class="halftone fade-t rail-mood"></div><div class="rail-foot">SCHEMA 0.1.0</div>
+            </nav>
+            <header class="topbar"><span class="exp">银镜反应动力学</span><span class="ctx">报告预览</span><span class="sp"></span><span class="tag demo">示意数据</span></header>
+            <main class="main">
+              <div class="s5">
+                <div class="desk tex-grain" style="--grain:.3">
+                  <figure class="slot desk-bg" data-slot="GEN-05"></figure>
+                  <div class="crops" style="left:calc(50% - 340px);width:680px;top:40px;height:980px;color:var(--ink-2)"></div>
+                  <article class="page">
+                    <figure class="slot band" data-slot="GEN-04"></figure>
+                    <div class="body">
+                      <h3>4　结果与讨论</h3>
+                      <p>以 ln(1/t) 对 1/T 作图（图 1），5 个温度点经线性拟合得斜率 −6470 K，R² = 0.978，由此求得表观活化能 <span class="hl">E<sub>a</sub> = 53.8 kJ·mol⁻¹</span>，较文献值 50.0 kJ·mol⁻¹<sup>[1]</sup> 偏高 7.6%，表明本实验条件下出镜速率符合 Arrhenius 规律。</p>
+                      <div class="figure"><svg id="chart-report" role="img" aria-label="报告插图"></svg></div>
+                      <div class="figcap">图 1　ln(1/t) 与 1/T 的关系（蓝：本实验；黑：文献 [1]）</div>
+                      <p>50 °C 数据点偏离拟合直线（残差 z = −2.0），实测出镜时间较预测值长约 30%，推测与银氨溶液放置时间过长有关，建议以现配溶液重测……</p>
+                    </div>
+                  </article>
+                </div>
+                <div class="opts">
+                  <div class="panel-h"><b>导出</b> 结果与讨论</div>
+                  <div class="opt on"><span class="fmt">MD</span><div>Markdown<small>粘贴进任何编辑器</small></div></div>
+                  <div class="opt"><span class="fmt">DOCX</span><div>Word<small>保留图 1 和参考文献格式</small></div></div>
+                  <div class="opt"><span class="fmt">PNG</span><div>仅图表<small>2× 高清，透明背景可选</small></div></div>
+                  <div style="display:grid;gap:10px;padding-top:4px">
+                    <div class="check on"><i></i>包含图 1</div>
+                    <div class="check on"><i></i>包含异常点讨论</div>
+                    <div class="check on"><i></i>包含改进建议</div>
+                    <div class="check on"><i></i>标注数据来源（DOI、图号）</div>
+                  </div>
+                  <figure class="anchor fill s5-anchor">
+                    <div class="vignette" data-fx="GEN-10"></div>
+                    <!-- 墨线：从笔尖墨滴出发，落到「导出」按钮正上方，引导视线 -->
+                    <svg class="ink-line" viewBox="0 0 312 100" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M136 0 C 134 34, 96 42, 128 66 S 206 84, 204 100" fill="none" stroke="#1e3bff" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                    </svg>
+                    <figcaption><b>OBJ. 05</b> NIB<br>成文</figcaption>
+                  </figure>
+                  <div style="display:flex;gap:8px"><button class="btn ghost">复制段落</button><button class="btn primary" style="flex:1;justify-content:center">导出 Markdown</button></div>
+                </div>
+              </div>
+            </main>
+            <footer class="statusbar"><i class="barcode"></i><span>M7 · 报告导出</span><span class="sp"></span><span>正文中的每个数字都可追溯到 M4 计算结果</span></footer>
+          </div>
+        </div></div>
+        <aside class="beat-notes">
+          <div class="id">S5 · 导出</div>
+          <h3>落成一段能交的文字</h3>
+          <dl>
+            <dt>剧情</dt><dd>收尾：一张像正式报告的纸面。左边是带头图的报告页，右边是导出选项。评审能看到，产品的产出可以直接用在实验报告或组会汇报里。</dd>
+            <dt>用户操作</dt><dd>勾选导出内容 → 选择格式 → 导出或复制。</dd>
+            <dt>模块</dt><dd>M7 · M8</dd>
+            <dt>交互</dt><dd>勾选项变化时，左侧预览实时增删对应段落（300ms 高度过渡）。悬停正文中的数字，显示它来自哪个计算字段。</dd>
+            <dt>素材位</dt><dd><code>GEN-04</code> 页眉，<code>GEN-05</code> 桌面，<code>GEN-10</code> 锚点物件</dd><dt>质感层</dt><dd>桌面是钴蓝墨迹纸底 + 颗粒，报告页本身保持干净。右栏空白处放钢笔尖，墨滴拉出一条点线流向「导出」按钮：既填了空，又是视觉引导。</dd>
+          </dl>
+        </aside>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== 05 素材位清单 ===================== -->
+  <section class="doc-section" id="assets">
+    <div class="sec-head">
+      <span class="num">05</span><h2>素材位清单</h2>
+      <p>由 storyboard.js 中的 ASSET_SLOTS 自动生成。填图方法：把图片命名为「编号.webp / .png / .jpg」放进 design/assets/，刷新即可，不需要改代码。</p>
+    </div>
+    <div class="manifest-wrap">
+      <table class="manifest" id="manifest">
+        <thead><tr><th>编号</th><th>类型</th><th>名称 / 位置</th><th>规格</th><th>画什么</th><th>风格参考</th><th>约束 / 来源</th><th>状态</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="callout"><b>GEN</b> 已生成，改动请改 design/render/ 下的脚本后运行 render.sh。<b>PHOTO</b> 需要上网检索真实照片（注意授权，记录来源），页面会自动统一成钴蓝双色调。<b>DEMO</b> 必须是真实的实验记录和论文截图，不能用 AI 生成或编造，由项目组提供。</div>
+  </section>
+
+</div>
+<script src="storyboard.js"></script>
+</body>
+</html>

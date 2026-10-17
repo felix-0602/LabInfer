@@ -13,10 +13,11 @@
 | [docs/product.md](docs/product.md) | 做给谁、解决什么痛点、和通用大模型差在哪、演示用什么实验、功能优先级（MoSCoW）、还有哪些事没定 | 技术实现、字段定义 |
 | [docs/architecture.md](docs/architecture.md) | 系统拆成哪些模块、每个模块输入输出什么、模块之间怎么流转、谁负责哪个模块、开发顺序 | 字段级的数据格式 |
 | [docs/contracts.md](docs/contracts.md) | 模块之间传递的数据**具体长什么样**（字段、类型、单位），当前契约版本号 | 为什么这样设计（写在 architecture.md） |
+| [design/index.html](design/index.html) | 页面长什么样：视觉从哪来、视觉规范、7 屏故事板、每屏交互、图片素材位及需求（GEN 素材的生成脚本在 design/render/） | 业务逻辑、字段定义 |
 | [docs/versioning.md](docs/versioning.md) | worktree 和分支怎么开、提交怎么写、契约怎么升版本、什么时候打标签 | 业务内容 |
 
 ## 真相源规则
 
 - 同一件事只在一份文档里写全，其他地方用链接引用，不复制内容。
 - 文档和代码冲突时，以 `contracts.md` 为准修正代码；其余文档以最新的决策为准，并在同一次提交里修正文档。
-- 新增文档前先确认现有四份放不下，新增后必须登记到上面的索引表。
+- 新增文档前先确认现有文档放不下，新增后必须登记到上面的索引表。
