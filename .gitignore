@@ -15,6 +15,10 @@ __pycache__/
 .venv/
 venv/
 
+# 后端运行时数据（演示缓存 demo_cache/ 需要提交，不在此列）
+server/data/
+venv/
+
 # 模型权重
 *.safetensors
 *.bin
