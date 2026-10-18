@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..config import CONTRACT_VERSION
 
@@ -8,11 +8,14 @@ router = APIRouter(prefix="/api/m6", tags=["m6"])
 
 
 class SimulateRequest(BaseModel):
+    # 契约字段名是 from（Python 关键字），frm 兼容旧调用
+    model_config = ConfigDict(populate_by_name=True)
+
     schema_version: str = CONTRACT_VERSION
     context_id: str
     finding_id: str
     param: str
-    frm: float
+    frm: float = Field(alias="from")
     to: float
     unit: str = ""
 

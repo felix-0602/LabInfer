@@ -38,7 +38,7 @@ def test_full_loop_analyze_findings_simulate_export(tmp_path):
 
     r = c.post("/api/m6/simulate", json={
         "context_id": "ctx_demo", "finding_id": "f_worst",
-        "param": "titrant_volume_delta", "frm": -2, "to": 0, "unit": "mL"})
+        "param": "titrant_volume_delta", "from": -2, "to": 0, "unit": "mL"})
     assert r.status_code == 200
     body = r.json()
     assert len(body["curve"]) == 20
