@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.5.0（滴定模型与演示案例切换）**
+**当前版本：0.6.0（模板库接口与存储后端）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -423,8 +423,9 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 |---|---|---|---|
 | 共享存储 | `GET /api/datasets/{id}` | — | Dataset |
 | 共享存储 | `PUT /api/datasets/{id}` | Dataset（用户校正后，`verified: true`） | Dataset |
-| M3 | `GET /api/m3/templates` | — | 模板列表：id、名称、model、必需角色、公式、预置参照、状态（演示 / 规划） |
-| M3 | `POST /api/m3/contexts` | `{ template_id }` | ExperimentContext |
+| M3 | `GET /api/m3/templates` | — | 模板列表：id、名称、model、必需角色、公式、预置参照、状态（演示 / 规划 / 自定义）。内置模板与模板库合并，业务规则见 [wiki.md](wiki.md) |
+| M3 | `POST /api/m3/templates` | ExperimentContext 骨架（无 `datasets`；`model` 须在模型注册表内，必需角色齐全） | 写入模板库的模板，状态置 `自定义`；id 冲突返回 409 |
+| M3 | `POST /api/m3/contexts` | `{ template_id }` | ExperimentContext（深拷贝模板，`datasets.mine = null`） |
 | M3 | `GET` / `PUT /api/m3/contexts/{id}` | ExperimentContext | ExperimentContext |
 | M1 | `POST /api/m1/records` | 表单：`image`、`context_id` | Dataset（`source: my_experiment`，带 `confidence`；识别不确定的格子值置 `null`） |
 | M4 | `POST /api/m4/analyze` | `{ context_id }` | AnalysisResult（含 `qc_results`、三层 `comparison`） |
@@ -444,6 +445,14 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 ---
 
 ## 变更记录
+
+### 0.6.0（2026-10-18）
+
+组织知识与持久层带动的兼容新增：
+
+- M3 新增 `POST /api/m3/templates`（沉淀自定义实验模板，id 冲突 409）；`GET /api/m3/templates` 的状态枚举增加 `自定义`。业务规则与生命周期见新增文档 [wiki.md](wiki.md)。
+- 存储层新增 SQLite 后端（`LABINFER_STORAGE=sqlite` 启用），与 JSON 后端同接口；表结构与安全规则见新增文档 [sql.md](sql.md)。接口行为与默认后端不变。
+- 新增文档 `docs/wiki.md`、`docs/sql.md` 并登记 README 索引。
 
 ### 0.5.0（2026-10-18）
 
