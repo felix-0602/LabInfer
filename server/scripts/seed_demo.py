@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.cache import cache_put, sha256_file
 from app.config import CONTRACT_VERSION
 from app.routers.contexts import TEMPLATES
-from app.storage import Store
+from app.storage import Store, store_from_env
 
 DEMO_RECORD_IMAGE = Path(__file__).resolve().parent.parent.parent / "design" / "assets" / "DEMO-01.jpg"
 
@@ -59,6 +59,7 @@ def bake_m1_cache(mine: dict) -> str | None:
         return None
     payload = copy.deepcopy(mine)
     payload.pop("id", None)
+    payload.pop("schema_version", None)   # 由路由盖当前契约版本
     for r in payload["rows"]:
         r["verified"] = False
     # 记录页上 p1 的滴定体积有涂改痕迹（28.54），保留一个低置信格子演示校正交互
@@ -69,7 +70,7 @@ def bake_m1_cache(mine: dict) -> str | None:
 
 
 def main(store: Store | None = None):
-    store = store or Store()
+    store = store or store_from_env()   # 跟随 LABINFER_STORAGE，与 uvicorn 同后端
     mine, ctx = build_demo_objects()
     store.put_dataset(mine)
     store.put_context(ctx)

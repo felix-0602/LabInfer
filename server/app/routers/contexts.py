@@ -72,35 +72,85 @@ class CreateContext(BaseModel):
     template_id: str
 
 
+def _all_templates(request: Request) -> list[tuple[str, dict]]:
+    """内置模板 + 模板库（组织知识层，见 docs/wiki.md）。内置优先，库中 id 不得与内置冲突。"""
+    items = [{"status": meta["status"], "template": dict(meta["template"], id=tid)}
+             for tid, meta in TEMPLATES.items()]
+    items += [{"status": t.get("status", "自定义"), "template": t}
+              for t in request.app.state.store.list_templates()
+              if t.get("id") and t["id"] not in TEMPLATES]
+    return items
+
+
 @router.get("/templates")
-def list_templates():
+def list_templates(request: Request):
     out = []
-    for tid, item in TEMPLATES.items():
+    for item in _all_templates(request):
         t = item["template"]
         m = REGISTRY[t["model"]]
         out.append({
-            "id": tid,
+            "id": t["id"],
             "name": t["name"],
             "model": t["model"],
             "required_roles": [m.x_role, m.y_role],
             "formula": m.formula,
             "reference_preview": {
-                "n_datasets": len(t["reference"]["datasets"]),
-                "crm": t["reference"]["crm"],
-                "limits": t["reference"]["limits"],
+                "n_datasets": len(t.get("reference", {}).get("datasets", [])),
+                "crm": t.get("reference", {}).get("crm"),
+                "limits": t.get("reference", {}).get("limits", []),
             },
             "status": item["status"],
         })
     return out
 
 
+@router.post("/templates", status_code=201)
+def create_template(request: Request, body: dict):
+    """把一次实验的骨架沉淀为可复用模板（wiki 层）。模板不含 datasets。"""
+    if not isinstance(body, dict):
+        return JSONResponse(status_code=400, content={
+            "error": {"code": "BAD_REQUEST", "message": "模板需要是 JSON 对象", "detail": {}}})
+    name = str(body.get("name") or "").strip()
+    model_id = body.get("model")
+    if not name or model_id not in REGISTRY:
+        return JSONResponse(status_code=400, content={
+            "error": {"code": "BAD_REQUEST",
+                      "message": f"模板需要非空 name 与注册表内的 model（{sorted(REGISTRY)}）",
+                      "detail": {}}})
+    m = REGISTRY[model_id]
+    columns = (body.get("variables") or {}).get("columns") or []
+    roles = {c.get("role") for c in columns if isinstance(c, dict)}
+    if not {m.x_role, m.y_role} <= roles:
+        return JSONResponse(status_code=400, content={
+            "error": {"code": "BAD_REQUEST",
+                      "message": f"variables.columns 缺少必需角色: {m.x_role}/{m.y_role}",
+                      "detail": {}}})
+
+    store = request.app.state.store
+    tpl = copy.deepcopy(body)
+    tpl.pop("datasets", None)
+    tpl["id"] = tpl.get("id") or new_id("tpl")
+    if tpl["id"] in TEMPLATES or store.get_template(tpl["id"]) is not None:
+        return JSONResponse(status_code=409, content={
+            "error": {"code": "CONFLICT", "message": f"模板 id 已存在: {tpl['id']}", "detail": {}}})
+    tpl["schema_version"] = CONTRACT_VERSION
+    tpl["status"] = "自定义"
+    tpl.setdefault("model_params", {})
+    tpl.setdefault("purpose", "")
+    tpl.setdefault("reference", {"datasets": [], "crm": None, "limits": []})
+    tpl.setdefault("qc_rules", [])
+    return store.put_template(tpl)
+
+
 @router.post("/contexts", status_code=201)
 def create_context(body: CreateContext, request: Request):
-    item = TEMPLATES.get(body.template_id)
+    item = next((it for it in _all_templates(request)
+                 if it["template"]["id"] == body.template_id), None)
     if item is None:
         return JSONResponse(status_code=404, content={
             "error": {"code": "NOT_FOUND", "message": f"模板不存在: {body.template_id}", "detail": {}}})
     ctx = copy.deepcopy(item["template"])
+    ctx.pop("status", None)
     ctx["id"] = new_id("ctx")
     ctx["datasets"] = {"mine": None}
     return request.app.state.store.put_context(ctx)

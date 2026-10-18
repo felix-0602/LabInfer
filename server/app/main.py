@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import CONTRACT_VERSION
 from .routers import contexts, datasets, m1, m4, m5, m6, m7, snapshot
-from .storage import Store
+from .storage import Store, store_from_env
 
 
 def create_app(store: Store | None = None) -> FastAPI:
     app = FastAPI(title="LabInfer API", version=CONTRACT_VERSION)
-    app.state.store = store or Store()
+    app.state.store = store or store_from_env()
 
     app.add_middleware(
         CORSMiddleware,

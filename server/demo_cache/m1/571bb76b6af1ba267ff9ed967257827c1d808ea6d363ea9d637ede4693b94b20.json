@@ -1,5 +1,4 @@
 {
-  "schema_version": "0.5.0",
   "source": "my_experiment",
   "meta": {
     "title": "HCl 标定与碱灰总碱度 数据记录（演示）",
