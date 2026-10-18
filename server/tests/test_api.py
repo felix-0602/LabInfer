@@ -14,7 +14,7 @@ def make_client(tmp_path):
 
 def test_health_and_templates(tmp_path):
     c = make_client(tmp_path)
-    assert c.get("/api/health").json()["contract_version"] == "0.5.0"
+    assert c.get("/api/health").json()["contract_version"] == "0.6.0"
     templates = c.get("/api/m3/templates").json()
     ids = {t["id"] for t in templates}
     assert {"tpl_alkali_titration", "tpl_iodine_clock"} <= ids
@@ -96,9 +96,71 @@ def test_snapshot_full_chain(tmp_path):
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
     snap = r.json()
-    assert snap["schema_version"] == "0.5.0"
+    assert snap["schema_version"] == "0.6.0"
     assert {s["id"] for s in snap["datasets"]} == {"ds_mine_demo"}
     assert snap["analysis"]["fits"] and snap["findings"]
 
     miss = c.get("/api/snapshot/nope")
     assert miss.status_code == 404
+
+
+CUSTOM_TPL = {
+    "name": "混合碱总碱度（自定义模板示例）",
+    "purpose": "以 HCl 滴定混合碱，测总碱度",
+    "model": "titration_standardization",
+    "model_params": {"molar_mass_na2co3_g_mol": 105.99, "molar_mass_na2o_g_mol": 61.979,
+                     "stock_volume_ml": 250, "aliquot_volume_ml": 25},
+    "variables": {"columns": [
+        {"key": "m", "role": "mass", "unit": "g"},
+        {"key": "V", "role": "volume", "unit": "mL"},
+        {"key": "ms", "role": "sample_mass", "unit": "g", "optional": True},
+    ]},
+    "reference": {"datasets": [], "crm": None, "limits": []},
+    "qc_rules": [{"rule_id": "parallel_rpd", "params": {"max": 0.002},
+                  "citation": "分析化学实验平行测定要求"}],
+}
+
+
+def test_template_library_create_and_instantiate(tmp_path):
+    c = make_client(tmp_path)
+    r = c.post("/api/m3/templates", json=CUSTOM_TPL)
+    assert r.status_code == 201
+    tpl = r.json()
+    assert tpl["status"] == "自定义" and tpl["id"].startswith("tpl_")
+    assert "datasets" not in tpl                      # 模板不含数据
+
+    listed = {t["id"]: t for t in c.get("/api/m3/templates").json()}
+    assert tpl["id"] in listed and listed[tpl["id"]]["status"] == "自定义"
+
+    r = c.post("/api/m3/contexts", json={"template_id": tpl["id"]})
+    assert r.status_code == 201
+    ctx = r.json()
+    assert ctx["model"] == "titration_standardization"
+    assert ctx["datasets"] == {"mine": None}
+
+    dup = c.post("/api/m3/templates", json={**CUSTOM_TPL, "id": "tpl_alkali_titration"})
+    assert dup.status_code == 409
+    bad_model = c.post("/api/m3/templates", json={**CUSTOM_TPL, "model": "nope"})
+    assert bad_model.status_code == 400
+    no_role = c.post("/api/m3/templates", json={
+        **CUSTOM_TPL, "variables": {"columns": [{"key": "m", "role": "mass", "unit": "g"}]}})
+    assert no_role.status_code == 400
+
+
+def test_full_loop_on_sqlite_backend(tmp_path):
+    """SQLite 后端跑通与 JSON 后端相同的闭环（docs/sql.md 的双后端承诺）。"""
+    from app.sqlstore import SqlStore
+    store = SqlStore(tmp_path / "e2e.sqlite3")
+    seed(store)
+    c = TestClient(create_app(store))
+
+    r = c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200
+    assert r.json()["fits"][0]["derived"]["c_hcl"] == pytest.approx(0.1027, abs=0.0002)
+
+    r = c.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200 and "event: finding" in r.text
+
+    r = c.get("/api/snapshot/ctx_demo")
+    assert r.status_code == 200
+    assert r.json()["schema_version"] == "0.6.0"
