@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.4.0（演示快照接口）**
+**当前版本：0.5.0（滴定模型与演示案例切换）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -17,38 +17,36 @@
 
 ## Dataset 数据集
 
-M1、M2 输出，M4 读取。列不限制名称，行用 `series` 标注类别，M4 据此分组：`std`（标准系列点）、`blank`（空白）、`sample:<名称>`（样品，平行样同名成组）、`qc:crm`（质控样）、`qc:spike`（加标样）。
+M1、M2 输出，M4 读取。列不限制名称，行用 `series` 标注类别，M4 据此分组：`std`（标准系列点，或标定平行份）、`blank`（空白）、`sample:<名称>`（样品，平行样同名成组）、`qc:crm`（质控样）、`qc:spike`（加标样）。
 
 ```jsonc
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "id": "ds_mine_01",
   "source": "my_experiment",          // my_experiment | literature
   "meta": {
-    "title": "水质氨氮 标准系列与样品",
+    "title": "HCl 标定与碱灰总碱度 数据记录",
     "doi": null,                       // source=literature 时必填
     "figure": null,                    // 如 "图1(b)"
     "image_ref": "uploads/xxx.jpg"     // 原始图片
   },
   "columns": [
-    { "key": "c", "name": "氨氮浓度", "unit": "mg/L" },
-    { "key": "A", "name": "吸光度", "unit": "" },
-    { "key": "V", "name": "取样体积", "unit": "mL" },     // 条件列：见行示例
-    { "key": "dil", "name": "稀释倍数", "unit": "" }
+    { "key": "m",  "name": "基准 Na₂CO₃ 质量", "unit": "g" },   // 条件列：见行示例
+    { "key": "V",  "name": "HCl 滴定体积",     "unit": "mL" },
+    { "key": "ms", "name": "碱灰试样质量",     "unit": "g" }
   ],
   "rows": [
-    // 标准系列行：浓度与吸光度都有值
-    { "id": "p1", "series": "std", "values": { "c": 0.10, "A": 0.041 },
-      "confidence": { "c": 0.99, "A": 0.94 }, "verified": false },
-    // 样品行：浓度为 null（待 M4 反推），条件列有值
-    { "id": "s1", "series": "sample:地表水1", "values": { "c": null, "A": 0.226, "V": 10, "dil": 1 },
-      "confidence": { "A": 0.91 }, "verified": false },
-    // 质控样行
-    { "id": "q1", "series": "qc:crm", "values": { "c": null, "A": 0.281, "V": 10, "dil": 1 },
+    // 标定行（series=std）：基准物质质量与滴定体积
+    { "id": "p1", "series": "std", "values": { "m": 0.1549, "V": 28.54 },
+      "confidence": { "m": 0.98, "V": 0.62 }, "verified": false },
+    // 测定行（series=sample:*）：同一试样的三份平行滴定共用同一个 series 名
+    { "id": "s1", "series": "sample:碱灰", "values": { "V": 29.55, "ms": 1.5919 },
       "confidence": {}, "verified": false }
   ]
 }
 ```
+
+`linear_calibration` 等模型的条件列（取样体积、稀释倍数）同样挂在行的 `values` 里，角色绑定见[模型注册表](#模型注册表)。
 
 `confidence` 为识别置信度 0～1，可选，仅 M1 产出的数据集携带；低置信格子由用户在 M8 校正后置 `verified: true`。
 
@@ -58,39 +56,40 @@ M3 输出，M4、M5 读取。
 
 ```jsonc
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "id": "ctx_01",
-  "name": "水质氨氮检测（HJ 535-2009 纳氏试剂法）",
-  "purpose": "测定水样氨氮浓度，判定是否达到 GB 3838-2002 III 类限值",
-  "model": "linear_calibration",
+  "name": "HCl 标定与碱灰总碱度（GB/T 601-2016 无水碳酸钠法）",
+  "purpose": "以基准无水碳酸钠标定 HCl 浓度，测定碱灰总碱度（以 Na₂O 计），检查平行测定精密度",
+  "model": "titration_standardization",
   "variables": {
     "columns": [                       // 角色→实际列的绑定
-      { "key": "c",   "role": "concentration",   "unit": "mg/L" },
-      { "key": "A",   "role": "signal",          "unit": "" },
-      { "key": "V",   "role": "sample_volume",   "unit": "mL", "optional": true, "default": 50 },
-      { "key": "dil", "role": "dilution_factor", "unit": "",   "optional": true, "default": 1 }
+      { "key": "m",  "role": "mass",        "unit": "g" },   // 标定行：基准物质质量
+      { "key": "V",  "role": "volume",      "unit": "mL" },  // 标定/测定行：滴定体积
+      { "key": "ms", "role": "sample_mass", "unit": "g", "optional": true }
     ]
   },
   "datasets": { "mine": "ds_mine_01" },
   "reference": {
-    "datasets": [                      // 第一层：文献数据集
+    "datasets": [                      // 第一层：文献数据集（滴定演示不用，曲线类模板用）
       { "dataset_id": "ds_lit_01",
         "columns": { "concentration": "x", "signal": "y" },  // 文献数据集的列→角色
         "space": "raw",                // raw=原始量；transformed=已在模型拟合空间（M4 不再变换）
-        "meta": { "doi": "10.3866/PKU.DXHX201807034", "figure": "图1(b)",
-                  "note": "纳氏试剂法标准曲线" } }
+        "meta": { "doi": "10.xxxx/xxxxx", "figure": "图1(b)", "note": "…" } }
     ],
-    "crm": {                           // 第二层：有证标准物质真值
-      "id": "GSB 07-3164-2014", "value": 0.716, "u95": 0.044, "unit": "mg/L" },
-    "limits": [                        // 第三层：法规限值
-      { "label": "GB 3838-2002 III 类", "value": 1.0, "unit": "mg/L", "operator": "<=" } ]
+    "crm": null,                       // 第二层：有证标准物质真值（按需声明）
+    "limits": [                        // 第三层：限值或理论参照
+      { "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）", "value": 58.47,
+        "unit": "%", "operator": "<=" } ]
   },
   "qc_rules": [                        // 质控规则包，M4 执行，M5 引用条文
-    { "rule_id": "calibration_r2",   "params": { "min": 0.999 }, "citation": "HJ 535-2009" },
-    { "rule_id": "parallel_rpd",     "params": { "max": 0.10 },  "citation": "HJ 630-2011" },
-    { "rule_id": "outlier_grubbs",   "params": { "alpha": 0.05 }, "citation": "GB/T 4883" },
-    { "rule_id": "crm_within_u95",   "params": {},               "citation": "CRM 证书" }
-  ]
+    { "rule_id": "standardization_rpad", "params": { "max": 0.002 },
+      "citation": "GB/T 601-2016 / 分析化学实验教学要求（相对平均偏差 ≤0.2%）" },
+    { "rule_id": "parallel_rpd",       "params": { "max": 0.002 }, "citation": "分析化学实验平行测定要求" },
+    { "rule_id": "outlier_grubbs",     "params": { "alpha": 0.05 }, "citation": "GB/T 4883" }
+  ],
+  "model_params": {                    // 模型常数（titration_standardization）
+    "molar_mass_na2co3_g_mol": 105.99, "molar_mass_na2o_g_mol": 61.979,
+    "stock_volume_ml": 250, "aliquot_volume_ml": 25 }
 }
 ```
 
@@ -104,20 +103,27 @@ M4 按注册表实现，新增模型 = 新增一行 + 一个实现，路由与�
 |---|---|---|---|---|---|
 | `linear_calibration` | `concentration`, `signal` | `sample_volume`, `dilution_factor` | 恒等 | `sensitivity`, `slope_ci95` | `dilution_factor`, `sample_volume` |
 | `arrhenius` | `temperature`, `time` | — | x→1/T（K），y→ln(1/t) | `Ea_kJ_per_mol`, `Ea_ci95` | `temperature` |
+| `titration_standardization` | `mass`, `volume` | `sample_mass` | 恒等（V–m 平面，过原点拟合） | `c_hcl`, `c_regression`, `rel_avg_dev_c`, `w_na2o_mean_pct`, `rel_avg_dev_w` | `titrant_volume_delta` |
 
 浓度反推公式（linear_calibration，样品行）：
 
-`ρ = (A − intercept) / slope × (V定容 / V取样) × dilution`
+`ρ = (A − intercept) / slope × (V定容 / V取样) × dil`
 
 其中 `V定容` 由模板参数提供（氨氮为 50 mL）。**这个换算必须由 M4 完成**——取样体积与稀释倍数是学生计算错误的高发区。
 
+滴定公式（titration_standardization，常数来自 `model_params`）：
+
+- 标定段（`std` 行）：`c(HCl) = 2m / (M(Na₂CO₃)·V)`，等价于 GB/T 601-2016 的 `m·1000 / (V·52.994)`；逐份计算后取平均，精密度用相对平均偏差。
+- 测定段（`sample:*` 行）：`w(Na₂O) = c̄·V·M(Na₂O)/2 × V容/V移 ÷ m样 ×100%`（滴定反应 Na₂CO₃ + 2HCl，故 n(Na₂O) = n(HCl)/2）。`V容/V移` 由模板参数提供（演示案例 250/25）。
+- 推演（M6，`param=titrant_volume_delta`）：w ∝ V，曲线 x 为 ΔV（mL）、y 为 w(Na₂O)（%）。
+
 ## AnalysisResult 分析结果
 
-M4 输出，M5、M6、M8 读取。
+M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_calibration，三层参照齐全）；第二个是演示案例（titration_standardization）的真实输出节选。
 
 ```jsonc
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "context_id": "ctx_01",
   "model": "linear_calibration",
   "transformed": [                     // 拟合空间的作图数据（linear 为恒等；M8 直接绘制）
@@ -166,13 +172,65 @@ M4 输出，M5、M6、M8 读取。
 }
 ```
 
+演示案例（titration_standardization）的输出节选，数值为真实演示数据：
+
+```jsonc
+{
+  "schema_version": "0.5.0",
+  "context_id": "ctx_demo",
+  "model": "titration_standardization",
+  "transformed": [                     // V–m 平面，M8 画散点 + 过原点拟合线
+    { "dataset_id": "ds_mine_demo", "x_label": "m", "x_unit": "g",
+      "y_label": "V", "y_unit": "mL",
+      "points": [ { "point_id": "p1", "x": 0.1549, "y": 28.54 } ] }
+  ],
+  "fits": [
+    { "dataset_id": "ds_mine_demo", "slope": 183.452866, "intercept": 0.0,
+      "r2": 0.99976, "n": 3,
+      "derived": { "c_hcl": 0.102735, "c_regression": 0.102859,
+                   "rel_avg_dev_c": 0.013114,          // 1.31%
+                   "w_na2o_mean_pct": 60.6313, "rel_avg_dev_w": 0.021404,  // 2.14%
+                   "molar_mass_na2co3": 105.99, "molar_mass_na2o": 61.979 } }
+  ],
+  "predictions": [                      // 每个 sample 行一份 w(Na₂O)
+    { "dataset_id": "ds_mine_demo", "point_id": "s1",
+      "value": 59.098, "u95": 1.2497, "unit": "%",     // u95 只传播标定浓度（k=2）
+      "input": { "V": 29.55 },
+      "factors": { "c_hcl_mol_l": 0.102735, "sample_mass_g": 1.5919,
+                   "stock_volume_ml": 250.0, "aliquot_volume_ml": 25.0 },
+      "as_reported": 59.098 }
+  ],
+  "residuals": [                        // 标定段 c_i − c̄，离群用格拉布斯判
+    { "dataset_id": "ds_mine_demo", "point_id": "p2", "residual": 0.002021,
+      "outlier": false, "method": "grubbs", "p": null }
+  ],
+  "qc_results": [
+    { "rule_id": "standardization_rpad", "pass": false, "value": 0.013114,
+      "value_pct": 1.31, "limit": 0.002, "citation": "GB/T 601-2016 / 教学要求",
+      "subjects": [ { "dataset_id": "ds_mine_demo", "point_id": "p1" } ] },
+    { "rule_id": "parallel_rpd", "pass": false, "value": 0.021404,
+      "value_pct": 2.14, "limit": 0.002, "citation": "分析化学实验平行测定要求",
+      "subjects": [ { "dataset_id": "ds_mine_demo", "point_id": "s1" } ] },
+    { "rule_id": "outlier_grubbs", "pass": true, "value": 1.074, "limit": 1.154,
+      "citation": "GB/T 4883", "subjects": [] }
+  ],
+  "comparison": {
+    "vs_reference": [],                 // 滴定演示不挂文献数据集
+    "vs_limit": [
+      { "point_id": "s1", "value": 59.098, "limit": 58.47,
+        "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）", "verdict": "exceed" } ],
+    "vs_crm": null                      // 未声明 CRM 时为 null
+  }
+}
+```
+
 ## Finding 结论
 
 M5 输出一个数组，M6、M7、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "id": "f1",
   "type": "anomaly",                   // pattern | conclusion | anomaly | suggestion
   "text": "标曲第 5 点（c=0.80）残差 0.0038，格拉布斯检验未判为离群……",
@@ -195,13 +253,21 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 
 ```jsonc
 // 请求
-{ "schema_version": "0.4.0", "context_id": "ctx_01", "finding_id": "f2",
+{ "schema_version": "0.5.0", "context_id": "ctx_01", "finding_id": "f2",
   "param": "dilution_factor", "from": 1, "to": 10, "unit": "" }
 
 // 返回（curve 在拟合空间，与 transformed 同坐标系）
-{ "schema_version": "0.4.0", "finding_id": "f2",
+{ "schema_version": "0.5.0", "finding_id": "f2",
   "predicted": { "dilution_factor": 5, "A": 0.112 },
   "curve": [{ "x": 0.556, "y": 0.226 }] }
+```
+
+`titration_volume_delta` 的返回：`curve` 的 x 为滴定体积系统偏差 ΔV（mL），y 为对应的 w(Na₂O)（%），例如
+
+```jsonc
+{ "schema_version": "0.5.0", "finding_id": "f_worst",
+  "predicted": { "titrant_volume_delta_ml": -1, "w_na2o_pct": 60.578 },
+  "curve": [{ "x": -2.0, "y": 58.578 }, { "x": 0.0, "y": 62.5779 }] }
 ```
 
 ---
@@ -248,7 +314,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 201：Figure
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "id": "fig_01",
   "image_url": "/api/m2/figures/fig_01/image",
   "width": 1280, "height": 960,                // 原图像素
@@ -264,7 +330,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 200：FigureDetection
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "figure_id": "fig_01",
   "plot_area": { "u0": 96, "v0": 40, "u1": 680, "v1": 512 },  // 绘图区边框
   "axes": {
@@ -314,7 +380,7 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 请求：ExtractRequest
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "calibration": { /* Calibration */ },
   "mode": "auto",                  // auto：按曲线颜色自动提取；manual：使用 points_px
   "series_id": "A",                // auto 时必填
@@ -329,9 +395,9 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 返回 200：ExtractResult
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.5.0",
   "dataset": {                     // Dataset，source = literature，已写入共享存储
-    "schema_version": "0.4.0",
+    "schema_version": "0.5.0",
     "id": "ds_lit_01",
     "source": "literature",
     "meta": { "title": "图1(b) · 纳氏试剂法标准曲线", "doi": "10.3866/PKU.DXHX201807034", "figure": "图1(b)",
@@ -371,9 +437,24 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 
 `GET /api/snapshot/{context_id}` 返回演示保底所需的全部状态（我的数据集 + 参照数据集 + 分析结果 + 结论）。M8 在构建时拉取一次存为本地影子文件，后端整体不可用时加载影子数据走完界面流程。
 
+### 演示切换对 M2 / M8 的边界约束（0.5.0）
+
+滴定演示不经过 M2 文献取数（参照是理论值与标准条文，不是文献曲线）。M2 的接口与能力不变，仍是曲线类模板的通用步骤；M8 的演示流程里对应步骤可跳过或作通用能力展示。M2、M8 的实现归各自负责人，本次切换不改它们的代码与设计稿。后端保证上表全部接口的请求/返回结构不变，只有取值口径随演示案例变化。M8 需要感知的变化只有三处：模板列表（`GET /api/m3/templates`）的演示项换成 `tpl_alkali_titration`；`AnalysisResult.fits[0].derived` 的字段集按模型注册表不同；M6 `param` 枚举增加 `titrant_volume_delta`。
+
 ---
 
 ## 变更记录
+
+### 0.5.0（2026-10-18）
+
+演示案例由水质氨氮检测切换为 HCl 标定与碱灰总碱度（GB/T 601-2016）带动的兼容新增：
+
+- 模型注册表新增 `titration_standardization`（必需角色 `mass`/`volume`，V–m 过原点拟合；`derived` 开放 `c_hcl`、`w_na2o_mean_pct` 等字段；M6 新参数 `titrant_volume_delta`）。
+- `qc_rules` 新增规则 `standardization_rpad`（标定段相对平均偏差）；`parallel_rpd` 的取值改为**全组相对平均偏差**（此前只取前两个值的 RPD），两条规则的结果都附 `value_pct` 便于 M5 引用。
+- Dataset 行 `series` 语义补充：`std` 亦用于标定平行份；条件列模式不变，按模型注册表的角色声明。
+- ExperimentContext 的 `model_params` 首次承载模型常数（摩尔质量、定容/移取体积）。
+- 示例与演示数据换成滴定案例的真实口径（c̄(HCl)=0.1027 mol/L，w̄(Na₂O)=60.63%，来自团队数据记录页 `design/assets/DEMO-01.jpg`）；氨氮示例退场，`linear_calibration` 模型保留在注册表供曲线类模板使用。
+- M1 演示缓存改由 `scripts/seed_demo.py` 按记录页照片 sha256 烘焙，演示上传原图即命中，不依赖 VLM。
 
 ### 0.4.0（2026-10-17）
 
