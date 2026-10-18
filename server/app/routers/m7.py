@@ -16,6 +16,9 @@ class ExportRequest(BaseModel):
 
 
 def _sections(ctx: dict, analysis: dict, findings: list[dict]):
+    if analysis.get("model") == "titration_standardization":
+        yield from _titration_sections(ctx, analysis, findings)
+        return
     fit = analysis["fits"][0]
     yield ("h1", f"{ctx['name']} · 结果与讨论")
     yield ("p", f"实验目的：{ctx['purpose']}")
@@ -42,7 +45,42 @@ def _sections(ctx: dict, analysis: dict, findings: list[dict]):
     if crm:
         yield ("li", f"质控样：{crm['id']}（{crm['value']}±{crm['u95']} mg/L）")
     for lim in ctx.get("reference", {}).get("limits", []):
-        yield ("li", f"限值：{lim['label']} = {lim['value']} mg/L")
+        yield ("li", f"限值：{lim['label']} = {lim['value']} {lim.get('unit', '')}")
+
+
+def _titration_sections(ctx: dict, analysis: dict, findings: list[dict]):
+    fit = analysis["fits"][0]
+    d = fit["derived"]
+    yield ("h1", f"{ctx['name']} · 结果与讨论")
+    yield ("p", f"实验目的：{ctx['purpose']}")
+    yield ("h2", "HCl 标定")
+    yield ("p", f"三份基准无水碳酸钠平行标定，c̄(HCl) = {d['c_hcl']} mol/L"
+                f"（相对平均偏差 {round(d['rel_avg_dev_c'] * 100, 2)}%）；"
+                f"滴定体积—称样量过原点拟合 R² = {fit['r2']}（n = {fit['n']}，"
+                f"回归浓度 {d['c_regression']} mol/L）。")
+    yield ("h2", "碱灰总碱度测定结果")
+    yield ("table", [("平行", "V(HCl) (mL)", "w(Na₂O) (%)", "U95 (%)")] + [
+        (p["point_id"], str(next(iter(p["input"].values()))), str(p["value"]), str(p["u95"]))
+        for p in analysis.get("predictions", [])
+    ])
+    if d.get("w_na2o_mean_pct") is not None:
+        yield ("p", f"平均总碱度（以 Na₂O 计）{round(d['w_na2o_mean_pct'], 2)}%，"
+                    f"相对平均偏差 {round(d['rel_avg_dev_w'] * 100, 2)}%。")
+    yield ("h2", "质量控制")
+    for qc in analysis.get("qc_results", []):
+        mark = "通过" if qc["pass"] else "未通过"
+        yield ("li", f"{qc['rule_id']}：{mark}（依据 {qc.get('citation', '')}）")
+    yield ("h2", "结论")
+    for f in findings:
+        yield ("li", f["text"])
+    yield ("h2", "参照来源")
+    yield ("li", f"标定方法：GB/T 601-2016（基准无水碳酸钠 270~300 ℃ 灼烧至恒重，"
+                 f"M(½Na₂CO₃) = 52.994 g/mol）")
+    yield ("li", f"理论参照：纯 Na₂CO₃ 总碱度（以 Na₂O 计）= M(Na₂O)/M(Na₂CO₃) = "
+                 f"{d['molar_mass_na2o']}/{d['molar_mass_na2co3']} ≈ 58.47%")
+    yield ("li", "离群检验：GB/T 4883（格拉布斯）")
+    for lim in ctx.get("reference", {}).get("limits", []):
+        yield ("li", f"限值：{lim['label']} = {lim['value']} {lim.get('unit', '')}")
 
 
 def _md(ctx: dict, analysis: dict, findings: list[dict]) -> str:

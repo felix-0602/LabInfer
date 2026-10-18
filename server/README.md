@@ -1,16 +1,29 @@
 # LabInfer 后端
 
-FastAPI 单进程服务，实现 contracts 0.3.0 定义的 `/api` 接口。数据集与实验上下文存 JSON 文件（`server/data/`，不入库）；演示缓存放 `server/demo_cache/`（入库，按图片 sha256 命名）。
+FastAPI 单进程服务，实现 contracts 0.5.0 定义的 `/api` 接口。数据集与实验上下文存 JSON 文件（`server/data/`，不入库）；演示缓存放 `server/demo_cache/`（入库，按图片 sha256 命名）。
+
+## 环境（统一用 uv）
+
+虚拟环境与依赖统一用 [uv](https://docs.astral.sh/uv/) 管理，不用 pip 直装（本机 pip 缓存损坏过，pypi 直连也不稳定，uv 加镜像一次通过）。pypi 直连不稳时加清华镜像。
+
+```bash
+cd server
+uv venv .venv
+uv pip install --python .venv/bin/python -r requirements.txt
+# 网络不稳时：
+uv pip install --python .venv/bin/python \
+  --default-index https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+```
 
 ## 运行
 
 ```bash
-cd server
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-python -m scripts.seed_demo          # 写入演示数据集与上下文
+. .venv/bin/activate
+python -m scripts.seed_demo          # 写入演示数据集与上下文，并按 design/assets/DEMO-01.jpg 烘焙 M1 演示缓存
 uvicorn app.main:app --reload --port 8000
 ```
+
+演示时上传 `design/assets/DEMO-01.jpg`（真实数据记录页）即命中 M1 缓存，不依赖 VLM。
 
 ## 测试
 

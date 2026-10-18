@@ -10,30 +10,36 @@ from ..storage import new_id
 
 router = APIRouter(prefix="/api/m3", tags=["m3"])
 
-AMMONIA_TEMPLATE = {
+ALKALI_TITRATION_TEMPLATE = {
     "schema_version": CONTRACT_VERSION,
-    "name": "水质氨氮检测（HJ 535-2009 纳氏试剂分光光度法）",
-    "purpose": "测定水样氨氮浓度，判定是否达到 GB 3838-2002 III 类限值",
-    "model": "linear_calibration",
-    "model_params": {"final_volume_ml": 50},
+    "name": "HCl 标定与碱灰总碱度（GB/T 601-2016 无水碳酸钠法）",
+    "purpose": "以基准无水碳酸钠标定 HCl 浓度，测定碱灰总碱度（以 Na₂O 计），检查平行测定精密度",
+    "model": "titration_standardization",
+    "model_params": {
+        "molar_mass_na2co3_g_mol": 105.99,   # GB/T 601-2016：M(½Na₂CO₃) = 52.994
+        "molar_mass_na2o_g_mol": 61.979,
+        "stock_volume_ml": 250,              # 碱灰试液定容体积
+        "aliquot_volume_ml": 25,             # 每次滴定移取试液体积
+    },
     "variables": {
         "columns": [
-            {"key": "c", "role": "concentration", "unit": "mg/L"},
-            {"key": "A", "role": "signal", "unit": ""},
-            {"key": "V", "role": "sample_volume", "unit": "mL", "optional": True, "default": 50},
-            {"key": "dil", "role": "dilution_factor", "unit": "", "optional": True, "default": 1},
+            {"key": "m", "role": "mass", "unit": "g"},                       # 标定行：基准 Na₂CO₃ 质量
+            {"key": "V", "role": "volume", "unit": "mL"},                    # 标定/测定行：HCl 滴定体积
+            {"key": "ms", "role": "sample_mass", "unit": "g", "optional": True},  # 测定行：碱灰试样质量
         ]
     },
     "reference": {
         "datasets": [],
-        "crm": {"id": "GSB 07-3164-2014", "value": 0.716, "u95": 0.044, "unit": "mg/L"},
-        "limits": [{"label": "GB 3838-2002 III 类", "value": 1.0, "unit": "mg/L", "operator": "<="}],
+        "crm": None,
+        "limits": [{"label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）", "value": 58.47,
+                    "unit": "%", "operator": "<="}],
     },
     "qc_rules": [
-        {"rule_id": "calibration_r2", "params": {"min": 0.999}, "citation": "HJ 535-2009"},
-        {"rule_id": "parallel_rpd", "params": {"max": 0.10}, "citation": "HJ 630-2011"},
+        {"rule_id": "standardization_rpad", "params": {"max": 0.002},
+         "citation": "GB/T 601-2016 / 分析化学实验教学要求（相对平均偏差 ≤0.2%）"},
+        {"rule_id": "parallel_rpd", "params": {"max": 0.002},
+         "citation": "分析化学实验平行测定要求（相对平均偏差 ≤0.2%）"},
         {"rule_id": "outlier_grubbs", "params": {"alpha": 0.05}, "citation": "GB/T 4883"},
-        {"rule_id": "crm_within_u95", "params": {}, "citation": "GSB 07-3164-2014 证书"},
     ],
 }
 
@@ -57,7 +63,7 @@ IODINE_TEMPLATE = {
 }
 
 TEMPLATES = {
-    "tpl_ammonia_nessler": {"status": "演示", "template": AMMONIA_TEMPLATE},
+    "tpl_alkali_titration": {"status": "演示", "template": ALKALI_TITRATION_TEMPLATE},
     "tpl_iodine_clock": {"status": "规划", "template": IODINE_TEMPLATE},
 }
 

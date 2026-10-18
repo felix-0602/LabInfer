@@ -55,6 +55,32 @@ def _simulate_temperature(fit: dict, frm: float, to: float, mid: float) -> dict:
     }
 
 
+def _simulate_titration_delta(preds: list[dict], frm: float, to: float, mid: float) -> dict:
+    """终点体积系统偏差 ΔV 对总碱度的推演：w ∝ V。取偏离平行均值最多的一份。"""
+    values = [p_["as_reported"] for p_ in preds]
+    mean = sum(values) / len(values)
+    pred = max(preds, key=lambda p_: abs(p_["as_reported"] - mean))
+    v0 = next(iter(pred["input"].values()))
+    w0 = pred["as_reported"]
+
+    n = 20
+    step = (to - frm) / (n - 1) if n > 1 else 1
+    curve = []
+    for i in range(n):
+        delta = frm + step * i
+        if v0 + delta <= 0:
+            continue
+        curve.append({"x": round(delta, 4),
+                      "y": round(w0 * (v0 + delta) / v0, 4)})
+    return {
+        "schema_version": CONTRACT_VERSION,
+        "finding_id": "",
+        "predicted": {"titrant_volume_delta_ml": mid,
+                      "w_na2o_pct": round(w0 * (v0 + mid) / v0, 4)},
+        "curve": curve,
+    }
+
+
 @router.post("/simulate")
 def simulate(body: SimulateRequest, request: Request):
     store = request.app.state.store
@@ -73,6 +99,12 @@ def simulate(body: SimulateRequest, request: Request):
     elif body.param == "temperature":
         fit = analysis["fits"][0]
         out = _simulate_temperature(fit, body.frm, body.to, mid)
+    elif body.param == "titrant_volume_delta":
+        preds = analysis.get("predictions", [])
+        if len(preds) < 2:
+            return JSONResponse(status_code=422, content={
+                "error": {"code": "NOT_SIMULATABLE", "message": "无可推演的平行样品", "detail": {}}})
+        out = _simulate_titration_delta(preds, body.frm, body.to, mid)
     else:
         return JSONResponse(status_code=422, content={
             "error": {"code": "NOT_SIMULATABLE",
