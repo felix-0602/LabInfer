@@ -126,8 +126,8 @@ def compose_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
             judge = "超过" if lim["verdict"] == "exceed" else "达到"
             findings.append(_f(
                 f"f_conc{i}", "conclusion",
-                f"{name}：氨氮浓度 {_num(pred['as_reported'])}±{_num(pred['u95'])} mg/L，"
-                f"{judge}{lim['label']}（限值 {_num(lim['limit'])} mg/L）。",
+                f"{name}：浓度 {_num(pred['as_reported'])}±{_num(pred['u95'])} {pred['unit']}，"
+                f"{judge}{lim['label']}（限值 {_num(lim['limit'])} {lim.get('unit', '')}）。",
                 [{"type": "point", "dataset_id": ds_id, "point_id": pred["point_id"]},
                  {"type": "comparison", "target": f"vs_limit[{analysis['comparison']['vs_limit'].index(lim)}]"}],
                 simulatable=True,
