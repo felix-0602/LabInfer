@@ -1,13 +1,10 @@
 """质控规则引擎：按 ExperimentContext.qc_rules 逐条执行，输出挂条文的判定。"""
 
+from .base import rel_avg_dev
+
 
 def _rpd(values: list[float]) -> float:
-    if len(values) < 2:
-        return 0.0
-    mean = sum(values) / len(values)
-    if mean == 0:
-        return 0.0
-    return abs(values[0] - values[1]) / mean
+    return rel_avg_dev(values)
 
 
 def run_qc(ctx: dict, pieces: dict) -> list[dict]:
@@ -59,8 +56,26 @@ def _parallel_rpd(pieces, params):
     return {
         "pass": bool(worst["value"] <= params.get("max", 0.10)),
         "value": worst["value"],
+        "value_pct": round(worst["value"] * 100, 2),
         "limit": params.get("max", 0.10),
         "subjects": worst["subjects"],
+    }
+
+
+def _standardization_rpad(pieces, params):
+    """标定段平行精密度：相对平均偏差（GB/T 601-2016 / 教学惯例 ≤0.2%）。"""
+    values = pieces.get("std_values") or []
+    if len(values) < 2:
+        return None
+    rad = rel_avg_dev(values)
+    subjects = [{"dataset_id": pieces["dataset_id"], "point_id": pid}
+                for pid in pieces.get("std_point_ids", [])]
+    return {
+        "pass": bool(rad <= params.get("max", 0.002)),
+        "value": rad,
+        "value_pct": round(rad * 100, 2),
+        "limit": params.get("max", 0.002),
+        "subjects": subjects,
     }
 
 
@@ -97,6 +112,7 @@ def _crm_within_u95(pieces, params):
 _RULES = {
     "calibration_r2": _calibration_r2,
     "parallel_rpd": _parallel_rpd,
+    "standardization_rpad": _standardization_rpad,
     "outlier_grubbs": _outlier_grubbs,
     "crm_within_u95": _crm_within_u95,
 }

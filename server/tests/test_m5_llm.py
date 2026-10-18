@@ -8,10 +8,10 @@ from app.main import create_app
 from app.storage import Store
 from scripts.seed_demo import main as seed
 
-GOOD = ("线性关系显著。\n"
-        '[{"type":"conclusion","text":"地表水样品浓度 2.781 mg/L，超 III 类限值 1 mg/L。",'
-        '"evidence":[{"type":"point","dataset_id":"ds_mine_demo","point_id":"s1a"},'
-        '{"type":"comparison","target":"vs_limit[0]"}]}]')
+GOOD = ("标定线性良好。\n"
+        '[{"type":"conclusion","text":"碱灰平行 2（s2）总碱度 62.578%，高于纯 Na₂CO₃ 理论值 58.47%。",'
+        '"evidence":[{"type":"point","dataset_id":"ds_mine_demo","point_id":"s2"},'
+        '{"type":"comparison","target":"vs_limit[1]"}]}]')
 BAD = '[{"type":"pattern","text":"活化能高达 99.9，非常大。","evidence":[{"type":"fit","dataset_id":"ds_mine_demo"}]}]'
 
 
@@ -37,7 +37,7 @@ def test_llm_valid_finding_kept(tmp_path, monkeypatch):
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
-    assert "地表水样品浓度" in r.text
+    assert "碱灰平行 2" in r.text
 
 
 def test_llm_retry_after_all_invalid(tmp_path, monkeypatch):
@@ -51,7 +51,7 @@ def test_llm_retry_after_all_invalid(tmp_path, monkeypatch):
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
-    assert "地表水样品浓度" in r.text
+    assert "碱灰平行 2" in r.text
     assert len(calls) == 2 and calls[1] > calls[0]
 
 
@@ -64,7 +64,7 @@ def test_llm_error_falls_back_to_template(tmp_path, monkeypatch):
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
-    assert "标准曲线线性良好" in r.text
+    assert "标定线性良好" in r.text
 
 
 def test_no_llm_configured_uses_template(tmp_path):

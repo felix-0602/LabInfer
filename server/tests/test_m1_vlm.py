@@ -1,4 +1,5 @@
 import io
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -7,21 +8,20 @@ from app.config import settings
 from app.main import create_app
 from app.storage import Store
 from app.vlm import compress_image
-from scripts.seed_demo import main as seed
+from scripts.seed_demo import DEMO_RECORD_IMAGE, main as seed
 
 FAKE_DS = {
-    "schema_version": "0.3.0",
+    "schema_version": "0.5.0",
     "source": "my_experiment",
     "meta": {"title": "识别结果"},
     "columns": [
-        {"key": "c", "name": "c", "unit": "mg/L"},
-        {"key": "A", "name": "A", "unit": ""},
+        {"key": "m", "name": "m", "unit": "g"},
         {"key": "V", "name": "V", "unit": "mL"},
-        {"key": "dil", "name": "dil", "unit": ""},
+        {"key": "ms", "name": "ms", "unit": "g"},
     ],
     "rows": [
-        {"id": "p1", "series": "std", "values": {"c": 0.10, "A": 0.041},
-         "confidence": {"c": 0.9, "A": 0.85}, "verified": False},
+        {"id": "p1", "series": "std", "values": {"m": 0.1549, "V": 28.54},
+         "confidence": {"m": 0.9, "V": 0.62}, "verified": False},
     ],
 }
 
@@ -82,3 +82,27 @@ def test_m1_unconfigured_returns_503(tmp_path):
     r = client.post("/api/m1/records", data={"context_id": "ctx_demo"},
                     files={"image": ("note.png", io.BytesIO(b"x"), "image/png")})
     assert r.status_code == 503
+
+
+def test_m1_demo_record_photo_hits_baked_cache(tmp_path):
+    """演示保底：上传真实数据记录页照片（DEMO-01.jpg），无需 VLM 即得种子数据。"""
+    if not DEMO_RECORD_IMAGE.exists():
+        import pytest
+        pytest.skip("演示记录照片不存在（design/assets/DEMO-01.jpg）")
+    store = Store(tmp_path)
+    seed(store)
+    client = TestClient(create_app(store))
+    with open(DEMO_RECORD_IMAGE, "rb") as f:
+        r = client.post(
+            "/api/m1/records",
+            data={"context_id": "ctx_demo"},
+            files={"image": ("DEMO-01.jpg", f, "image/jpeg")},
+        )
+    assert r.status_code == 201
+    ds = r.json()
+    assert ds["cached"] is True
+    assert len(ds["rows"]) == 6
+    assert ds["rows"][0]["values"] == {"m": 0.1549, "V": 28.54}
+    assert ds["rows"][0]["confidence"]["V"] < 0.7      # 涂改过的格子保留低置信，供 M8 校正
+    ctx = store.get_context("ctx_demo")
+    assert ctx["datasets"]["mine"] == ds["id"]

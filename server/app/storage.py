@@ -13,7 +13,9 @@ def new_id(prefix: str) -> str:
 
 
 _ID_PREFIX = {"datasets": "ds", "contexts": "ctx", "analyses": "an",
-              "findings": "f", "uploads": "up"}
+              "findings": "f", "uploads": "up", "templates": "tpl"}
+
+_KIND_DIRS = ("datasets", "contexts", "analyses", "findings", "uploads", "templates")
 
 
 class Store:
@@ -21,7 +23,7 @@ class Store:
 
     def __init__(self, root: Path = DATA_DIR):
         self.root = Path(root)
-        for sub in ("datasets", "contexts", "analyses", "findings", "uploads"):
+        for sub in _KIND_DIRS:
             (self.root / sub).mkdir(parents=True, exist_ok=True)
 
     def _path(self, kind: str, id: str) -> Path:
@@ -83,5 +85,26 @@ class Store:
         p.write_bytes(data)
         return p
 
+    # ---- templates（组织知识层，业务规则见 docs/wiki.md） ----
+
+    def put_template(self, tpl: dict) -> dict:
+        return self.put("templates", tpl)
+
+    def get_template(self, id: str) -> dict | None:
+        return self.get("templates", id)
+
+    def list_templates(self) -> list[dict]:
+        d = self.root / "templates"
+        return [json.loads(p.read_text(encoding="utf-8"))
+                for p in sorted(d.glob("*.json"))]
+
 
 store = Store()
+
+
+def store_from_env() -> Store:
+    """按 LABINFER_STORAGE 选择后端：json（默认）或 sqlite。设计见 docs/sql.md。"""
+    if os.environ.get("LABINFER_STORAGE", "json").strip().lower() == "sqlite":
+        from .sqlstore import SqlStore
+        return SqlStore()
+    return Store()

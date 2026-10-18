@@ -23,7 +23,7 @@ RECORD_SYSTEM = """你是实验记录识别助手。用户给你一张手写实�
 按给定的列定义识别成表格 JSON，规则：
 1. 只输出一个 JSON 对象，不要多余文字。
 2. 每行：{"series":"std"|"blank"|"sample:名称"|"qc:crm","values":{列key:数值或null},"confidence":{列key:0~1}}。
-3. 标准系列行是 series="std"；平行样品用相同 series 名；质控样 series="qc:crm"。
+3. 标准系列行或标定平行行是 series="std"；平行样品（如同一试样的多份滴定）用相同 series 名；质控样 series="qc:crm"。
 4. 看不清、不确定的值一律填 null，不许猜；整行识别不出就省略该行。
 5. 数值不带单位，纯数字。"""
 

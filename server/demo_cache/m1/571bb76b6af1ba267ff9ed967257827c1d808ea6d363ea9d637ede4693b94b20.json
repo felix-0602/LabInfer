@@ -1,0 +1,86 @@
+{
+  "source": "my_experiment",
+  "meta": {
+    "title": "HCl 标定与碱灰总碱度 数据记录（演示）",
+    "doi": null,
+    "figure": null,
+    "image_ref": null
+  },
+  "columns": [
+    {
+      "key": "m",
+      "name": "基准 Na₂CO₃ 质量",
+      "unit": "g"
+    },
+    {
+      "key": "V",
+      "name": "HCl 滴定体积",
+      "unit": "mL"
+    },
+    {
+      "key": "ms",
+      "name": "碱灰试样质量",
+      "unit": "g"
+    }
+  ],
+  "rows": [
+    {
+      "id": "p1",
+      "series": "std",
+      "values": {
+        "m": 0.1549,
+        "V": 28.54
+      },
+      "verified": false,
+      "confidence": {
+        "m": 0.98,
+        "V": 0.62
+      }
+    },
+    {
+      "id": "p2",
+      "series": "std",
+      "values": {
+        "m": 0.1832,
+        "V": 33.0
+      },
+      "verified": false
+    },
+    {
+      "id": "p3",
+      "series": "std",
+      "values": {
+        "m": 0.167,
+        "V": 31.19
+      },
+      "verified": false
+    },
+    {
+      "id": "s1",
+      "series": "sample:碱灰",
+      "values": {
+        "V": 29.55,
+        "ms": 1.5919
+      },
+      "verified": false
+    },
+    {
+      "id": "s2",
+      "series": "sample:碱灰",
+      "values": {
+        "V": 31.29,
+        "ms": 1.5919
+      },
+      "verified": false
+    },
+    {
+      "id": "s3",
+      "series": "sample:碱灰",
+      "values": {
+        "V": 30.11,
+        "ms": 1.5919
+      },
+      "verified": false
+    }
+  ]
+}
