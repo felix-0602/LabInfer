@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.6.0（模板库接口与存储后端）**
+**当前版本：0.7.0（滴定曲线参照、误差预算与讲解阶梯）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -89,11 +89,27 @@ M3 输出，M4、M5 读取。
   ],
   "model_params": {                    // 模型常数（titration_standardization）
     "molar_mass_na2co3_g_mol": 105.99, "molar_mass_na2o_g_mol": 61.979,
-    "stock_volume_ml": 250, "aliquot_volume_ml": 25 }
+    "stock_volume_ml": 250, "aliquot_volume_ml": 25,
+    // 0.7.0 可选：滴定曲线与误差预算的常数，缺省时不输出对应节
+    "pka1": 6.35, "pka2": 10.33,       // 碳酸 25 ℃
+    "initial_water_ml": 30,            // 溶解基准物的水量（教材 25～35 mL 取中值）
+    "indicator": { "name": "甲基橙", "ph_range": [3.1, 4.4] },
+    "balance_error_g": 0.0001,         // 单次称量最大误差，差减法计两次
+    "burette_error_ml": 0.01 },        // 单次读数最大误差，计两次
+  "ladder": {                          // 0.7.0 可选：讲解阶梯，规则见 wiki.md#讲解阶梯
+    "base_level": 3,
+    "rungs": [
+      { "rung_id": "L4-indicator", "level": 4, "title": "为什么用甲基橙",
+        "concept": "Na₂CO₃ 有两个化学计量点，第二个落在甲基橙变色区内",
+        "anchor": { "type": "comparison", "target": "titration_curve" },
+        "trigger": null,               // null = 锚点存在即可出现；或 { "qc_fail": "standardization_rpad" }
+        "source": "分析化学教材 酸碱滴定章" } ] }
 }
 ```
 
 `space` 解决「文献常画变换后的量（如 ln(1/t)–1/T）而我的数据是原始量」的问题：`transformed` 的参照数据集直接在拟合空间参与对比（product.md 待定事项落定）。
+
+**滴定曲线参照（0.7.0）**：文献滴定曲线由 M2 取数，作为 `reference.datasets` 的一项，列角色为 `titrant_volume`（x）与 `ph`（y）。文献的浓度与学生不同，M4 统一换到滴定分数 a = V / V计量点 再叠加，因此参照项需在 `meta` 里给出文献图的计量点体积 `v_eq_ml`；若文献横轴本身就是滴定分数或百分数，声明 `space: "transformed"`，M4 不再换算。
 
 ## 模型注册表
 
@@ -103,7 +119,7 @@ M4 按注册表实现，新增模型 = 新增一行 + 一个实现，路由与�
 |---|---|---|---|---|---|
 | `linear_calibration` | `concentration`, `signal` | `sample_volume`, `dilution_factor` | 恒等 | `sensitivity`, `slope_ci95` | `dilution_factor`, `sample_volume` |
 | `arrhenius` | `temperature`, `time` | — | x→1/T（K），y→ln(1/t) | `Ea_kJ_per_mol`, `Ea_ci95` | `temperature` |
-| `titration_standardization` | `mass`, `volume` | `sample_mass` | 恒等（V–m 平面，过原点拟合） | `c_hcl`, `c_regression`, `rel_avg_dev_c`, `w_na2o_mean_pct`, `rel_avg_dev_w` | `titrant_volume_delta` |
+| `titration_standardization` | `mass`, `volume` | `sample_mass` | 恒等（V–m 平面，过原点拟合） | `c_hcl`, `c_regression`, `rel_avg_dev_c`, `w_na2o_mean_pct`, `rel_avg_dev_w` | `titrant_volume_delta`, `co2_retained_fraction`（0.7.0） |
 
 浓度反推公式（linear_calibration，样品行）：
 
@@ -116,6 +132,9 @@ M4 按注册表实现，新增模型 = 新增一行 + 一个实现，路由与�
 - 标定段（`std` 行）：`c(HCl) = 2m / (M(Na₂CO₃)·V)`，等价于 GB/T 601-2016 的 `m·1000 / (V·52.994)`；逐份计算后取平均，精密度用相对平均偏差。
 - 测定段（`sample:*` 行）：`w(Na₂O) = c̄·V·M(Na₂O)/2 × V容/V移 ÷ m样 ×100%`（滴定反应 Na₂CO₃ + 2HCl，故 n(Na₂O) = n(HCl)/2）。`V容/V移` 由模板参数提供（演示案例 250/25）。
 - 推演（M6，`param=titrant_volume_delta`）：w ∝ V，曲线 x 为 ΔV（mL）、y 为 w(Na₂O)（%）。
+- 理论滴定曲线（0.7.0）：对标定段称样量居中的一份，按电荷平衡 `[H⁺] + [Na⁺] = [OH⁻] + [HCO₃⁻] + 2[CO₃²⁻] + [Cl⁻]` 逐点解 pH（封闭体系，CO₂ 不逸出；计量点 pH 约 3.9，与教材 3.8～3.9 一致）。每份终点的偏差 `ΔV_i = V_i − 2m_i / (M(Na₂CO₃)·c̄)`，按 ΔV 放到曲线上。指示剂窗口为曲线上 pH 落在 `indicator.ph_range` 内的 ΔV 区间。
+- 推演（M6，`param=co2_retained_fraction`，0～1）：计量点附近残留 CO₂ 的比例，1 = 未煮沸（封闭），0 = 已煮沸驱尽；曲线 x 为 ΔV（mL）、y 为 pH，用于展示煮沸让突跃变陡。
+- 误差预算（0.7.0）：按教材最大误差口径，称量相对误差 `2·balance_error_g / m_i`、读数相对误差 `2·burette_error_ml / V_i`，两项方和根得到仪器可解释的相对偏差，与实测相对平均偏差对比。
 
 ## AnalysisResult 分析结果
 
@@ -220,9 +239,32 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
       { "point_id": "s1", "value": 59.098, "limit": 58.47,
         "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）", "verdict": "exceed" } ],
     "vs_crm": null                      // 未声明 CRM 时为 null
+  },
+  "titration_curve": {                  // 0.7.0 可选：model_params 含 pka1/pka2 时输出
+    "x_label": "ΔV", "x_unit": "mL", "y_label": "pH", "y_unit": "",
+    "basis": { "point_id": "p3", "v_eq_ml": 30.67, "closed_system": true,
+               "pka1": 6.35, "pka2": 10.33 },
+    "theory": [ { "x": -1.0, "y": 5.2 } /* 计算值，步长由 M4 定 */ ],
+    "ph_eq": 3.97,
+    "indicator": { "name": "甲基橙", "ph_range": [3.1, 4.4],
+                   "dv_window_ml": [-0.15, 0.46] /* 计算值：pH 4.4→3.1 */ },
+    "endpoints": [                      // 学生终点，point_id 对应标定段行
+      { "dataset_id": "ds_mine_demo", "point_id": "p2", "dv_ml": -0.649, "ph": 4.96 } ],
+    "literature": [                     // 已换到同一 ΔV 坐标的文献曲线，未挂参照时为 []
+      { "dataset_id": "ds_lit_02", "points": [ /* M2 取数后换算，示例省略 */ ] } ]
+  },
+  "error_budget": {                     // 0.7.0 可选：model_params 含 balance/burette 误差时输出
+    "items": [
+      { "source": "天平两次称量", "rel": 0.0013, "subject": { "dataset_id": "ds_mine_demo", "point_id": "p1" } },
+      { "source": "滴定管两次读数", "rel": 0.0007, "subject": { "dataset_id": "ds_mine_demo", "point_id": "p1" } } ],
+    "expected_rel_dev": 0.0015,         // 仪器可解释的相对偏差（取各份最大）
+    "observed_rel_dev": 0.013114,       // 即 rel_avg_dev_c
+    "ratio": 8.7
   }
 }
 ```
+
+`titration_curve` 与 `error_budget` 里标「计算值」的数由 M4 算出，示例只示意形状；M5 引用它们时照常过数字溯源校验。Finding 的 `evidence` 用 `{ "type": "comparison", "target": "titration_curve" }` 或 `"error_budget"` 指向这两节。
 
 ## Finding 结论
 
@@ -241,9 +283,13 @@ M5 输出一个数组，M6、M7、M8 读取。
     { "type": "fit",        "dataset_id": "ds_mine_01" }
   ],
   "simulatable": true,
-  "simulation": { "param": "dilution_factor", "from": 1, "to": 10, "unit": "" }
+  "simulation": { "param": "dilution_factor", "from": 1, "to": 10, "unit": "" },
+  "ladder": [                          // 0.7.0 可选：本条结论往上递的讲解，最多 2 级
+    { "rung_id": "L5-error-type", "level": 5, "text": "……" } ]
 }
 ```
+
+`ladder[].rung_id` 必须是 ExperimentContext `ladder.rungs` 里存在且锚点出现在本条 `evidence` 中的一级；`text` 同样过数字溯源校验。
 
 `evidence[].type`：`point`（数据点）、`fit`（拟合对象）、`qc`（质控判定）、`comparison`（参照判定）。M8 联动时按 type 高亮对应元素。M5 校验器规则：`text` 中出现的数字必须能在 AnalysisResult 的数值集合中找到（±容差），`evidence` 引用的对象必须存在；不过校验的结论整条丢弃并回灌错误重生成一次，再失败则降级为模板文案。
 
@@ -438,13 +484,25 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 
 `GET /api/snapshot/{context_id}` 返回演示保底所需的全部状态（我的数据集 + 参照数据集 + 分析结果 + 结论）。M8 在构建时拉取一次存为本地影子文件，后端整体不可用时加载影子数据走完界面流程。
 
-### 演示切换对 M2 / M8 的边界约束（0.5.0）
+### 演示切换对 M2 / M8 的边界约束（0.5.0，0.7.0 修订）
+
+0.7.0 起滴定演示经过 M2：取教材或论文里的 HCl 滴定 Na₂CO₃ 滴定曲线，作为文献曲线参照（见 ExperimentContext「滴定曲线参照」）。以下为 0.5.0 原文，其中「不经过 M2」一句已被本段取代。
 
 滴定演示不经过 M2 文献取数（参照是理论值与标准条文，不是文献曲线）。M2 的接口与能力不变，仍是曲线类模板的通用步骤；M8 的演示流程里对应步骤可跳过或作通用能力展示。M2、M8 的实现归各自负责人，本次切换不改它们的代码与设计稿。后端保证上表全部接口的请求/返回结构不变，只有取值口径随演示案例变化。M8 需要感知的变化只有三处：模板列表（`GET /api/m3/templates`）的演示项换成 `tpl_alkali_titration`；`AnalysisResult.fits[0].derived` 的字段集按模型注册表不同；M6 `param` 枚举增加 `titrant_volume_delta`。
 
 ---
 
 ## 变更记录
+
+### 0.7.0（2026-10-18，提议，待 z 确认 M3/M4/M5/M6 部分）
+
+滴定演示的可视化与讲解带动的兼容新增，全部为可选字段：
+
+- ExperimentContext：`model_params` 新增 `pka1`、`pka2`、`initial_water_ml`、`indicator`、`balance_error_g`、`burette_error_ml`；新增 `ladder`（讲解阶梯，规则见 [wiki.md](wiki.md#讲解阶梯)）；文献滴定曲线作为 `reference.datasets` 一项，列角色 `titrant_volume`/`ph`，`meta.v_eq_ml` 供换算滴定分数。
+- AnalysisResult：新增 `titration_curve`（理论曲线、指示剂窗口、学生终点 ΔV、换算后的文献曲线）与 `error_budget`（仪器误差预算对比实测离散）。
+- Finding：新增 `ladder`（往上递的讲解，最多 2 级）；`evidence.comparison.target` 可取 `titration_curve`、`error_budget`。
+- M6：`param` 枚举新增 `co2_retained_fraction`。
+- M2/M8 边界：滴定演示恢复经过 M2（文献滴定曲线）。
 
 ### 0.6.0（2026-10-18）
 
