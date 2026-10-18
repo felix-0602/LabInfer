@@ -291,6 +291,21 @@ M5 输出一个数组，M6、M7、M8 读取。
 
 `ladder[].rung_id` 必须是 ExperimentContext `ladder.rungs` 里存在且锚点出现在本条 `evidence` 中的一级；`text` 同样过数字溯源校验。
 
+`verification`（0.7.0 可选，Could 7 虚拟实验台）：异常类结论经虚拟实验台 MCP 验证后的状态。
+
+```jsonc
+"verification": {
+  "status": "refuted",                 // verified | refuted | unverified
+  "hypothesis": "基准物吸水 1%",
+  "calls": [                           // 工具调用记录，最多 3 条
+    { "tool": "replay_with_fault", "args": { "fault": "primary_moisture", "value": 0.01 },
+      "result": { "w_na2o_mean_pct": 59.06, "rel_avg_dev_c": 0.0131 } } ],
+  "reason": "吸水 1% 只把总碱度推高约 1%，到不了实测 60.63%，也不改变 1.31% 的离散"
+}
+```
+
+`calls[].result` 里的数与 `reason` 中的数同样过数字溯源校验（数值集合包含调用结果）。字段缺省等同 `unverified`。
+
 `evidence[].type`：`point`（数据点）、`fit`（拟合对象）、`qc`（质控判定）、`comparison`（参照判定）。M8 联动时按 type 高亮对应元素。M5 校验器规则：`text` 中出现的数字必须能在 AnalysisResult 的数值集合中找到（±容差），`evidence` 引用的对象必须存在；不过校验的结论整条丢弃并回灌错误重生成一次，再失败则降级为模板文案。
 
 ## Simulation 参数推演
@@ -502,6 +517,7 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 - AnalysisResult：新增 `titration_curve`（理论曲线、指示剂窗口、学生终点 ΔV、换算后的文献曲线）与 `error_budget`（仪器误差预算对比实测离散）。
 - Finding：新增 `ladder`（往上递的讲解，最多 2 级）；`evidence.comparison.target` 可取 `titration_curve`、`error_budget`。
 - M6：`param` 枚举新增 `co2_retained_fraction`。
+- Finding：新增 `verification`（虚拟实验台 MCP 验证状态与调用记录，Could 级）。
 - M2/M8 边界：滴定演示恢复经过 M2（文献滴定曲线）。
 
 ### 0.6.0（2026-10-18）
