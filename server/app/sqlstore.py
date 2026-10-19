@@ -88,7 +88,10 @@ class SqlStore:
             self._conn.executescript(_DDL)
             version = self._conn.execute("PRAGMA user_version").fetchone()[0]
             if version < SCHEMA_VERSION:
-                # PRAGMA 不支持参数绑定；1 是当前 schema 代数（模块常量），非外部输入
+                # PRAGMA 不支持参数绑定（docs/sql.md 安全规则的唯一例外）；
+                # 操作数是写死的代数字面量，断言与 SCHEMA_VERSION 对齐，
+                # 常量升代而字面量未跟时启动即失败。维持单条字符串字面量，不引入 format/f-string。
+                assert SCHEMA_VERSION == 1
                 self._conn.execute("PRAGMA user_version = 1")
 
     def _ensure_id(self, data: dict, prefix: str) -> dict:
