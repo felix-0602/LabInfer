@@ -33,7 +33,9 @@ python -m pytest tests -q
 
 ## 环境变量
 
-见 `.env.example`。`LABINFER_STORAGE=sqlite` 启用 SQLite 后端；`LABINFER_DATA` 改数据目录。GLM key 缺失时 M5 降级为模板结论（确定性生成，演示保底也用它）；M1 未命中演示缓存且无 key 时返回 503。本机走 fake-ip 代理（域名全解析进 198.18.0.0/15）时设 `LABINFER_ALLOW_FAKEIP=1` 放行该段出网，其余拒绝规则不变（`app/llm.py`）。
+见 `.env.example`。`LABINFER_STORAGE=sqlite` 启用 SQLite 后端；`LABINFER_DATA` 改数据目录；`LABINFER_DEMO_CACHE` / `LABINFER_RUNTIME_CACHE` 改两类缓存目录。GLM key 缺失时 M5 降级为模板结论（确定性生成，演示保底也用它）；M1 未命中缓存且无 key 时返回 503。本机走 fake-ip 代理（域名全解析进 198.18.0.0/15）时设 `LABINFER_ALLOW_FAKEIP=1` 放行该段出网，其余拒绝规则不变（`app/llm.py`）。
+
+**M1 识别缓存的白名单政策**：`server/demo_cache/`（入库）只存演示图的预先校正结果，登记清单在 `server/demo_cache/manifest.json`（列 `design/assets/` 下的图片路径）。其余图片的成功识别写 `server/data/runtime_cache/`（不入库），命中规则与演示缓存相同。要给新图片做演示保底：把图片放进 `design/assets/`，在 manifest 里登记一行，跑一次 `python -m scripts.seed_demo` 或上传一次让识别结果烘焙进演示缓存，提交。
 
 ## 边界
 
