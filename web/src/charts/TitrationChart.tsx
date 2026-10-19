@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { TitrationCurve } from "../types";
 import { extent, fmt, linear, niceTicks, pad } from "./scale";
 
@@ -24,8 +25,12 @@ export function TitrationChart({ curve, highlight, anomalies, onHover, simulated
   const [w0, w1] = curve.indicator.dv_window_ml;
   const [ph0, ph1] = curve.indicator.ph_range;
 
+  // 文献曲线换到 ΔV 后通常比 ±2 mL 宽得多，裁到绘图区内
+  const clip = useId();
+
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="理论滴定曲线与各份标定终点">
+      <clipPath id={clip}><rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} /></clipPath>
       {niceTicks(y0, y1).map((t) => (
         <g key={"y" + t}>
           <line className="grid" x1={M.l} x2={W - M.r} y1={sy(t)} y2={sy(t)} />
@@ -48,9 +53,11 @@ export function TitrationChart({ curve, highlight, anomalies, onHover, simulated
       <text className="axis-label" x={W - M.r} y={H - 8} textAnchor="end">{curve.x_label} / {curve.x_unit}</text>
       <text className="axis-label" x={M.l} y={M.t - 8}>{curve.y_label}</text>
 
-      {curve.literature.map((l) => <path key={l.dataset_id} className="lit-line" d={path(l.points, sx, sy)} />)}
-      <path className="theory-line" d={path(curve.theory, sx, sy)} />
-      {simulated && simulated.length > 1 && <path className="sim-curve" d={path(simulated, sx, sy)} />}
+      <g clipPath={`url(#${clip})`}>
+        {curve.literature.map((l) => <path key={l.dataset_id} className="lit-line" d={path(l.points, sx, sy)} />)}
+        <path className="theory-line" d={path(curve.theory, sx, sy)} />
+        {simulated && simulated.length > 1 && <path className="sim-curve" d={path(simulated, sx, sy)} />}
+      </g>
 
       {curve.endpoints.map((e) => {
         const on = highlight.has(e.point_id);

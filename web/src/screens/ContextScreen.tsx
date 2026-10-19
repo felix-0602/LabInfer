@@ -7,6 +7,13 @@ const RULE_NAMES: Record<string, string> = {
   outlier_grubbs: "格拉布斯离群检验",
 };
 
+// 模型常数展示：数值原样，数组连成区间，对象按值拼接（如 indicator → 甲基橙 3.1–4.4）
+function paramText(v: unknown): string {
+  if (Array.isArray(v)) return v.map(paramText).join("–");
+  if (v && typeof v === "object") return Object.values(v).map(paramText).join(" ");
+  return String(v);
+}
+
 export function ContextScreen() {
   const { s, dispatch } = useWorkbench();
   const ctx = s.ctx;
@@ -33,7 +40,7 @@ export function ContextScreen() {
           <dt>模型常数</dt>
           <dd className="chips">
             {Object.entries(ctx.model_params ?? {}).map(([k, v]) => (
-              <span key={k} className="chip mono">{k} = {v}</span>
+              <span key={k} className="chip mono">{k} = {paramText(v)}</span>
             ))}
           </dd>
           <dt>参照</dt>

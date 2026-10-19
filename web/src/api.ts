@@ -69,7 +69,7 @@ export const api = {
   analyze: (context_id: string) => request<AnalysisResult>("/api/m4/analyze", json({ context_id })),
   simulate: (body: { context_id: string; finding_id: string; param: string; from: number; to: number; unit: string }) =>
     request<Simulation>("/api/m6/simulate", json({ schema_version: "0.6.0", ...body })),
-  exportReport: async (context_id: string, format: "md" | "docx", include: Record<string, boolean>) => {
+  exportReport: async (context_id: string, format: "md" | "docx" | "png", include: Record<string, boolean>) => {
     const res = await fetch("/api/m7/export", json({ context_id, format, include }));
     if (!res.ok) throw new ApiError(res.status, "EXPORT_FAILED", "导出失败");
     return res.blob();

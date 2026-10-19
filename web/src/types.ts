@@ -32,7 +32,8 @@ export interface ExperimentContext {
   name: string;
   purpose: string;
   model: string;
-  model_params?: Record<string, number>;
+  // 多为数值常数；0.7.0 起也有对象（如 indicator: { name, ph_range }）
+  model_params?: Record<string, unknown>;
   variables: { columns: Column[] };
   reference: { datasets: ReferenceDataset[]; crm: Json | null; limits: Limit[] };
   qc_rules: { rule_id: string; params: Json; citation?: string }[];

@@ -151,7 +151,12 @@ export function Analysis() {
               <article
                 key={f.id}
                 className={"f-card " + f.type + (selected === f.id ? " selected" : "") + (linked ? " linked" : "")}
-                onClick={() => setSelected(selected === f.id ? null : f.id)}
+                onClick={() => {
+                  setSelected(selected === f.id ? null : f.id);
+                  // 结论引用了某张图的整节（滴定曲线 / 误差预算），切到那张图
+                  const t = f.evidence.find((e) => e.type === "comparison" && (e.target === "titration_curve" || e.target === "error_budget"));
+                  if (t?.type === "comparison") setTab(t.target === "titration_curve" ? "titration" : "budget");
+                }}
               >
                 <div className="type mono"><i />{TYPE_LABEL[f.type] ?? f.type}{canSim ? " · 可推演" : ""}</div>
                 <p>{f.text}</p>

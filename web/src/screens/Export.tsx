@@ -7,7 +7,8 @@ import { PrecisionChart } from "../charts/PrecisionChart";
 import { TitrationChart } from "../charts/TitrationChart";
 import { errorText, useWorkbench } from "../workbench";
 
-type Format = "md" | "docx";
+type Format = "md" | "docx" | "png";
+const FORMAT_NAME: Record<Format, string> = { md: "Markdown", docx: "Word", png: "图 1（PNG）" };
 type IncludeKey = "figure" | "anomalies" | "suggestions" | "quality_control" | "sources";
 
 const INCLUDE: { key: IncludeKey; label: string }[] = [
@@ -18,15 +19,17 @@ const INCLUDE: { key: IncludeKey; label: string }[] = [
   { key: "sources", label: "标注依据（标准条文、文献图号）" },
 ];
 
-// M7 的 Markdown 只用到标题、段落、列表和表格，这里按行渲染成预览，不改写任何内容
-function renderMarkdown(md: string, figure: ReactNode): ReactNode[] {
+// M7 的 Markdown 只用到标题、段落、列表、表格和一张插图（![图注](figure.png)），这里按行渲染成预览，不改写任何内容。
+// 插图位置由 M7 决定，预览用前端的同款图表代替 figure.png
+function renderMarkdown(md: string, figure: (caption: string) => ReactNode): ReactNode[] {
   const out: ReactNode[] = [];
   const lines = md.split("\n");
-  let figurePlaced = !figure;
-  let inSection = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.startsWith("|")) {
+    const img = /^!\[(.*)\]\((.*)\)\s*$/.exec(line);
+    if (img) {
+      out.push(<Fragment key={i}>{figure(img[1])}</Fragment>);
+    } else if (line.startsWith("|")) {
       const rows: string[][] = [];
       while (i < lines.length && lines[i].startsWith("|")) {
         const cells = lines[i].split("|").slice(1, -1).map((c) => c.trim());
@@ -49,17 +52,10 @@ function renderMarkdown(md: string, figure: ReactNode): ReactNode[] {
       const level = line.indexOf(" ");
       const text = line.slice(level + 1);
       out.push(level === 1 ? <h2 key={i}>{text}</h2> : <h3 key={i}>{text}</h3>);
-      if (level > 1) inSection = true;
     } else if (line.trim()) {
       out.push(<p key={i}>{line}</p>);
-      // 图 1 放在第一节正文之后
-      if (!figurePlaced && inSection) {
-        out.push(<Fragment key={"fig" + i}>{figure}</Fragment>);
-        figurePlaced = true;
-      }
     }
   }
-  if (!figurePlaced) out.push(<Fragment key="fig-end">{figure}</Fragment>);
   return out;
 }
 
@@ -93,7 +89,7 @@ export function Export() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${ctxId}-结果与讨论.${format}`;
+      link.download = format === "png" ? `${ctxId}-图1.png` : `${ctxId}-结果与讨论.${format}`;
       link.click();
       URL.revokeObjectURL(url);
       dispatch({ type: "complete", step: 5 });
@@ -111,12 +107,12 @@ export function Export() {
   };
 
   const a = s.analysis;
-  const figure = include.figure && a ? (
+  const figure = (caption: string) => a ? (
     <figure className="report-fig">
       {a.titration_curve
         ? <TitrationChart curve={a.titration_curve} highlight={new Set()} anomalies={new Set()} onHover={() => {}} />
         : <PrecisionChart analysis={a} highlight={new Set()} anomalies={new Set()} onHover={() => {}} />}
-      <figcaption>图 1　{a.titration_curve ? "理论滴定曲线与各份标定终点（灰带：指示剂变色区）" : "平行测定结果 ± U95 与允许带"}</figcaption>
+      <figcaption>{caption}</figcaption>
     </figure>
   ) : null;
 
@@ -147,8 +143,8 @@ export function Export() {
         <button className={"opt" + (format === "docx" ? " on" : "")} onClick={() => setFormat("docx")}>
           <span className="fmt mono">DOCX</span><span>Word<small>可直接交实验报告</small></span>
         </button>
-        <button className="opt" disabled title="M7 尚未实现 png 格式">
-          <span className="fmt mono">PNG</span><span>仅图表<small>M7 待实现</small></span>
+        <button className={"opt" + (format === "png" ? " on" : "")} onClick={() => setFormat("png")}>
+          <span className="fmt mono">PNG</span><span>仅图表<small>M7 出图，可插进任何文档</small></span>
         </button>
         <div className="checks">
           {INCLUDE.map(({ key, label }) => (
@@ -162,7 +158,7 @@ export function Export() {
         <div className="actions">
           <button className="btn ghost" disabled={!md} onClick={copy}>{copied ? "已复制" : "复制 Markdown"}</button>
           <button className="btn primary grow" disabled={s.shadow || !!s.busy} onClick={download}>
-            导出 {format === "md" ? "Markdown" : "Word"}
+            导出 {FORMAT_NAME[format]}
           </button>
         </div>
       </aside>
