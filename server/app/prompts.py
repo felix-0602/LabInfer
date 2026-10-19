@@ -32,10 +32,17 @@ RECORD_SYSTEM = """你是实验记录识别助手。用户给你一张手写实�
 
 async def llm_findings(analysis: dict, ctx: dict, dataset: dict) -> tuple[list[dict], list[str]]:
     """主路径：glm-5.3 生成 → 校验 → 失败回灌重试一次。返回 (结论列表, 丢弃原因)。"""
+    compact_curve = analysis.get("titration_curve")
+    if compact_curve is not None:
+        # theory 是 161 点的作图数据，进 prompt 会撑爆 token：只留可引用的摘要
+        compact_curve = {k: v for k, v in compact_curve.items() if k != "theory"}
+        compact_curve["n_theory_points"] = len(analysis["titration_curve"].get("theory", []))
     compact = {
         "fits": analysis.get("fits"), "predictions": analysis.get("predictions"),
         "residuals": analysis.get("residuals"), "qc_results": analysis.get("qc_results"),
         "comparison": analysis.get("comparison"),
+        "titration_curve": compact_curve,                # 0.7.0 可选节（去 theory 点列）
+        "error_budget": analysis.get("error_budget"),
     }
     dataset_index = [
         {"point_id": r["id"], "series": r.get("series")} for r in dataset.get("rows", [])
