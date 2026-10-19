@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.7.0（滴定曲线参照、误差预算与讲解阶梯）**
+**当前版本：0.7.1（示例版本号勘误与接口补登记）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -21,7 +21,7 @@ M1、M2 输出，M4 读取。列不限制名称，行用 `series` 标注类别�
 
 ```jsonc
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "id": "ds_mine_01",
   "source": "my_experiment",          // my_experiment | literature
   "meta": {
@@ -56,7 +56,7 @@ M3 输出，M4、M5 读取。
 
 ```jsonc
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "id": "ctx_01",
   "name": "HCl 标定与碱灰总碱度（GB/T 601-2016 无水碳酸钠法）",
   "purpose": "以基准无水碳酸钠标定 HCl 浓度，测定碱灰总碱度（以 Na₂O 计），检查平行测定精密度",
@@ -142,7 +142,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
 
 ```jsonc
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "context_id": "ctx_01",
   "model": "linear_calibration",
   "transformed": [                     // 拟合空间的作图数据（linear 为恒等；M8 直接绘制）
@@ -195,7 +195,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
 
 ```jsonc
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "context_id": "ctx_demo",
   "model": "titration_standardization",
   "transformed": [                     // V–m 平面，M8 画散点 + 过原点拟合线
@@ -234,7 +234,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
       "citation": "GB/T 4883", "subjects": [] }
   ],
   "comparison": {
-    "vs_reference": [],                 // 滴定演示不挂文献数据集
+    "vs_reference": [],                 // 文献滴定曲线落在 titration_curve.literature，不进斜率对比
     "vs_limit": [
       { "point_id": "s1", "value": 59.098, "limit": 58.47,
         "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）", "verdict": "exceed" } ],
@@ -272,7 +272,7 @@ M5 输出一个数组，M6、M7、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "id": "f1",
   "type": "anomaly",                   // pattern | conclusion | anomaly | suggestion
   "text": "标曲第 5 点（c=0.80）残差 0.0038，格拉布斯检验未判为离群……",
@@ -314,11 +314,11 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 
 ```jsonc
 // 请求
-{ "schema_version": "0.5.0", "context_id": "ctx_01", "finding_id": "f2",
+{ "schema_version": "0.7.1", "context_id": "ctx_01", "finding_id": "f2",
   "param": "dilution_factor", "from": 1, "to": 10, "unit": "" }
 
 // 返回（curve 在拟合空间，与 transformed 同坐标系）
-{ "schema_version": "0.5.0", "finding_id": "f2",
+{ "schema_version": "0.7.1", "finding_id": "f2",
   "predicted": { "dilution_factor": 5, "A": 0.112 },
   "curve": [{ "x": 0.556, "y": 0.226 }] }
 ```
@@ -326,7 +326,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 `titration_volume_delta` 的返回：`curve` 的 x 为滴定体积系统偏差 ΔV（mL），y 为对应的 w(Na₂O)（%），例如
 
 ```jsonc
-{ "schema_version": "0.5.0", "finding_id": "f_worst",
+{ "schema_version": "0.7.1", "finding_id": "f_worst",
   "predicted": { "titrant_volume_delta_ml": -1, "w_na2o_pct": 60.578 },
   "curve": [{ "x": -2.0, "y": 58.578 }, { "x": 0.0, "y": 62.5779 }] }
 ```
@@ -353,6 +353,8 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
   | 422 | 参数合法，但处理失败（例如校准点重合、无法换算、缺少必需角色列） |
   | 503 | 依赖的服务不可用（VLM、LLM） |
 
+- 健康检查 `GET /api/health` 返回 `{ "status": "ok", "contract_version": "<当前版本号>" }`，不依赖存储与外部服务。
+
 - **像素坐标**：指原图上的像素，不是屏幕像素。原点在左上角，u 向右、v 向下，可以是小数，写作 `[u, v]`。
 - 图片地址由后端在返回里给出，前端不自己拼路径。
 - 后端对外请求（VLM/LLM）仅允许 https，拒绝 localhost、环回、私有和保留地址。
@@ -375,7 +377,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 201：Figure
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "id": "fig_01",
   "image_url": "/api/m2/figures/fig_01/image",
   "width": 1280, "height": 960,                // 原图像素
@@ -391,7 +393,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 200：FigureDetection
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "figure_id": "fig_01",
   "plot_area": { "u0": 96, "v0": 40, "u1": 680, "v1": 512 },  // 绘图区边框
   "axes": {
@@ -441,7 +443,7 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 请求：ExtractRequest
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "calibration": { /* Calibration */ },
   "mode": "auto",                  // auto：按曲线颜色自动提取；manual：使用 points_px
   "series_id": "A",                // auto 时必填
@@ -456,9 +458,9 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 返回 200：ExtractResult
 {
-  "schema_version": "0.5.0",
+  "schema_version": "0.7.1",
   "dataset": {                     // Dataset，source = literature，已写入共享存储
-    "schema_version": "0.5.0",
+    "schema_version": "0.7.1",
     "id": "ds_lit_01",
     "source": "literature",
     "meta": { "title": "图1(b) · 纳氏试剂法标准曲线", "doi": "10.3866/PKU.DXHX201807034", "figure": "图1(b)",
@@ -508,6 +510,14 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 ---
 
 ## 变更记录
+
+### 0.7.1（2026-10-19）
+
+勘误与补登记，无字段与接口行为变更：
+
+- 示例中所有 `schema_version` 从 0.5.0 更正为本文件当前版本号（通用约定本就要求「值为本文件的版本号」，示例未跟随历次升版）。模块输出随 `CONTRACT_VERSION` 常量升至 0.7.1。
+- 演示示例 `vs_reference` 旁注释更正：0.7.0 起滴定演示挂的文献滴定曲线落在 `titration_curve.literature`，`vs_reference`（斜率对比）仍为空。
+- 补登记既有接口 `GET /api/health`。
 
 ### 0.7.0（2026-10-19）
 

@@ -1,6 +1,6 @@
 # LabInfer 后端
 
-FastAPI 单进程服务，实现 contracts 0.6.0 定义的 `/api` 接口。存储有两个后端，默认 JSON 文件（`server/data/`，不入库），设 `LABINFER_STORAGE=sqlite` 切到 SQLite（`server/data/labinfer.sqlite3`，表结构见 [docs/sql.md](../docs/sql.md)），接口行为一致。演示缓存放 `server/demo_cache/`（入库，按图片 sha256 命名）。
+FastAPI 单进程服务，实现 contracts 0.7.1 定义的 `/api` 接口。存储有两个后端，默认 JSON 文件（`server/data/`，不入库），设 `LABINFER_STORAGE=sqlite` 切到 SQLite（`server/data/labinfer.sqlite3`，表结构见 [docs/sql.md](../docs/sql.md)），接口行为一致。演示缓存放 `server/demo_cache/`（入库，按图片 sha256 命名）。
 
 ## 环境（统一用 uv）
 
