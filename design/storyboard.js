@@ -2,7 +2,7 @@
    LabInfer 设计稿 · 脚本
    1. 素材位清单（唯一真相源）与加载
    2. 画框缩放
-   3. 示意图表
+   3. 图表（理论滴定曲线）
    ========================================================= */
 
 /* ---------- 1. 素材位清单 ----------
@@ -18,14 +18,26 @@ const ASSET_SLOTS = [
   {
     id: "GEN-01",
     kind: "GEN",
-    name: "封面主视觉：银镜试管",
-    where: "S0 封面，画面中右，压在超大标题之上",
+    name: "已退役：银镜试管（原银镜案例封面）",
+    where: "不再使用。演示案例改为滴定后由 GEN-11 取代，保留登记以便追溯",
     ratio: "7:9 竖幅",
     size: "1400 × 1800 px",
     format: "WebP，透明背景",
     content: "玻璃试管内壁镀着上沿不规则的银镜层，上沿之上散落成核银斑；液态银从管口溢出、沿外壁淌下；周围悬浮银珠。",
     style: "R2 铬银棋子、R6 液态金属。影棚：暗场 + 白色长条灯 + 钴蓝灯板，反射里带品牌色。",
     note: "脚本 render/tube.py",
+  },
+  {
+    id: "GEN-11",
+    kind: "GEN",
+    name: "封面主视觉：滴定管",
+    where: "S0 封面，画面中右，压在超大标题之上",
+    ratio: "7:9 竖幅（滴定管细长，可斜放 12° 撑满画幅）",
+    size: "1400 × 1800 px",
+    format: "WebP，透明背景",
+    content: "酸式滴定管：玻璃管身带精确刻度（几何建模，0.1 mL 一格），铬银活塞；管内钴蓝液柱，弯月面清晰；管尖悬着一滴将落未落的钴蓝液滴。刻度旁可有一枚十字准星对准弯月面，呼应「读数」。",
+    style: "沿用 GEN-01 的影棚：暗场 + 白色长条灯 + 钴蓝灯板，反射里带品牌色。R2 铬银、R10 玻璃。",
+    note: "脚本 render/burette.py（待写，需 Blender ≥ 4.2，本机未安装）。写好后在 render.sh 登记 GEN-11。",
   },
   {
     id: "GEN-02",
@@ -54,7 +66,7 @@ const ASSET_SLOTS = [
   {
     id: "GEN-04",
     kind: "GEN",
-    name: "导出报告页眉：银镜碎片迸射",
+    name: "导出报告页眉：铬银碎片迸射",
     where: "S5 导出预览，报告页顶部横幅（也会进入导出的 Word / 图片）",
     ratio: "4.5:1 横幅",
     size: "2040 × 450 px",
@@ -115,7 +127,7 @@ const ASSET_SLOTS = [
     id: "GEN-09",
     kind: "GEN",
     name: "锚点 04：浑天仪",
-    where: "S4 分析，标题行 Ea 数值与图例之间",
+    where: "S4 分析，标题行 c̄(HCl) 数值与图例之间",
     ratio: "约 1:1（已裁边）",
     size: "≈ 1000 px",
     format: "WebP，透明背景",
@@ -138,12 +150,12 @@ const ASSET_SLOTS = [
   {
     id: "PHOTO-01",
     kind: "PHOTO",
-    name: "真实银镜反应照片",
+    name: "真实滴定终点照片",
     where: "S0 封面右上角样片（演示案例专属）",
     ratio: "4:5 竖幅（页面会居中裁切）",
     size: "≥ 1000 × 1250 px",
     format: "JPG",
-    content: "真实做出来的银镜：试管或烧杯内壁的银镜特写，能看到镜面反射和不均匀的镀层边缘。越近越好，背景干净。",
+    content: "真实的甲基橙滴定终点：锥形瓶里溶液由黄转橙的那一刻，或滴定管尖悬着一滴的特写。越近越好，背景干净。最好是团队自己做实验时拍的。",
     style: "页面自动处理：转灰度后映射为「墨黑 → 钴蓝」或「钴蓝 → 白」双色调，原图颜色无所谓，明暗对比要强。",
     note: "需确认可商用或可署名使用（如 Wikimedia Commons、Unsplash），记录来源链接；不要 AI 生成图，不要带水印。",
   },
@@ -167,19 +179,19 @@ const ASSET_SLOTS = [
     ratio: "3:4 竖幅（手机竖拍即可）",
     size: "≥ 1500 × 2000 px",
     format: "JPG",
-    content: "银镜反应动力学实验的真实手写记录：至少包含水浴温度 T（°C）和出镜时间 t（s）两列，4–5 个温度梯度。",
+    content: "HCl 标定与碱灰总碱度的真实手写记录页（武汉工程大学《分析化学实验》实验 3）：标定段三份 m、V、c，测定段三份 V、w，以及平均值。已提供。",
     style: "真实拍摄，保留纸张、光线等自然痕迹，不需要修图。",
     note: "不能编造或用 AI 生成；照片中的数值必须与 M1 识别演示所用数据一致。",
   },
   {
     id: "DEMO-02",
     kind: "DEMO",
-    name: "文献曲线截图",
+    name: "文献滴定曲线截图",
     where: "S3b 文献取数画布；S3a 识别后也会出现",
     ratio: "约 4:3（以原图为准）",
     size: "宽 ≥ 1200 px",
     format: "PNG",
-    content: "参照文献中的一张曲线图截图，需同时登记 DOI 与图号。坐标轴刻度要清楚可读。",
+    content: "教材或论文里 HCl 滴定 Na₂CO₃ 的滴定曲线（pH 对 V 或滴定分数），能看到两个计量点。需登记 DOI 或 ISBN 与图号，并读出图中计量点体积。坐标轴刻度要清楚可读。",
     style: "原样截图，不要裁掉坐标轴和图例。",
     note: "不能编造；本设计稿中的校准点位置是示意，接入真图后要按真实刻度重新标注。",
   },
@@ -440,28 +452,21 @@ function initFrames() {
   document.querySelectorAll(".frame").forEach((f) => ro.observe(f));
 }
 
-/* ---------- 3. 示意图表 ----------
-   示意数据，非真实实验；仅用于表现版式。数值由 Arrhenius 关系手工构造，
-   拟合结果用 numpy.polyfit 计算：我的数据 Ea = 53.8 kJ/mol，R² = 0.978；文献示意 Ea = 50.0。 */
-const DATA = {
-  mine: [
-    { id: "p1", T: 30, x: 3.299, y: -6.428 },
-    { id: "p2", T: 40, x: 3.193, y: -5.743 },
-    { id: "p3", T: 50, x: 3.095, y: -5.429, anomaly: true },
-    { id: "p4", T: 60, x: 3.002, y: -4.5 },
-    { id: "p5", T: 70, x: 2.914, y: -3.932 },
+/* ---------- 3. 图表：HCl 滴定 Na₂CO₃ 的理论滴定曲线 ----------
+   数据真实：三份标定的称样量与滴定体积取自 DEMO-01 手写记录页，c̄ = 0.102735 mol/L 为 M4 计算结果。
+   曲线是确定性计算，不是示意：碳酸 pKa 6.35 / 10.33，按电荷平衡逐点解 pH（与 contracts 0.7.0 的
+   titration_curve 口径一致）。正式页面由 M4 返回曲线，前端只绘制，这里在设计稿内复算一遍用来定版式。
+   残留 CO₂ 比例 f：1 = 未煮沸（封闭体系），小于 1 时把溶解 CO₂ 封顶在计量点浓度的 f 倍，模拟近终点煮沸。 */
+const TITR = {
+  M: 105.99, c: 0.102735, V0: 30, pKa1: 6.35, pKa2: 10.33,
+  std: [
+    { id: "p1", m: 0.1549, V: 28.54 },
+    { id: "p2", m: 0.1832, V: 33.0 },
+    { id: "p3", m: 0.167, V: 31.19 },
   ],
-  lit: [
-    { id: "L1", x: 3.354, y: -6.459 },
-    { id: "L2", x: 3.245, y: -5.805 },
-    { id: "L3", x: 3.143, y: -5.191 },
-    { id: "L4", x: 3.047, y: -4.615 },
-    { id: "L5", x: 2.957, y: -4.073 },
-  ],
-  // x 以 10^-3 K^-1 为单位，所以斜率除以 1000
-  fitMine: { k: -6.46956, b: 14.85235 },
-  fitLit: { k: -6.01395, b: 13.7117 },
-  sim: { T: 80, x: 2.832, y: -3.468, t: 32 },
+  basis: "p3", // 称样量居中的一份
+  window: [3.1, 4.4], // 甲基橙变色区
+  boiled: 0.05,
 };
 
 const NS = "http://www.w3.org/2000/svg";
@@ -473,96 +478,116 @@ function el(tag, attrs, parent, text) {
   return n;
 }
 
-function drawArrhenius(svg, { w, h, compact = false }) {
+function titrPH(m, V, f = 1) {
+  const { M, c, V0 } = TITR;
+  const Ka1 = 10 ** -TITR.pKa1, Ka2 = 10 ** -TITR.pKa2, Kw = 1e-14;
+  const n0 = m / M, Vt = (V0 + V) / 1000;
+  const CT = n0 / Vt, Na = (2 * n0) / Vt, Cl = (c * V) / 1000 / Vt;
+  const Veq = ((2 * m) / M / c) * 1000;
+  const cap = (f * n0) / ((V0 + Veq) / 1000);
+  let lo = 0, hi = 14;
+  for (let k = 0; k < 70; k++) {
+    const p = (lo + hi) / 2, hh = 10 ** -p, D = hh * hh + Ka1 * hh + Ka1 * Ka2;
+    const an = (hh * hh) / D * CT <= cap
+      ? (CT * (Ka1 * hh + 2 * Ka1 * Ka2)) / D
+      : (Ka1 * cap) / hh + (2 * Ka1 * Ka2 * cap) / (hh * hh);
+    if (hh + Na - Kw / hh - an - Cl > 0) lo = p; else hi = p;
+  }
+  return (lo + hi) / 2;
+}
+const veq = (m) => ((2 * m) / TITR.M / TITR.c) * 1000;
+
+function drawTitration(svg, { w, h, compact = false }) {
   svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  const m = compact ? { l: 44, r: 16, t: 14, b: 30 } : { l: 64, r: 28, t: 44, b: 52 };
-  const X = [2.8, 3.4];
-  const Y = [-6.8, -3.2];
+  const m = compact ? { l: 40, r: 16, t: 14, b: 30 } : { l: 64, r: 28, t: 52, b: 52 };
+  const X = [-1, 1], Y = [2, 8];
   const sx = (v) => m.l + ((v - X[0]) / (X[1] - X[0])) * (w - m.l - m.r);
   const sy = (v) => h - m.b - ((v - Y[0]) / (Y[1] - Y[0])) * (h - m.t - m.b);
   const ink = "#0a0b10", ink3 = "#6b7180", cobalt = "#1e3bff", signal = "#e5242b";
   const fs = compact ? 9 : 11;
   const mono = "IBM Plex Mono, monospace";
+  const base = TITR.std.find((p) => p.id === TITR.basis);
+  const Vb = veq(base.m);
+  const curve = (f) => {
+    const pts = [];
+    for (let d = X[0]; d <= X[1] + 1e-9; d += 0.01) pts.push([d, titrPH(base.m, Vb + d, f)]);
+    return pts.map(([d, p]) => `${sx(d).toFixed(1)},${sy(Math.min(Math.max(p, Y[0]), Y[1])).toFixed(1)}`).join(" ");
+  };
+
+  // 甲基橙变色区：中性灰带（红色只留给异常）
+  const [w0, w1] = TITR.window;
+  el("rect", { x: m.l, y: sy(w1), width: w - m.l - m.r, height: sy(w0) - sy(w1), fill: "rgba(10,11,16,.06)" }, svg);
+  if (!compact) el("text", { x: m.l + 8, y: sy(w1) + 14, "font-size": 10, "font-family": mono, fill: ink3 }, svg, `甲基橙 pH ${w0}–${w1}`);
 
   // 网格与刻度
   const g = el("g", {}, svg);
-  for (let v = 2.8; v <= 3.401; v += 0.1) {
+  for (let v = -1; v <= 1.001; v += 0.25) {
     const x = sx(v);
     el("line", { x1: x, x2: x, y1: m.t, y2: h - m.b, stroke: "rgba(10,11,16,.08)", "stroke-width": 0.5 }, g);
     el("line", { x1: x, x2: x, y1: h - m.b, y2: h - m.b + 5, stroke: ink, "stroke-width": 0.75 }, g);
-    el("text", { x, y: h - m.b + (compact ? 15 : 20), "text-anchor": "middle", "font-size": fs, "font-family": mono, fill: ink3 }, g, v.toFixed(1));
+    if (compact && Math.abs(v * 2 - Math.round(v * 2)) > 1e-6) continue;
+    const t = v === 0 ? "0" : (v > 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+    el("text", { x, y: h - m.b + (compact ? 15 : 20), "text-anchor": "middle", "font-size": fs, "font-family": mono, fill: ink3 }, g, t);
   }
-  for (let v = -6.5; v <= -3.49; v += 0.5) {
+  for (let v = 2; v <= 8; v += 1) {
     const y = sy(v);
     el("line", { x1: m.l, x2: w - m.r, y1: y, y2: y, stroke: "rgba(10,11,16,.08)", "stroke-width": 0.5 }, g);
     el("line", { x1: m.l - 5, x2: m.l, y1: y, y2: y, stroke: ink, "stroke-width": 0.75 }, g);
-    el("text", { x: m.l - 9, y: y + 3.5, "text-anchor": "end", "font-size": fs, "font-family": mono, fill: ink3 }, g, v.toFixed(1).replace("-", "−"));
+    el("text", { x: m.l - 9, y: y + 3.5, "text-anchor": "end", "font-size": fs, "font-family": mono, fill: ink3 }, g, String(v));
   }
   el("line", { x1: m.l, x2: w - m.r, y1: h - m.b, y2: h - m.b, stroke: ink, "stroke-width": 1 }, g);
   el("line", { x1: m.l, x2: m.l, y1: m.t, y2: h - m.b, stroke: ink, "stroke-width": 1 }, g);
+  el("line", { x1: sx(0), x2: sx(0), y1: m.t, y2: h - m.b, stroke: ink3, "stroke-width": 0.75, "stroke-dasharray": "3 3" }, g);
   if (!compact) {
-    el("text", { x: w - m.r, y: h - 10, "text-anchor": "end", "font-size": 11, "font-family": mono, fill: ink }, g, "1/T  (10⁻³ K⁻¹)");
-    el("text", { x: m.l + 8, y: m.t + 16, "font-size": 11, "font-family": mono, fill: ink }, g, "ln(1/t)");
-    // 顶部温度尺：把 1/T 换回 °C，像仪器刻度
+    el("text", { x: w - m.r, y: h - 10, "text-anchor": "end", "font-size": 11, "font-family": mono, fill: ink }, g, "ΔV = 终点 − 计量点  (mL)");
+    el("text", { x: m.l + 8, y: m.t + 16, "font-size": 11, "font-family": mono, fill: ink }, g, "pH");
+    el("text", { x: sx(0) + 6, y: h - m.b - 8, "font-size": 10, "font-family": mono, fill: ink3 }, g, "计量点");
+    // 顶部滴定管刻度：把 ΔV 换回 p3 那一份在滴定管上的读数
     el("line", { x1: m.l, x2: w - m.r, y1: m.t, y2: m.t, stroke: "rgba(10,11,16,.25)", "stroke-width": 0.5 }, g);
-    [25, 30, 40, 50, 60, 70, 80].forEach((c) => {
-      const x = sx(1000 / (c + 273.15));
-      el("line", { x1: x, x2: x, y1: m.t - 4, y2: m.t, stroke: ink3, "stroke-width": 0.75 }, g);
-      el("text", { x, y: m.t - 8, "text-anchor": "middle", "font-size": 10, "font-family": mono, fill: ink3 }, g, `${c}°C`);
-    });
-  }
-
-  // 拟合线
-  const line = (f, x0, x1, attrs) =>
-    el("line", { x1: sx(x0), y1: sy(f.k * x0 + f.b), x2: sx(x1), y2: sy(f.k * x1 + f.b), ...attrs }, svg);
-  line(DATA.fitLit, 2.93, 3.38, { stroke: ink, "stroke-width": 1, "stroke-dasharray": "5 4" });
-  line(DATA.fitMine, 2.89, 3.32, { stroke: cobalt, "stroke-width": 1.5 });
-
-  // 推演：沿拟合线外推到 80 °C
-  if (!compact) {
-    line(DATA.fitMine, DATA.sim.x, 2.914, { stroke: cobalt, "stroke-width": 1.5, "stroke-dasharray": "2 4" });
-    const s = DATA.sim;
-    el("circle", { cx: sx(s.x), cy: sy(s.y), r: 6, fill: "#fff", stroke: cobalt, "stroke-width": 1.5, "stroke-dasharray": "2 2" }, svg);
-    const tg = el("g", { transform: `translate(${sx(s.x) + 14}, ${sy(s.y) + 4})` }, svg);
-    el("text", { "font-size": 11, "font-family": mono, fill: cobalt }, tg, "推演 · 80 °C");
-    el("text", { y: 15, "font-size": 11, "font-family": mono, fill: cobalt }, tg, "预测 t ≈ 32 s");
-  }
-
-  // 文献点：空心方块
-  DATA.lit.forEach((p) => {
-    const r = compact ? 3 : 4.5;
-    el("rect", { x: sx(p.x) - r, y: sy(p.y) - r, width: r * 2, height: r * 2, fill: "#fff", stroke: ink, "stroke-width": 1.2 }, svg);
-  });
-
-  // 我的点：实心钴蓝
-  DATA.mine.forEach((p) => {
-    const cx = sx(p.x), cy = sy(p.y);
-    if (p.anomaly) {
-      el("circle", { cx, cy, r: compact ? 8 : 13, fill: "none", stroke: signal, "stroke-width": 1.5 }, svg);
-      if (!compact) {
-        // 预测位置与残差
-        const yp = DATA.fitMine.k * p.x + DATA.fitMine.b;
-        el("line", { x1: cx, y1: cy, x2: cx, y2: sy(yp), stroke: signal, "stroke-width": 1, "stroke-dasharray": "2 2" }, svg);
-        el("circle", { cx, cy: sy(yp), r: 2.5, fill: signal }, svg);
-        // 引线放在拟合线左下方的空白区，避开 p2 和文献点
-        const ly = cy + 80;
-        el("polyline", { points: `${cx - 9},${cy + 10} ${cx - 50},${ly - 4} ${cx - 250},${ly - 4}`, fill: "none", stroke: signal, "stroke-width": 0.75 }, svg);
-        const tg = el("g", { transform: `translate(${cx - 250}, ${ly + 12})` }, svg);
-        el("text", { "font-size": 11, "font-family": mono, fill: signal, "font-weight": 500 }, tg, "p3 · 50 °C · 残差 z = −2.0");
-        el("text", { y: 16, "font-size": 11, "font-family": mono, fill: ink3 }, tg, "实测 228 s / 预测 176 s");
-      }
+    for (let r = Math.ceil((Vb - 1) * 10) / 10; r <= Vb + 1; r += 0.1) {
+      const x = sx(r - Vb), major = Math.abs(r * 2 - Math.round(r * 2)) < 1e-6;
+      el("line", { x1: x, x2: x, y1: m.t - (major ? 6 : 3), y2: m.t, stroke: ink3, "stroke-width": 0.75 }, g);
+      if (major) el("text", { x, y: m.t - 10, "text-anchor": "middle", "font-size": 10, "font-family": mono, fill: ink3 }, g, r.toFixed(1));
     }
-    el("circle", { cx, cy, r: compact ? 3.5 : 5.5, fill: p.anomaly ? signal : cobalt, stroke: "#fff", "stroke-width": compact ? 1 : 1.5 }, svg);
-    if (!compact && !p.anomaly)
-      el("text", { x: cx - 10, y: cy - 10, "text-anchor": "end", "font-size": 10, "font-family": mono, fill: cobalt }, svg, p.id);
+    el("text", { x: w - m.r, y: m.t - 26, "text-anchor": "end", "font-size": 10, "font-family": mono, fill: ink3 }, g, `BURETTE · ${base.id} · mL`);
+  }
+
+  // 理论曲线：未煮沸（实线）；推演：已煮沸（点线）
+  if (!compact) {
+    el("polyline", { points: curve(TITR.boiled), fill: "none", stroke: cobalt, "stroke-width": 1.5, "stroke-dasharray": "2 4", "stroke-linecap": "round" }, svg);
+    el("text", { x: sx(-0.62), y: sy(titrPH(base.m, Vb - 0.62, TITR.boiled)) - 10, "font-size": 11, "font-family": mono, fill: cobalt }, svg, "推演 · 近终点煮沸");
+  }
+  el("polyline", { points: curve(1), fill: "none", stroke: cobalt, "stroke-width": compact ? 1.25 : 1.75, "stroke-linejoin": "round" }, svg);
+
+  // 我的终点：落在变色区外的用红圈
+  TITR.std.forEach((p, i) => {
+    const dv = p.V - veq(p.m), ph = titrPH(p.m, p.V);
+    const out = ph > w1 || ph < w0;
+    const cx = sx(dv), cy = sy(ph);
+    if (out) el("circle", { cx, cy, r: compact ? 7 : 12, fill: "none", stroke: signal, "stroke-width": 1.5 }, svg);
+    el("circle", { cx, cy, r: compact ? 3.5 : 5.5, fill: out ? signal : cobalt, stroke: "#fff", "stroke-width": compact ? 1 : 1.5 }, svg);
+    if (compact) return;
+    const sign = dv > 0 ? "+" : "−";
+    const head = `${p.id} · ΔV ${sign}${Math.abs(dv).toFixed(2)} mL · pH ${ph.toFixed(2)}`;
+    if (!out) {
+      el("text", { x: cx + 12, y: cy - 10, "font-size": 10, "font-family": mono, fill: cobalt }, svg, head);
+      return;
+    }
+    // 引线伸向空白处：p2 在左上，p3 在右下
+    const left = dv < 0;
+    const lx = left ? cx - 40 : cx + 40, ly = left ? cy - 70 : cy + 60;
+    el("polyline", { points: `${cx + (left ? -9 : 9)},${cy + (left ? -9 : 9)} ${lx},${ly} ${left ? lx - 160 : lx + 160},${ly}`, fill: "none", stroke: signal, "stroke-width": 0.75 }, svg);
+    const tg = el("g", { transform: `translate(${left ? lx - 160 : lx}, ${ly + 14})` }, svg);
+    el("text", { "font-size": 11, "font-family": mono, fill: signal, "font-weight": 500 }, tg, head);
+    el("text", { y: 16, "font-size": 11, "font-family": mono, fill: ink3 }, tg, ph > w1 ? "停早了：溶液应仍为黄色" : "滴过了：已越过变色区");
   });
 }
 
 function initCharts() {
   const a = document.getElementById("chart-analysis");
-  if (a) drawArrhenius(a, { w: 860, h: 600 });
+  if (a) drawTitration(a, { w: 860, h: 600 });
   const b = document.getElementById("chart-report");
-  if (b) drawArrhenius(b, { w: 568, h: 230, compact: true });
+  if (b) drawTitration(b, { w: 568, h: 230, compact: true });
 }
 
 /* 单屏查看：index.html?frame=s3b 只显示这一屏，铺满窗口 */
