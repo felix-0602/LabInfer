@@ -1,5 +1,6 @@
 import anchor from "../../../design/assets/GEN-06.webp";
-import { Anchor, stagger } from "../motion";
+import { stagger } from "../motion";
+import { Vignette } from "../vignette";
 import { useWorkbench } from "../workbench";
 
 const RULE_NAMES: Record<string, string> = {
@@ -24,7 +25,10 @@ export function ContextScreen() {
 
   return (
     <div className="split">
-      <section className="pane main-pane">
+      <section className="pane main-pane s1-main">
+        <div className="ghost-num s1-ghost">01</div>
+        <div className="reg" style={{ right: 64, top: 52 }} />
+        <div className="colorbar" style={{ right: 96, top: 55 }}><i /><i /><i /><i /><i /><i /></div>
         <div className="eyebrow mono rv" style={stagger(0)}>STEP 01 · 实验上下文 · 预置模板</div>
         <h1 className="h-title rv" style={stagger(1)}>{title}</h1>
         {sub && <div className="h-sub display rv" style={stagger(2)}>{sub.replace("）", "")}</div>}
@@ -67,8 +71,8 @@ export function ContextScreen() {
           </button>
         </div>
       </section>
-      <aside className="pane side-pane">
-        <Anchor src={anchor} caption="OBJ. 01 · MODEL · 把实验抽象成结构与公式" />
+      <aside className="pane side-pane tex-grain">
+        <Vignette id="GEN-06" className="s1-anchor" src={anchor} caption="OBJ. 01 · MOLECULAR MODEL · 建模：把实验抽象成结构与公式" />
         <div className="eyebrow mono rv" style={stagger(3)}>实验模板库 · {s.templates.length} 项</div>
         <ul className="tpl-list">
           {s.templates.map((t, i) => (

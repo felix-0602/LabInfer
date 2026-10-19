@@ -3,7 +3,7 @@ import type { TitrationCurve } from "../types";
 import { stagger } from "../motion";
 import { extent, fmt, linear, niceTicks, pad } from "./scale";
 
-const W = 760, H = 420, M = { l: 56, r: 24, t: 24, b: 48 };
+const W = 760, H = 420, M = { l: 56, r: 24, t: 44, b: 48 };
 
 interface Props {
   curve: TitrationCurve;
@@ -12,6 +12,8 @@ interface Props {
   onHover: (pointId: string | null) => void;
   // M6 推演曲线（同一 ΔV–pH 坐标），没有时不画
   simulated?: { x: number; y: number }[] | null;
+  // 顶部滴定管刻度：把 ΔV 换回某一份在滴定管上的真实读数（veq = 该份计量点体积，mL）
+  burette?: { point_id: string; veq: number } | null;
   // 结论流式出现时，它引用的点闪一下（key 变化即重播）
   flash?: { ids: Set<string>; key: number };
 }
@@ -20,7 +22,7 @@ const path = (pts: { x: number; y: number }[], sx: (v: number) => number, sy: (v
   pts.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join("");
 
 // 理论滴定曲线：学生只有终点体积，按 M4 给的 ΔV 放到曲线上；变色区用中性灰带，红色只给落在区外的终点
-export function TitrationChart({ curve, highlight, anomalies, onHover, simulated, flash }: Props) {
+export function TitrationChart({ curve, highlight, anomalies, onHover, simulated, flash, burette }: Props) {
   const xs = [...curve.theory.map((p) => p.x), ...curve.endpoints.map((e) => e.dv_ml)];
   const ys = [...curve.theory.map((p) => p.y), ...curve.endpoints.map((e) => e.ph)];
   const [x0, x1] = pad(extent(xs), 0.04), [y0, y1] = pad(extent(ys), 0.06);
@@ -48,6 +50,26 @@ export function TitrationChart({ curve, highlight, anomalies, onHover, simulated
         </g>
       ))}
       </g>
+      {burette && (() => {
+        const ticks: number[] = [];
+        for (let r = Math.ceil((burette.veq + x0) * 10) / 10; r <= burette.veq + x1 + 1e-9; r += 0.1) ticks.push(+r.toFixed(1));
+        return (
+          <g className="burette c-frame">
+            <line className="burette-base" x1={M.l} x2={W - M.r} y1={M.t} y2={M.t} />
+            {ticks.map((r) => {
+              const major = Math.abs(r * 2 - Math.round(r * 2)) < 1e-6;
+              const x = sx(r - burette.veq);
+              return (
+                <g key={r}>
+                  <line className="burette-tick" x1={x} x2={x} y1={M.t - (major ? 6 : 3)} y2={M.t} />
+                  {major && <text className="tick" x={x} y={M.t - 10} textAnchor="middle">{r.toFixed(1)}</text>}
+                </g>
+              );
+            })}
+            <text className="tick burette-label" x={W - M.r} y={M.t - 26} textAnchor="end">BURETTE · {burette.point_id} · mL</text>
+          </g>
+        );
+      })()}
       <g className="c-band">
       <rect className="window" x={sx(w0)} width={Math.max(1, sx(w1) - sx(w0))} y={sy(ph1)} height={Math.max(1, sy(ph0) - sy(ph1))} />
       <text className="band-label" x={sx(w1) + 6} y={sy(ph1) + 14}>{curve.indicator.name} 变色区 pH {ph0}–{ph1}</text>
@@ -59,7 +81,7 @@ export function TitrationChart({ curve, highlight, anomalies, onHover, simulated
       <line className="axis" x1={M.l} x2={W - M.r} y1={H - M.b} y2={H - M.b} />
       <line className="axis" x1={M.l} x2={M.l} y1={M.t} y2={H - M.b} />
       <text className="axis-label" x={W - M.r} y={H - 8} textAnchor="end">{curve.x_label} / {curve.x_unit}</text>
-      <text className="axis-label" x={M.l} y={M.t - 8}>{curve.y_label}</text>
+      <text className="axis-label" x={M.l + 8} y={M.t + 16}>{curve.y_label}</text>
       </g>
 
       <g clipPath={`url(#${clip})`}>

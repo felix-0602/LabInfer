@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import demoPhoto from "../../../design/assets/DEMO-01.jpg";
 import anchor from "../../../design/assets/GEN-07.webp";
 import type { Dataset, Row } from "../types";
-import { Anchor, stagger } from "../motion";
+import { stagger } from "../motion";
+import { Vignette } from "../vignette";
 import { useWorkbench } from "../workbench";
 
 // 低于这个置信度的格子要用户过目（architecture.md · M1）
@@ -71,6 +72,12 @@ export function MyData() {
   return (
     <div className="split">
       <section className="pane photo-pane">
+        <div className="print-frame">
+          <div className="crops" style={{ inset: 0 }} />
+          <div className="reg" style={{ left: "50%", top: -15, marginLeft: -9 }} />
+          <div className="reg" style={{ left: -15, top: "50%", marginTop: -9 }} />
+          <div className="colorbar" style={{ right: 0, bottom: -22 }}><i /><i /><i /><i /><i /><i /></div>
+        </div>
         {photo ? (
           <div className={"record-wrap" + (s.busy ? " scanning" : "")}><img className="record-photo develop" src={photo} alt="手写实验记录照片" /></div>
         ) : (
@@ -163,7 +170,7 @@ export function MyData() {
         ) : (
           <div className="empty dim">{s.busy ?? "还没有识别结果"}</div>
         )}
-        <Anchor className="small" src={anchor} caption="OBJ. 02 · VERNIER CALIPER · 读数：把刻度变成数字" />
+        <Vignette id="GEN-07" className="s2-anchor" src={anchor} caption="OBJ. 02 · VERNIER CALIPER · 读数：把刻度变成数字" />
         <div className="actions end">
           {draft && (
             <span className="mono dim small">

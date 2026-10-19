@@ -30,6 +30,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           );
         })}
+        <div className="halftone fade-t rail-mood" />
         <div className="rail-foot mono">SCHEMA {s.ctx?.schema_version ?? "—"}</div>
       </nav>
       <header className={"topbar" + (s.busy ? " is-busy" : "")}>
@@ -47,6 +48,7 @@ export function Shell({ children }: { children: ReactNode }) {
       )}
       <main className="stage" ref={stage}><div className="screen" key={s.step}>{children}</div></main>
       <footer className="statusbar mono">
+        <i className="barcode" />
         <span>{current?.module}</span>
         <span className="spacer" />
         <span>{s.online === false ? "后端离线" : s.online ? "后端在线" : "探测后端中"}</span>

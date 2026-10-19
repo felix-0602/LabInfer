@@ -21,12 +21,13 @@ export function Cover() {
   };
 
   return (
-    <div className="cover" ref={root} style={{ backgroundImage: `url(${bg})` }} onPointerMove={onMove}>
+    <div className="cover tex-grain" ref={root} style={{ backgroundImage: `url(${bg})` }} onPointerMove={onMove}>
       <div className="cover-top mono">
         <span>LABINFER — RESEARCH INSTRUMENT</span>
         <span>HACKATHON 2026 · 科研创新赛道</span>
         <span>N° 001</span>
       </div>
+      <div className="halftone fade-radial cover-glow" />
       <div className="cover-hero">
         <span className="glint" style={{ "--img": `url(${hero})` } as CSSProperties}>
           <img src={hero} alt="" />
@@ -35,8 +36,14 @@ export function Cover() {
       </div>
       <div className="cover-giant display">
         <div className="line">LAB</div>
-        <div className="line fill glitch" data-text="INFER">INFER</div>
+        <div className="line fill glitch-static" data-text="INFER"><span className="glitch" data-text="INFER">INFER</span></div>
       </div>
+      <div className="crease-v" style={{ left: "50%" }} />
+      <div className="crease-h" style={{ top: "58%" }} />
+      <span className="side-label">HCl STANDARDIZATION · Na₂CO₃ PRIMARY STANDARD</span>
+      <div className="ruler-v" style={{ left: 24, top: 120, height: 100 }} />
+      <div className="cross" style={{ left: 44, top: 96 }} />
+      <div className="cross" style={{ right: 44, top: 96 }} />
       <div className="cover-tag">
         <h1 className="rv" style={stagger(0)}>拍下数据，截下文献。<br />得到的不只是结果，<b>还有结论。</b></h1>
         <p className="rv" style={stagger(1)}>规律、能证明什么、哪里不对、下次怎么改。</p>

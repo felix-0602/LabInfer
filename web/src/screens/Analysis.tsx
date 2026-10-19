@@ -6,7 +6,8 @@ import { FitChart } from "../charts/FitChart";
 import { PrecisionChart } from "../charts/PrecisionChart";
 import { TitrationChart } from "../charts/TitrationChart";
 import type { AnalysisResult, Finding, Simulation } from "../types";
-import { Anchor, CountUp, STREAM_GAP, Segmented, stagger } from "../motion";
+import { CountUp, STREAM_GAP, Segmented, stagger } from "../motion";
+import { Vignette } from "../vignette";
 import { errorText, useWorkbench } from "../workbench";
 
 type Tab = "titration" | "fit" | "precision" | "budget";
@@ -120,6 +121,17 @@ export function Analysis() {
 
   const chartProps = { highlight, anomalies, onHover: setHoverPt, flash };
 
+  // 滴定管刻度跟随当前关注的那一份：悬停的点 > 选中结论的点 > 第一个异常点 > 第一份
+  const tc = a.titration_curve;
+  const focus = tc && (tc.endpoints.find((e) => e.point_id === hoverPt)
+    ?? tc.endpoints.find((e) => highlight.has(e.point_id))
+    ?? tc.endpoints.find((e) => anomalies.has(e.point_id))
+    ?? tc.endpoints.find((e) => e.dv_ml < tc.indicator.dv_window_ml[0] || e.dv_ml > tc.indicator.dv_window_ml[1])
+    ?? tc.endpoints[0]);
+  const volCol = s.dataset?.columns.find((c) => c.key === "V" || c.unit === "mL")?.key;
+  const vRead = focus && volCol ? s.dataset?.rows.find((r) => r.id === focus.point_id)?.values[volCol] : null;
+  const burette = focus && typeof vRead === "number" ? { point_id: focus.point_id, veq: vRead - focus.dv_ml } : null;
+
   return (
     <div className="s4">
       <section className="pane chart-area">
@@ -145,7 +157,7 @@ export function Analysis() {
             )}
             {fit && <span>{tabs.includes("titration") ? "V–m 过原点 " : ""}R² {fit.r2} · n = {fit.n}</span>}
           </div>
-          <Anchor className="s4-anchor" src={anchor} caption="OBJ. 04 · ARMILLARY · 规律" />
+          <Vignette id="GEN-09" className="s4-anchor" src={anchor} />
         </div>
 
         <Segmented items={tabs} value={tab} label={(t) => TAB_LABEL[t]} onChange={setTab}>
@@ -153,7 +165,7 @@ export function Analysis() {
         </Segmented>
 
         <div className="chart-box" key={tab ?? "none"}>
-          {tab === "titration" && a.titration_curve && <TitrationChart curve={a.titration_curve} simulated={simCurve} {...chartProps} />}
+          {tab === "titration" && a.titration_curve && <TitrationChart curve={a.titration_curve} simulated={simCurve} burette={burette} {...chartProps} />}
           {tab === "fit" && <FitChart analysis={a} {...chartProps} />}
           {tab === "precision" && <PrecisionChart analysis={a} projection={projection} {...chartProps} />}
           {tab === "budget" && a.error_budget && <BudgetChart budget={a.error_budget} />}
