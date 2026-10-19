@@ -1,3 +1,4 @@
+import asyncio
 import io
 from pathlib import Path
 
@@ -5,10 +6,11 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from app.config import settings
+from app.llm import LlmError
 from app.main import create_app
 from app.storage import Store
 from app.vlm import compress_image, normalize_series
-from scripts.seed_demo import DEMO_RECORD_IMAGE, main as seed
+from scripts.seed_demo import DEMO_RECORD_IMAGE, build_demo_objects, main as seed
 
 
 def test_normalize_series_maps_model_variants():
@@ -19,6 +21,48 @@ def test_normalize_series_maps_model_variants():
     assert normalize_series("qc:标准物质") == "qc:crm"
     assert normalize_series("std") == "std"
     assert normalize_series("") == ""
+
+
+DETECT_OK = '{"tables":[{"bbox":[10,100,990,300]},{"bbox":[10,450,990,800]}]}'
+REGION_STD = '[{"series":"标定","values":{"m":0.1549,"V":28.54},"confidence":{"V":0.9}}]'
+REGION_SAMPLE = '[{"series":"样品：碱灰","values":{"V":29.55,"ms":1.5919},"confidence":{"V":0.99}}]'
+
+
+def test_two_stage_split_tables_and_merge_rows(monkeypatch):
+    """版面分析返回两张表 → 逐表识别 → 行合并、series 归一、id 重排。"""
+    calls = []
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        calls.append(messages[0]["content"][:6])
+        if len(calls) == 1:
+            return DETECT_OK                       # 第一段：版面分析
+        return REGION_STD if len(calls) == 2 else REGION_SAMPLE
+    monkeypatch.setattr("app.vlm.chat", fake_chat)
+
+    _, ctx = build_demo_objects()
+    from app.vlm import recognize_record
+    ds = asyncio.run(recognize_record(_png_bytes(400, 600), ctx))
+    assert len(calls) == 3                         # 1 次找表 + 2 次逐表
+    assert [r["id"] for r in ds["rows"]] == ["p1", "p2"]
+    assert [r["series"] for r in ds["rows"]] == ["std", "sample:碱灰"]
+    assert ds["rows"][1]["values"]["ms"] == 1.5919
+
+
+def test_layout_failure_falls_back_to_whole_page(monkeypatch):
+    calls = []
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        calls.append(1)
+        if len(calls) == 1:
+            raise LlmError("NETWORK", "版面分析失败")
+        return REGION_STD                          # 回退后整页识别
+    monkeypatch.setattr("app.vlm.chat", fake_chat)
+
+    _, ctx = build_demo_objects()
+    from app.vlm import recognize_record
+    ds = asyncio.run(recognize_record(_png_bytes(400, 600), ctx))
+    assert len(calls) == 2
+    assert [r["series"] for r in ds["rows"]] == ["std"]
 
 FAKE_DS = {
     "schema_version": "0.5.0",
