@@ -34,10 +34,17 @@ export interface ExperimentContext {
   model: string;
   model_params?: Record<string, number>;
   variables: { columns: Column[] };
-  reference: { datasets: { dataset_id: string }[]; crm: Json | null; limits: Limit[] };
+  reference: { datasets: ReferenceDataset[]; crm: Json | null; limits: Limit[] };
   qc_rules: { rule_id: string; params: Json; citation?: string }[];
   datasets: { mine: string | null };
   [k: string]: unknown;
+}
+
+export interface ReferenceDataset {
+  dataset_id: string;
+  columns?: Record<string, string>;
+  space?: "raw" | "transformed";
+  meta?: { doi?: string | null; figure?: string | null; note?: string; v_eq_ml?: number };
 }
 
 export interface Template {
@@ -151,4 +158,48 @@ export interface Snapshot {
   datasets: Dataset[];
   analysis: AnalysisResult;
   findings: Finding[];
+}
+
+// ---- M2 曲线取数 ----
+
+export type Px = [number, number];
+
+export interface Figure {
+  schema_version: string;
+  id: string;
+  image_url: string;
+  width: number;
+  height: number;
+  sha256: string;
+  meta: { doi: string | null; figure: string | null };
+}
+
+export type AxisScale = "linear" | "log10";
+
+export interface AxisCalibration {
+  scale: AxisScale;
+  p1: { px: Px; value: number };
+  p2: { px: Px; value: number };
+}
+
+// 识别建议里某个轴刻度不足时为 null，由用户在画布上手动放点
+export interface Calibration { x: AxisCalibration | null; y: AxisCalibration | null }
+
+export interface FigureDetection {
+  schema_version: string;
+  figure_id: string;
+  plot_area: { u0: number; v0: number; u1: number; v1: number } | null;
+  axes: Record<"x" | "y", { label: string; unit: string; scale: AxisScale; ticks: { px: Px; value: number; confidence: number }[] }>;
+  calibration: Calibration;
+  series: { id: string; label: string; color: string | null; marker: string | null; confidence: number }[];
+  warnings: string[];
+  engine?: { vlm?: string; cached?: boolean };
+}
+
+export interface ExtractResult {
+  schema_version: string;
+  dataset: Dataset;
+  points_px: { point_id: string; px: Px }[];
+  residual_px: number | null;
+  warnings: string[];
 }

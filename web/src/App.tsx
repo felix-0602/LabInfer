@@ -95,6 +95,22 @@ export function App() {
         patch({ busy: null, notice: { tone: "error", text: `计算失败：${errorText(e)}` } });
       }
     },
+    attachReference: async (entry) => {
+      if (!s.ctx || s.shadow) return;
+      patch({ busy: "正在把文献曲线加入参照" });
+      try {
+        // 同一张图同一条曲线重复提取会覆盖同一个 dataset_id，参照项也按 id 替换
+        const datasets = [...s.ctx.reference.datasets.filter((d) => d.dataset_id !== entry.dataset_id), entry];
+        const ctx = await api.putContext({ ...s.ctx, reference: { ...s.ctx.reference, datasets } });
+        patch({ ctx, busy: "M4 正在重新计算" });
+        const analysis = await api.analyze(ctx.id);
+        patch({ analysis, busy: null });
+        dispatch({ type: "complete", step: 3, next: 4 });
+        void runFindings(ctx.id);
+      } catch (e) {
+        patch({ busy: null, notice: { tone: "error", text: `加入参照失败：${errorText(e)}` } });
+      }
+    },
     rerunFindings: async () => {
       if (s.ctx && !s.shadow) await runFindings(s.ctx.id);
     },

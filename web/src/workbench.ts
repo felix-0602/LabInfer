@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import { ApiError } from "./api";
-import type { AnalysisResult, Dataset, ExperimentContext, Finding, Template } from "./types";
+import type { AnalysisResult, Dataset, ExperimentContext, Finding, ReferenceDataset, Template } from "./types";
 
 // 页面状态只在浏览器内存里（architecture.md · M8）。刷新后从后端重新拉取。
 
@@ -75,6 +75,7 @@ export interface Workbench {
   loadDemo: () => Promise<void>;
   recognize: (image: Blob, filename: string) => Promise<void>;
   confirmDataset: (ds: Dataset) => Promise<void>;
+  attachReference: (entry: ReferenceDataset) => Promise<void>;
   rerunFindings: () => Promise<void>;
 }
 

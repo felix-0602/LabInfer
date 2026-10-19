@@ -1,4 +1,6 @@
-import type { AnalysisResult, Dataset, ExperimentContext, Finding, Simulation, Template } from "./types";
+import type {
+  AnalysisResult, AxisCalibration, Dataset, ExperimentContext, ExtractResult, Figure, FigureDetection, Finding, Px, Simulation, Template,
+} from "./types";
 
 // 契约错误体：{ error: { code, message, detail } }
 export class ApiError extends Error {
@@ -38,6 +40,8 @@ export const api = {
   templates: () => request<Template[]>("/api/m3/templates"),
   createContext: (template_id: string) => request<ExperimentContext>("/api/m3/contexts", json({ template_id })),
   getContext: (id: string) => request<ExperimentContext>(`/api/m3/contexts/${encodeURIComponent(id)}`),
+  putContext: (ctx: ExperimentContext) =>
+    request<ExperimentContext>(`/api/m3/contexts/${encodeURIComponent(ctx.id)}`, { ...json(ctx), method: "PUT" }),
   getDataset: (id: string) => request<Dataset>(`/api/datasets/${encodeURIComponent(id)}`),
   putDataset: (ds: Dataset) =>
     request<Dataset>(`/api/datasets/${encodeURIComponent(ds.id)}`, { ...json(ds), method: "PUT" }),
@@ -47,6 +51,21 @@ export const api = {
     form.append("image", image, filename);
     return request<Dataset>("/api/m1/records", { method: "POST", body: form });
   },
+  uploadFigure: (image: Blob, filename: string, doi: string, figure: string) => {
+    const form = new FormData();
+    form.append("image", image, filename);
+    if (doi) form.append("doi", doi);
+    if (figure) form.append("figure", figure);
+    return request<Figure>("/api/m2/figures", { method: "POST", body: form });
+  },
+  detectFigure: (id: string) => request<FigureDetection>(`/api/m2/figures/${encodeURIComponent(id)}/detect`, { method: "POST" }),
+  extractFigure: (id: string, body: {
+    calibration: { x: AxisCalibration; y: AxisCalibration };
+    mode: "auto" | "manual";
+    series_id: string | null;
+    points_px: Px[] | null;
+    columns?: Record<"x" | "y", { name: string; unit: string }>;
+  }) => request<ExtractResult>(`/api/m2/figures/${encodeURIComponent(id)}/extract`, json({ schema_version: "0.6.0", ...body })),
   analyze: (context_id: string) => request<AnalysisResult>("/api/m4/analyze", json({ context_id })),
   simulate: (body: { context_id: string; finding_id: string; param: string; from: number; to: number; unit: string }) =>
     request<Simulation>("/api/m6/simulate", json({ schema_version: "0.6.0", ...body })),
