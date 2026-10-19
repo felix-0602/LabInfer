@@ -4,6 +4,23 @@
 
 黑客松「科研创新」赛道参赛项目。
 
+## 快速启动
+
+```bash
+./start.sh
+```
+
+后端起在 http://127.0.0.1:8000 （接口文档 `/docs`），前端起在 http://127.0.0.1:5173 （`/api` 由 Vite 代理到后端），Ctrl+C 一起停。首次运行自动装依赖（后端 `uv venv` + `requirements.txt`，直连失败自动切清华镜像；前端 `npm install`）、写入演示数据与识别缓存；之后启动只有几秒。
+
+| 选项 | 作用 |
+|---|---|
+| `--backend` / `--frontend` | 只起其中一端 |
+| `--no-seed` | 跳过演示数据播种（默认每次启动写入/覆盖演示数据与识别缓存） |
+| `--reload` | 后端热重载（开发用） |
+
+- 要用真实 VLM/LLM：`cp server/.env.example server/.env`，填 `LABINFER_GLM_API_KEY`（脚本自动加载）。不填也能跑——M5 降级为模板结论，演示上传 `design/assets/DEMO-01.jpg` 走烘焙缓存，不依赖模型。
+- 手动分步启动、存储后端切换等细节见 [server/README.md](server/README.md) 与 `web/package.json`。
+
 ## 文档索引
 
 每个问题只有一个文档负责回答。找信息先查这张表，改信息只改负责的那份。
