@@ -615,9 +615,9 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .s4 { display: grid; grid-template-columns: 1fr 440px; height: 100%; }
 .s4 .chart-area { position: relative; padding: 28px 32px 24px; display: flex; flex-direction: column; }
 .s4 .headline { display: flex; align-items: flex-end; gap: 28px; }
-.s4 .ea .lbl { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.1em; }
-.s4 .ea .big { font-size: 112px; color: var(--ink); }
-.s4 .ea .big small { font-family: var(--f-mono); font-size: 16px; font-weight: 400; letter-spacing: 0; color: var(--ink-3); margin-left: 8px; font-variation-settings: normal; }
+.s4 .metric .lbl { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.1em; }
+.s4 .metric .big { font-size: 112px; color: var(--ink); }
+.s4 .metric .big small { font-family: var(--f-mono); font-size: 16px; font-weight: 400; letter-spacing: 0; color: var(--ink-3); margin-left: 8px; font-variation-settings: normal; }
 .s4 .vs { padding-bottom: 14px; display: grid; gap: 4px; font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
 .s4 .vs b { color: var(--ink); font-weight: 500; }
 .s4 .vs .delta { color: var(--cobalt); }
@@ -850,3 +850,13 @@ body.solo .frame { width: min(100vw, 160vh); border-radius: 0; box-shadow: none;
 .s4 .s4-anchor > .vignette { inset: 0; }
 .s4 .s4-anchor figcaption { display: none; }
 .s5 .s5-anchor figcaption { top: auto; bottom: 0; }
+
+/* 滴定案例补充：真实数据标签、超限数字、讲解阶梯与虚拟台复核行 */
+.tag.real { border-color: var(--cobalt); color: var(--cobalt); }
+.s4 .vs .delta.bad { color: var(--signal); }
+.s4 .metric .big { font-size: 96px; }
+.f-card .ladder { margin-top: 8px; padding-top: 6px; border-top: var(--hair); font-size: 11.5px; color: var(--ink-2); line-height: 1.5; }
+.f-card .ladder b { font-family: var(--f-mono); font-weight: 500; font-size: 10.5px; color: var(--cobalt); margin-right: 6px; }
+.f-card .verify { margin-top: 8px; padding: 5px 8px; border-radius: 2px; background: var(--paper-1); font-size: 11.5px; color: var(--ink-2); line-height: 1.5; }
+.f-card .verify b { font-family: var(--f-mono); font-weight: 500; font-size: 10.5px; color: var(--ink); margin-right: 6px; }
+.f-card .verify.refuted b { color: var(--ink-3); }
