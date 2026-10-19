@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS templates(    -- 组织知识：实验模板库，业
 
 - **所有携带外部输入的 SQL 一律参数绑定（`?` 占位）**，禁止拼接、`format`、f-string 组装。id、context_id、payload 全部走绑定参数。
 - 表名、列名只出现模块内的常量 DDL 里，不接收任何外部输入。
-- 唯一例外是 `PRAGMA user_version = <int>`（PRAGMA 不支持绑定），操作数是模块常量 `SCHEMA_VERSION`，非外部输入。
+- 唯一例外是 `PRAGMA user_version = <int>`（PRAGMA 不支持绑定）。操作数是写死的代数字面量，模块内用断言与常量 `SCHEMA_VERSION` 对齐（常量升代而字面量未跟时启动即失败），非外部输入。
 
 ## 迁移
 

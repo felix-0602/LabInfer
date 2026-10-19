@@ -14,7 +14,7 @@ def make_client(tmp_path):
 
 def test_health_and_templates(tmp_path):
     c = make_client(tmp_path)
-    assert c.get("/api/health").json()["contract_version"] == "0.7.0"
+    assert c.get("/api/health").json()["contract_version"] == "0.7.1"
     templates = c.get("/api/m3/templates").json()
     ids = {t["id"] for t in templates}
     assert {"tpl_alkali_titration", "tpl_iodine_clock"} <= ids
@@ -96,7 +96,7 @@ def test_snapshot_full_chain(tmp_path):
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
     snap = r.json()
-    assert snap["schema_version"] == "0.7.0"
+    assert snap["schema_version"] == "0.7.1"
     assert {s["id"] for s in snap["datasets"]} == {"ds_mine_demo"}
     assert snap["analysis"]["fits"] and snap["findings"]
     assert "titration_curve" in snap["analysis"] and "error_budget" in snap["analysis"]
@@ -202,4 +202,4 @@ def test_full_loop_on_sqlite_backend(tmp_path):
 
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
-    assert r.json()["schema_version"] == "0.7.0"
+    assert r.json()["schema_version"] == "0.7.1"

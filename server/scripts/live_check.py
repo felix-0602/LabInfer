@@ -177,7 +177,7 @@ def main() -> int:
     t = step("演示保底快照")
     r = client.get(f"/api/snapshot/{ctx['id']}")
     snap = r.json()
-    ok(snap["schema_version"] == "0.7.0" and snap["findings"] and snap["analysis"]["fits"],
+    ok(snap["schema_version"] == "0.7.1" and snap["findings"] and snap["analysis"]["fits"],
        "快照含上下文、数据集、分析与结论")
     results["snapshot"] = time.time() - t
 
