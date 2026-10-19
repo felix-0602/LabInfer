@@ -1,6 +1,8 @@
 import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import orb from "../../../design/assets/GEN-03.webp";
 import prism from "../../../design/assets/GEN-08.webp";
+// 左侧期刊微距底纹：程序绘制（design/render/journal.py），只做情绪，内容不可读
+import journal from "../../../design/assets/PHOTO-02.webp";
 import { api } from "../api";
 import { pxToValue } from "../charts/calib";
 import { fmt } from "../charts/scale";
@@ -207,6 +209,7 @@ export function Literature() {
       <div className="split">
         <section className="pane main-pane center lit-empty tex-grain">
           <div className="display ghost-word">FIGURE → DATA</div>
+          <div className="journal duo-day"><img src={journal} alt="" /></div>
           <div className="halftone fade-r" />
           <div className="cross" style={{ left: 32, top: 32 }} />
           <div className="cross" style={{ right: 32, top: 32 }} />

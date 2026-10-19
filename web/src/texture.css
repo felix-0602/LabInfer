@@ -237,3 +237,27 @@
 .chart .burette-tick { stroke: var(--ink-3); stroke-width: 0.75; }
 .chart .burette-label { letter-spacing: 0.08em; }
 .s2-anchor .v-tag:not(:last-child) { display: none; }
+
+/* ---------- 程序绘制的「照片」位（design/render/*.py）：双色调映射 ---------- */
+.duo-night { background: var(--cobalt); isolation: isolate; overflow: hidden; }
+.duo-night > img { filter: grayscale(1) contrast(1.35) brightness(0.95); mix-blend-mode: multiply; }
+.duo-day { background: #fff; isolation: isolate; overflow: hidden; }
+.duo-day > img { filter: grayscale(1) contrast(1.25) brightness(1.05); }
+.duo-day::after { content: ""; position: absolute; inset: 0; background: var(--cobalt); mix-blend-mode: screen; pointer-events: none; }
+.duo-night > img, .duo-day > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* 封面样片：右上角；读数挪到样片左侧，与样片顶边对齐，避开 INFER 大字 */
+.cover .specimen { position: absolute; right: 56px; top: 104px; width: 150px; height: 188px; margin: 0; box-shadow: 0 0 0 0.5px rgba(231, 233, 240, 0.4);
+  translate: calc(var(--mx) * -8px) calc(var(--my) * -5px); transition: translate 900ms var(--ease-out);
+  animation: specimen-in 900ms var(--ease-out) 1000ms both; }
+@keyframes specimen-in { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+.cover .specimen-cap { position: absolute; right: 56px; top: 300px; white-space: nowrap; text-align: right; font-size: 10px; line-height: 1.7; letter-spacing: 0.1em; color: rgba(231, 233, 240, 0.6);
+  animation: rv-fade 600ms var(--ease-out) 1400ms both; }
+.cover .cover-readout { top: 104px; right: 230px; }
+
+/* S3 空状态：左侧期刊微距底纹 */
+.lit-empty .journal { position: absolute; left: 0; top: 0; bottom: 0; width: 520px; opacity: 0.4; z-index: 0; pointer-events: none;
+  -webkit-mask: linear-gradient(to right, #000 30%, transparent); mask: linear-gradient(to right, #000 30%, transparent);
+  animation: journal-in 1200ms var(--ease-out) both; }
+@keyframes journal-in { from { opacity: 0; transform: translateX(-24px); } }
+@media (max-width: 900px) { .cover .specimen, .cover .specimen-cap { display: none; } .cover .cover-readout { top: 150px; right: 56px; } }

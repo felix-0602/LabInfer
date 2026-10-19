@@ -2,6 +2,8 @@ import { useRef, type CSSProperties, type PointerEvent } from "react";
 import bg from "../../../design/assets/GEN-02.webp";
 // 封面主视觉：银镜试管 GEN-01
 import hero from "../../../design/assets/GEN-01.webp";
+// 右上角样片：程序渲染的滴定终点（design/render/specimen.py），双色调映射成墨黑 → 钴蓝
+import specimen from "../../../design/assets/PHOTO-01.webp";
 import { CountUp, reducedMotion, stagger } from "../motion";
 import { useWorkbench } from "../workbench";
 
@@ -51,6 +53,8 @@ export function Cover() {
           {s.busy ?? "载入演示案例 · HCl 标定与碱灰总碱度 →"}
         </button>
       </div>
+      <figure className="specimen duo-night"><img src={specimen} alt="" /></figure>
+      <div className="specimen-cap mono">SPECIMEN 001<br />METHYL ORANGE · pH 3.9</div>
       <div className="cover-readout mono">
         <div className="rv" style={stagger(0)}>CASE&nbsp;&nbsp;&nbsp;<b>001 · TITRATION</b></div>
         <div className="rv" style={stagger(1)}>MODEL&nbsp;&nbsp;<b>STANDARDIZATION</b></div>

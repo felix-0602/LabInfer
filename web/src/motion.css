@@ -270,29 +270,7 @@ html[data-nav="cover-in"]::view-transition-new(root) { animation: vt-fade-in 400
 .s3b .banner { animation: rv-up var(--dur-base) var(--ease-out) 200ms both; }
 
 /* ---------- 图表：坐标先出，曲线描出，数据点弹入 ---------- */
-.chart .c-frame { animation: rv-fade 360ms var(--ease-out) both; }
-.chart .c-band { transform-box: fill-box; transform-origin: center; animation: band-in 600ms var(--ease-out) 120ms both; }
-@keyframes band-in { from { opacity: 0; transform: scaleY(0.4); } }
-.chart .c-draw { stroke-dasharray: 1; animation: draw var(--dur-draw) var(--ease-inout) 160ms both; }
-@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-.chart .c-fade { animation: rv-fade 600ms var(--ease-out) 700ms both; }
-.chart .c-pop { transform-box: fill-box; transform-origin: center; animation: pop-in 460ms var(--ease-spring) both; animation-delay: calc(560ms + var(--i, 0) * 80ms); }
-.chart .c-row { animation: rv-fade 300ms var(--ease-out) both; animation-delay: calc(80ms + var(--i, 0) * 60ms); }
-.chart .c-grow { transform-box: fill-box; transform-origin: left; animation: grow-x 700ms var(--ease-out) both; animation-delay: calc(160ms + var(--i, 0) * 60ms); }
-@keyframes grow-x { from { transform: scaleX(0); } }
-.chart .c-sim { animation: rv-fade var(--dur-quick) var(--ease-out) both; }
-.chart .ring { transform-box: fill-box; transform-origin: center; animation: pop-in 260ms var(--ease-spring) both; }
-/* 结论出现时，它引用的点闪一下 */
-.chart .flash {
-  fill: none; stroke: var(--cobalt); stroke-width: 2; pointer-events: none;
-  transform-box: fill-box; transform-origin: center; opacity: 0;
-  animation: flash-ring 1000ms var(--ease-out) both;
-}
-.chart .flash.bad { stroke: var(--signal); }
-@keyframes flash-ring {
-  0% { opacity: 1; transform: scale(0.8); stroke-width: 3; }
-  100% { opacity: 0; transform: scale(3.6); stroke-width: 0.5; }
-}
+/* 图表各层的进场动画在 charts/reveal.css（模板：charts/reveal.tsx） */
 .chart-box { animation: rv-fade 200ms var(--ease-out) both; }
 
 /* ---------- S4 结论卡片：逐条流式出现 ---------- */
@@ -330,6 +308,11 @@ html[data-nav="cover-in"]::view-transition-new(root) { animation: vt-fade-in 400
 .ladder:hover { color: var(--ink); }
 .ladder-text { display: inline; animation: rv-fade var(--dur-base) var(--ease-out) both; }
 .sim-ctl input[type="range"] { animation: rv-fade var(--dur-base) var(--ease-out) both; }
+/* 推演面板展开 / 折叠：高度走 grid 0fr → 1fr，箭头转 90° */
+.sim-body { transition: grid-template-rows var(--dur-base) var(--ease-out); }
+.sim-body > div { transition: padding-top var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out); opacity: 0; }
+.sim-ctl.open .sim-body > div { opacity: 1; }
+.sim-head .chev { transition: rotate var(--dur-quick) var(--ease-spring); }
 .verify { animation: rv-fade 400ms var(--ease-out) both; }
 
 /* ---------- S5 导出：报告像一张纸从桌面推上来 ---------- */
@@ -352,5 +335,5 @@ html[data-nav="cover-in"]::view-transition-new(root) { animation: vt-fade-in 400
 /* ---------- 减少动态效果：全部停在终态（伪元素也算） ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .cover, .cover-giant, .cover-hero, .cover-readout { translate: none; }
+  .cover, .cover-giant, .cover-hero, .cover-readout, .cover .specimen { translate: none; }
 }

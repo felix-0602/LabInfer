@@ -1,0 +1,46 @@
+/* 图表动画模板的样式（组件见 reveal.tsx）。
+   整条时间线只由下面几个变量决定：想让所有图表整体快一点 / 慢一点，改这里即可。
+   keyframes rv-fade、pop-in 与缓动、时长令牌来自 motion.css；减少动态效果时 motion.css 的总开关让各层直接落在终态。 */
+.chart {
+  --c-at-frame: 0ms;     /* 网格、坐标轴 */
+  --c-at-band: 120ms;    /* 参考区 */
+  --c-at-draw: 160ms;    /* 主曲线描线 */
+  --c-at-mark: 560ms;    /* 第一个数据点 */
+  --c-at-fade: 700ms;    /* 标注、次要曲线 */
+  --c-at-bar: 80ms;      /* 第一行横条 */
+  --c-step: 80ms;        /* 数据点之间的间隔 */
+  --c-row-step: 60ms;    /* 横条之间的间隔 */
+}
+
+.chart .c-frame { animation: rv-fade 360ms var(--ease-out) var(--c-at-frame) both; }
+.chart .c-band { transform-box: fill-box; transform-origin: center; animation: band-in 600ms var(--ease-out) var(--c-at-band) both; }
+@keyframes band-in { from { opacity: 0; transform: scaleY(0.4); } }
+.chart .c-draw { stroke-dasharray: 1; animation: draw var(--dur-draw) var(--ease-inout) var(--c-at-draw) both; }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.chart .c-fade { animation: rv-fade 600ms var(--ease-out) var(--c-at-fade) both; }
+.chart .c-pop {
+  transform-box: fill-box; transform-origin: center;
+  animation: pop-in 460ms var(--ease-spring) both;
+  animation-delay: calc(var(--c-at-mark) + min(var(--i, 0), 20) * var(--c-step));
+}
+.chart .c-row { animation: rv-fade 300ms var(--ease-out) both; animation-delay: calc(var(--c-at-bar) + var(--i, 0) * var(--c-row-step)); }
+.chart .c-row .c-grow {
+  transform-box: fill-box; transform-origin: left;
+  animation: grow-x 700ms var(--ease-out) both;
+  animation-delay: calc(var(--c-at-bar) + 80ms + var(--i, 0) * var(--c-row-step));
+}
+@keyframes grow-x { from { transform: scaleX(0); } }
+.chart .c-sim { animation: rv-fade var(--dur-quick) var(--ease-out) both; }
+.chart .ring { transform-box: fill-box; transform-origin: center; animation: pop-in 260ms var(--ease-spring) both; }
+
+/* 结论出现时，它引用的点闪一下 */
+.chart .flash {
+  fill: none; stroke: var(--cobalt); stroke-width: 2; pointer-events: none;
+  transform-box: fill-box; transform-origin: center; opacity: 0;
+  animation: flash-ring 1000ms var(--ease-out) both;
+}
+.chart .flash.bad { stroke: var(--signal); }
+@keyframes flash-ring {
+  0% { opacity: 1; transform: scale(0.8); stroke-width: 3; }
+  100% { opacity: 0; transform: scale(3.6); stroke-width: 0.5; }
+}

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# 重新生成 design/assets/ 下的 GEN 素材（Blender 渲染 + ImageMagick 后处理）。
+# 重新生成 design/assets/ 下的 GEN 素材（Blender 渲染 + ImageMagick 后处理），
+# 以及 PHOTO 位的两张程序绘制图（纯 Python：numpy + Pillow，不需要 Blender）。
 #
-# 依赖：Blender ≥ 4.2（Cycles，有 NVIDIA 显卡时自动用 OptiX），ImageMagick 7。
+# 依赖：Blender ≥ 4.2（Cycles，有 NVIDIA 显卡时自动用 OptiX），ImageMagick 7；PHOTO 位只要 python3、numpy、Pillow。
 # 用法：
 #   BLENDER=/path/to/blender ./render.sh            # 全部
 #   BLENDER=/path/to/blender ./render.sh GEN-03     # 只出一张
@@ -34,7 +35,7 @@ anchor() { # 锚点物件：裁掉透明留白，四周留 3% 边
 }
 
 ARGS=("$@")
-for ID in GEN-01 GEN-02 GEN-03 GEN-04 GEN-05 GEN-06 GEN-07 GEN-08 GEN-09 GEN-10; do
+for ID in GEN-01 GEN-02 GEN-03 GEN-04 GEN-05 GEN-06 GEN-07 GEN-08 GEN-09 GEN-10 PHOTO-01 PHOTO-02; do
   want "${ARGS[@]}" || continue
   echo "== $ID"
   case $ID in
@@ -55,6 +56,11 @@ for ID in GEN-01 GEN-02 GEN-03 GEN-04 GEN-05 GEN-06 GEN-07 GEN-08 GEN-09 GEN-10;
     GEN-08) render anchors.py 1600 1000 384 prism;   anchor ;;
     GEN-09) render anchors.py 1200 1200 384 armilla; anchor ;;
     GEN-10) render anchors.py 1000 1000 384 nib;     anchor ;;
+    # PHOTO 位：程序绘制的灰度图，页面再做双色调；前端用缩小的 WebP
+    PHOTO-01) python3 specimen.py "$OUT/$ID.jpg"
+              magick "$OUT/$ID.jpg" -resize 400x500 -quality 82 "$OUT/$ID.webp" ;;
+    PHOTO-02) python3 journal.py "$OUT/$ID.jpg"
+              magick "$OUT/$ID.jpg" -resize 600x800 -quality 78 "$OUT/$ID.webp" ;;
   esac
 done
 ls -la "$OUT"
