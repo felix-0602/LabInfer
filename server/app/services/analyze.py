@@ -22,7 +22,7 @@ def _pick(row: dict, col: dict | None, default=None):
     return v
 
 
-def _analyze_titration(ctx: dict, mine_ds: dict, model) -> dict:
+def _analyze_titration(ctx: dict, mine_ds: dict, model, ref_datasets: dict[str, dict]) -> dict:
     """酸碱滴定：标定段逐份求 c 后平均，测定段算 w(Na₂O)，精密度用相对平均偏差。"""
     roles = _role_map(ctx)
     m_col, v_col = roles.get(model.x_role), roles.get(model.y_role)
@@ -168,7 +168,7 @@ def _analyze_titration(ctx: dict, mine_ds: dict, model) -> dict:
 def analyze(ctx: dict, mine_ds: dict, ref_datasets: dict[str, dict]) -> dict:
     model = REGISTRY[ctx["model"]]
     if model.id == "titration_standardization":
-        return _analyze_titration(ctx, mine_ds, model)
+        return _analyze_titration(ctx, mine_ds, model, ref_datasets)
     roles = _role_map(ctx)
     x_col, y_col = roles.get(model.x_role), roles.get(model.y_role)
     if not x_col or not y_col:
