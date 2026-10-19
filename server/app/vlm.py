@@ -10,6 +10,27 @@ from .prompts import RECORD_SYSTEM
 
 _MAX_EDGE = 1568
 
+# 模型常不按枚举写 series（全角冒号、中文前缀、裸「标定」），在边界统一归一到契约枚举
+_SERIES_ALIASES = {"标定": "std", "标准": "std", "标准系列": "std", "空白": "blank"}
+_SERIES_PREFIXES = ("sample", "样品", "试样", "样本")
+
+
+def normalize_series(s: str) -> str:
+    s = (s or "").strip()
+    if s in ("std", "blank", "qc:crm", "qc:spike"):
+        return s
+    if s in _SERIES_ALIASES:
+        return _SERIES_ALIASES[s]
+    if s.startswith("qc:"):
+        return "qc:crm"
+    for prefix in _SERIES_PREFIXES:
+        for colon in (":", "："):
+            head = prefix + colon
+            if s.lower().startswith(head):
+                name = s[len(head):].strip().strip("：: ")
+                return f"sample:{name}" if name else "sample:样品"
+    return s
+
 
 def compress_image(data: bytes) -> bytes:
     from PIL import Image
@@ -41,13 +62,17 @@ async def recognize_record(image_bytes: bytes, ctx: dict) -> dict:
             {"type": "image_url", "image_url": {"url": _data_uri(compress_image(image_bytes))}},
         ]},
     ]
-    raw = await chat(messages, model=settings.vlm_model)
+    raw = await chat(messages, model=settings.vlm_model, timeout=120)
     obj = extract_json(raw)
+    if isinstance(obj, list):                    # 模型常无视格式约定直接给行数组
+        obj = {"rows": obj}
     rows_out = []
     for i, r in enumerate((obj or {}).get("rows", []), start=1):
+        if not isinstance(r, dict):
+            continue
         rows_out.append({
             "id": f"p{i}",
-            "series": r.get("series") or "std",
+            "series": normalize_series(r.get("series") or "std"),
             "values": r.get("values") or {},
             "confidence": r.get("confidence") or {},
             "verified": False,
