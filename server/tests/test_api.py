@@ -14,7 +14,7 @@ def make_client(tmp_path):
 
 def test_health_and_templates(tmp_path):
     c = make_client(tmp_path)
-    assert c.get("/api/health").json()["contract_version"] == "0.6.0"
+    assert c.get("/api/health").json()["contract_version"] == "0.7.0"
     templates = c.get("/api/m3/templates").json()
     ids = {t["id"] for t in templates}
     assert {"tpl_alkali_titration", "tpl_iodine_clock"} <= ids
@@ -96,12 +96,51 @@ def test_snapshot_full_chain(tmp_path):
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
     snap = r.json()
-    assert snap["schema_version"] == "0.6.0"
+    assert snap["schema_version"] == "0.7.0"
     assert {s["id"] for s in snap["datasets"]} == {"ds_mine_demo"}
     assert snap["analysis"]["fits"] and snap["findings"]
+    assert "titration_curve" in snap["analysis"] and "error_budget" in snap["analysis"]
 
     miss = c.get("/api/snapshot/nope")
     assert miss.status_code == 404
+
+
+def test_export_png_and_include_flags(tmp_path):
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    c.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+
+    r = c.post("/api/m7/export", json={"context_id": "ctx_demo", "format": "png"})
+    assert r.status_code == 200
+    assert r.content[:8] == b"\x89PNG\r\n\x1a\n"
+    assert r.headers["content-type"] == "image/png"
+
+    r = c.post("/api/m7/export", json={
+        "context_id": "ctx_demo", "format": "md",
+        "include": {"figure": False, "anomalies": False,
+                    "quality_control": False, "sources": False}})
+    assert r.status_code == 200
+    assert "质量控制" not in r.text and "参照来源" not in r.text
+    assert "## 滴定曲线" not in r.text                   # figure=False 连小节一起关
+    assert "仪器误差预算" not in r.text                    # anomaly 类结论被过滤
+    assert "总碱度" in r.text                             # conclusion 类保留
+
+    r = c.post("/api/m7/export", json={
+        "context_id": "ctx_demo", "format": "md", "include": {"figure": True}})
+    assert r.status_code == 200 and "## 滴定曲线" in r.text and "变色窗" in r.text
+
+
+def test_simulate_co2_retention(tmp_path):
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    r = c.post("/api/m6/simulate", json={
+        "context_id": "ctx_demo", "finding_id": "f", "from": 0, "to": 1,
+        "param": "co2_retained_fraction"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["predicted"]["co2_retained_fraction"] == 0.5
+    assert 3.97 < body["predicted"]["ph_eq"] < 8.0       # 驱除 CO₂ 后计量点 pH 上移
+    assert len(body["curve"]) == 161
 
 
 CUSTOM_TPL = {
@@ -163,4 +202,4 @@ def test_full_loop_on_sqlite_backend(tmp_path):
 
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
-    assert r.json()["schema_version"] == "0.6.0"
+    assert r.json()["schema_version"] == "0.7.0"
