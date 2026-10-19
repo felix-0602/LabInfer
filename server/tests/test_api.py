@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -128,6 +130,26 @@ def test_export_png_and_include_flags(tmp_path):
     r = c.post("/api/m7/export", json={
         "context_id": "ctx_demo", "format": "md", "include": {"figure": True}})
     assert r.status_code == 200 and "## 滴定曲线" in r.text and "变色窗" in r.text
+
+
+def test_export_md_embeds_figure_data_uri(tmp_path):
+    """md 导出的插图必须自包含：data URI 内嵌，而不是指向不存在的 figure.png。"""
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    c.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+
+    r = c.post("/api/m7/export", json={"context_id": "ctx_demo", "format": "md"})
+    assert r.status_code == 200
+    assert "](figure.png)" not in r.text
+    uri_at = r.text.find("data:image/png;base64,")
+    assert uri_at != -1
+    payload = r.text[uri_at:].split(")", 1)[0][len("data:image/png;base64,"):]
+    assert base64.b64decode(payload)[:8] == b"\x89PNG\r\n\x1a\n"   # 内嵌的是合法 PNG
+
+    off = c.post("/api/m7/export", json={
+        "context_id": "ctx_demo", "format": "md", "include": {"figure": False}})
+    assert off.status_code == 200
+    assert "data:image/png;base64," not in off.text and "![图" not in off.text
 
 
 def test_simulate_co2_retention(tmp_path):

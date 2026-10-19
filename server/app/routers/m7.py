@@ -1,3 +1,4 @@
+import base64
 import io
 
 from fastapi import APIRouter, Request
@@ -117,7 +118,8 @@ def _sections(ctx: dict, analysis: dict, findings: list[dict], flags: dict):
             yield ("li", f"限值：{lim['label']} = {lim['value']} {lim.get('unit', '')}")
 
 
-def _md(ctx: dict, analysis: dict, findings: list[dict], flags: dict) -> str:
+def _md(ctx: dict, analysis: dict, findings: list[dict], flags: dict,
+        fig_uri: str = "figure.png") -> str:
     lines = []
     for kind, content in _sections(ctx, analysis, findings, flags):
         if kind == "h1":
@@ -129,7 +131,7 @@ def _md(ctx: dict, analysis: dict, findings: list[dict], flags: dict) -> str:
         elif kind == "li":
             lines.append(f"- {content}")
         elif kind == "image":
-            lines += [f"![{content}](figure.png)", ""]
+            lines += [f"![{content}]({fig_uri})", ""]
         elif kind == "table":
             lines += ["| " + " | ".join(content[0]) + " |",
                       "| " + " | ".join("---" for _ in content[0]) + " |"]
@@ -171,12 +173,32 @@ def _docx_bytes(ctx: dict, analysis: dict, findings: list[dict], flags: dict) ->
     return buf.getvalue()
 
 
+_CJK_FONTS = ("Noto Sans CJK SC", "WenQuanYi Micro Hei", "WenQuanYi Zen Hei",
+              "AR PL UMing CN", "WenQuanYi Zen Hei Mono")
+
+
+def _apply_cjk_font() -> None:
+    """图例与轴标签含中文（指示剂名、样品名等）。环境里有中文字体就用，
+    免得画成豆腐块；一个都没有则维持 DejaVu 回退（届时图例只剩 ASCII 部分）。"""
+    import matplotlib.font_manager as fm
+
+    available = {f.name for f in fm.fontManager.ttflist}
+    for name in _CJK_FONTS:
+        if name in available:
+            import matplotlib.pyplot as plt
+            plt.rcParams["font.family"] = "sans-serif"
+            plt.rcParams["font.sans-serif"] = [name, "DejaVu Sans"]
+            plt.rcParams["axes.unicode_minus"] = False   # 中文字体普遍缺 U+2212
+            return
+
+
 def _figure_png_bytes(ctx: dict, analysis: dict) -> bytes:
-    """图 1：滴定曲线（有 titration_curve 时）或 V–m 散点拟合。图内文字只用 ASCII，
-    服务端环境不保证中文字体。"""
+    """图 1：滴定曲线（有 titration_curve 时）或 V–m 散点拟合。
+    图内中文（指示剂名等）依赖 _apply_cjk_font 找到的字体。"""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    _apply_cjk_font()
 
     fig, ax = plt.subplots(figsize=(7.0, 4.2), dpi=150)
     curve = analysis.get("titration_curve")
@@ -231,7 +253,10 @@ def export(body: ExportRequest, request: Request):
     flags = _flags(body.include)
 
     if body.format == "md":
-        return PlainTextResponse(_md(ctx, analysis, findings, flags), media_type="text/markdown")
+        # 图片内嵌为 data URI，导出的单个 md 文件自包含（figure.png 相对链接无文件可指）
+        fig_uri = f"data:image/png;base64,{base64.b64encode(_figure_png_bytes(ctx, analysis)).decode()}" \
+            if flags["figure"] else "figure.png"
+        return PlainTextResponse(_md(ctx, analysis, findings, flags, fig_uri), media_type="text/markdown")
     if body.format == "docx":
         data = _docx_bytes(ctx, analysis, findings, flags)
         return StreamingResponse(
