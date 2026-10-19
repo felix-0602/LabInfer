@@ -28,11 +28,11 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
 
     findings.append(_f(
         "f_pattern", "pattern",
-        f"标定——即用基准物质（组成稳定、能当标准砝码用的碳酸钠）把盐酸准确浓度"
-        f"测出来的操作——三份平行线性良好："
-        f"称的基准 Na₂CO₃ 越多、消耗的盐酸体积越大，滴定体积与称样量成过原点直线"
-        f"（R²={_num(fit['r2'])}，n={fit['n']}），三份平均 c̄(HCl)={_num(d['c_hcl'])} mol/L"
-        f"（过原点回归 {_num(d['c_regression'])}）。",
+        f"[标定](term:standardization)的线性关系很好：每一份基准碳酸钠称得越多，"
+        f"滴定耗掉的盐酸就越多，三份整齐落在「称多少、耗多少」的直线上。"
+        f"报告口径：三份平均 [c̄(HCl)](term:c_bar)={_num(d['c_hcl'])} mol/L，"
+        f"[过原点回归](term:regression_origin)的斜率另算一遍是 {_num(d['c_regression'])}，"
+        f"两种算法互相印证（[R²](term:r_squared)={_num(fit['r2'])}，n={fit['n']}）。",
         [{"type": "fit", "dataset_id": ds_id}],
     ))
 
@@ -86,14 +86,15 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
                     if c["point_id"] == pred["point_id"]), None)
         if not lim:
             continue
-        judge = "高于" if lim["verdict"] == "exceed" else "不超过"
-        gloss = ("总碱度——碱灰里所有能把酸中和掉的碱性成分合起来、折算成 Na₂O 的质量分数——"
-                 if i == 1 else "总碱度（以 Na₂O 计）")
+        judge = ("比「假设碱灰是纯碳酸钠」算出的理论值 "
+                 f"{_num(lim['limit'])}% 还高一点" if lim["verdict"] == "exceed"
+                 else f"没有超出纯 Na₂CO₃ 的理论值 {_num(lim['limit'])}%")
+        gloss = "[总碱度](term:total_alkalinity)" if i == 1 else "总碱度"
+        pm = "[±](term:u95)" if i == 1 else "±"
         findings.append(_f(
             f"f_conc{i}", "conclusion",
-            f"碱灰平行 {i}（{pred['point_id']}）：{gloss}"
-            f"({_num(pred['as_reported'])} ± {_num(pred['u95'])})%，"
-            f"{judge}纯 Na₂CO₃ 理论值 {_num(lim['limit'])}%。",
+            f"碱灰平行 {i}（{pred['point_id']}）的{gloss} {_num(pred['as_reported'])}%，{judge}。"
+            f"报告口径：({_num(pred['as_reported'])} {pm} {_num(pred['u95'])})%（以 Na₂O 计）。",
             [{"type": "point", "dataset_id": ds_id, "point_id": pred["point_id"]},
              {"type": "comparison",
               "target": f"vs_limit[{analysis['comparison']['vs_limit'].index(lim)}]"}],

@@ -112,10 +112,13 @@ M3 输出，M4、M5 读取。
       { "source_id": "src_textbook_exp3", "title": "武汉工程大学《分析化学实验》",
         "locator": "实验 3 HCl 溶液的标定及碱灰总碱度的测定",
         "quote": "常以 HCl 标准溶液为滴定剂测定总碱度来衡量产品的质量", "verified": true } ],
-    "glossary": [                      // 术语表：术语首现解释的口径；M5 提示词注入，前端点出解释卡
+    "glossary": [                      // 术语表：首现解释的卡片口径（定义 + 帮助句，无比喻）；M5 提示词注入
       { "term_id": "primary_standard", "term": "基准物质",
-        "plain": "纯度极高、组成稳定、能当标准砝码用的物质；本实验用无水碳酸钠",
-        "aliases": ["基准物"], "source": "src_textbook_exp3" } ],
+        "plain": "纯到不拖累计算、放多久都不变、能直接称量的固体，本实验用无水碳酸钠",
+        "help": "它自己必须先准，才有资格去定别人的浓度",     // 0.8.0 可选：帮助理解的一句，只用基本概念
+        "aliases": ["基准物"], "source": "src_textbook_exp3" },
+      { "term_id": "u95", "term": "不确定度 ±", "plain": "把各项不可避免的小误差合成后给出的范围",
+        "help": "真实值有九成五的把握落在这个范围里", "aliases": ["±", "U95"], "source": "src_jjf" } ],
     "field_notes": {                   // 字段人话：键 = 上下文字段路径，01 页替换原始键名
       "model_params.molar_mass_na2co3_g_mol":
         { "label": "Na₂CO₃ 摩尔质量", "plain": "一摩尔无水碳酸钠的质量 105.99 g", "term_id": null } },
@@ -538,7 +541,8 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 
 - ExperimentContext：新增 `guide`（教学导读层，形状与 M8 前端约定一致，规则见 [wiki.md](wiki.md#表达标准)）：`status`（draft/reviewed）、`audience_level`（对齐 ladder.base_level）、`generated_at`、`sources`（出处登记表，`source_id` 索引，`verified: false` 即「待核」）、`glossary`（`term_id` 索引的术语首现解释）、`field_notes`（按字段路径给 01 页的键名人话）、`sections`（`show_in` 声明出现在 01/03 哪页，正文术语用 `[文字](term:term_id)` 标记，`rung_id` 可回挂讲解阶梯）。M3 透传；01/03 页与 M5 读取——学习不只发生在实验前。
 - `GET /api/m3/templates` 每项新增 `has_guide: boolean`。
-- M5：`FINDING_SYSTEM` 增补语言标准（第 8～14 条，出处 wiki.md#表达标准）：保留全部逻辑链、术语首现一句话自然解释（按 glossary 口径注入提示词）、不写压缩电报腔与长复句、结论独立成短句、多步推理加路标、讲学生数据具体到哪份哪个值、输出前按读者思维通读。Finding.text 本版**不启用** term 标记（等 M8 接好解释卡再开）。
+- M5：`FINDING_SYSTEM` 增补语言标准（第 8～15 条，出处 wiki.md#表达标准）：保留全部逻辑链；结论分两遍写（首句纯中文判定句，无符号无括号；数字与符号从第二句「报告口径」起）；术语与符号首现挂 term 标记，解释进卡片（定义 + 帮助句，不用比喻与缩略语）；不写压缩电报腔与长复句；结论独立成短句；多步推理加路标；讲学生数据具体到哪份哪个值；输出前按读者思维通读。ctx 带 `guide` 时术语表（含 term_id 与帮助句）注入用户消息。
+- Finding.text 自 0.8.0 起允许 `[文字](term:term_id)` 标记：term_id 必须在 `guide.glossary` 里，M5 校验器把未知标记剥成纯文字，M7 报告导出把标记剥成纯文字，解释卡由 M8 工作台渲染（标记与 M8 卡片渲染需同批合并）。
 - 无数据结构破坏：Finding、AnalysisResult、Dataset 均不变；模块输出 `schema_version` 随 `CONTRACT_VERSION` 升至 0.8.0。
 
 ### 0.7.1（2026-10-19）

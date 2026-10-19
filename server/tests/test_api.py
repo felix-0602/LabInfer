@@ -108,7 +108,7 @@ def test_guide_structure_consistency(tmp_path):
     src_ids = {s["source_id"] for s in guide["sources"]}
 
     for s in guide["sections"]:
-        linked = set(re.findall(r"\]\(term:([a-z_]+)\)", s["body"]))
+        linked = set(re.findall(r"\]\(term:([a-z0-9_]+)\)", s["body"]))
         assert linked <= term_ids, f"{s['section_id']} 链接了未登记术语: {linked - term_ids}"
         assert set(s["sources"]) <= src_ids
         assert 0 < len(s["summary"]) <= 50
@@ -118,6 +118,8 @@ def test_guide_structure_consistency(tmp_path):
     for g in guide["glossary"]:
         assert g["source"] in src_ids
         assert 0 < len(g["plain"]) <= 60
+        if g.get("help"):
+            assert 0 < len(g["help"]) <= 60
     for note in guide["field_notes"].values():
         assert 0 < len(note["label"]) <= 16
         assert 0 < len(note["plain"]) <= 60
@@ -126,6 +128,22 @@ def test_guide_structure_consistency(tmp_path):
     ctx_n = len([s for s in guide["sections"] if "context" in s["show_in"]])
     lit_n = len([s for s in guide["sections"] if "literature" in s["show_in"]])
     assert 4 <= ctx_n <= 8 and 1 <= lit_n <= 3          # M8 约定的页面容量
+
+
+def test_finding_term_marks_resolve_and_export_strips(tmp_path):
+    """0.8.0 起 Finding.text 允许 term 标记：保底文案的标记必须全部指向登记术语；
+    M7 导出是纯文字载体，标记剥成显示文字。"""
+    import re
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    sse = c.post("/api/m5/findings", json={"context_id": "ctx_demo"}).text
+    guide = c.get("/api/m3/contexts/ctx_demo").json()["guide"]
+    term_ids = {g["term_id"] for g in guide["glossary"]}
+    marked = set(re.findall(r"\]\(term:([a-z0-9_]+)\)", sse))
+    assert marked                                    # 保底路径确实带了标记
+    assert marked <= term_ids
+    md = c.post("/api/m7/export", json={"context_id": "ctx_demo", "format": "md"}).text
+    assert "(term:" not in md and "总碱度" in md      # 报告纯文字、判定信息不丢
 
 
 def test_m1_without_cache_returns_503(tmp_path):

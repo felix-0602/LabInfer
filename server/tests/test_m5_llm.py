@@ -64,7 +64,27 @@ def test_llm_error_falls_back_to_template(tmp_path, monkeypatch):
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
-    assert "三份平行线性良好" in r.text
+    assert "整齐落在" in r.text
+
+
+def test_llm_unknown_term_mark_stripped(tmp_path, monkeypatch):
+    """term 标记只许指向 ctx 术语表；未知的在校验器剥成纯文字，不进结果。"""
+    client = make_client(tmp_path)
+    _enable_llm(monkeypatch)
+    payload = ('好。\n'
+               '[{"type":"conclusion",'
+               '"text":"碱灰平行 2（s2）总碱度 62.578%，高于纯 Na₂CO₃ 理论值 58.47%，'
+               '见[说法](term:made_up_id)。",'
+               '"evidence":[{"type":"point","dataset_id":"ds_mine_demo","point_id":"s2"},'
+               '{"type":"comparison","target":"vs_limit[1]"}]}]')
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        return payload
+    monkeypatch.setattr("app.prompts.chat", fake_chat)
+    r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200
+    assert "(term:made_up_id)" not in r.text
+    assert "见说法。" in r.text
 
 
 def test_no_llm_configured_uses_template(tmp_path):
@@ -87,6 +107,7 @@ def test_llm_prompt_carries_guide_glossary(tmp_path, monkeypatch):
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
-    assert "标定——用基准物质把一瓶只有大概浓度的溶液的准确浓度测出来的操作" in captured["user"]
+    assert "标定（standardization）——拿一份纯到可以完全信任、能称出准确克数的固体，反过来测出一瓶溶液的真实浓度" in captured["user"]
+    assert "帮助理解" in captured["user"]
     assert "语言标准" in captured["system"]
     assert "路标" in captured["system"]        # 节奏与路标规则（wiki.md#表达标准）

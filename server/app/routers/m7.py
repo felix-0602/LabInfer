@@ -1,5 +1,6 @@
 import base64
 import io
+import re
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
@@ -10,6 +11,12 @@ from ..config import CONTRACT_VERSION
 router = APIRouter(prefix="/api/m7", tags=["m7"])
 
 _INCLUDE_KEYS = ("figure", "anomalies", "suggestions", "quality_control", "sources")
+_TERM_MARK_RE = re.compile(r"\[([^\]]+)\]\(term:[a-z0-9_]+\)")
+
+
+def _plain_text(text: str) -> str:
+    """报告是纯文字载体：Finding.text 里的 term 标记剥成显示文字（卡片只在工作台里点）。"""
+    return _TERM_MARK_RE.sub(r"\1", text)
 
 
 class ExportRequest(BaseModel):
@@ -67,7 +74,7 @@ def _titration_sections(ctx: dict, analysis: dict, findings: list[dict], flags: 
             yield ("li", f"{qc['rule_id']}：{mark}（依据 {qc.get('citation', '')}）")
     yield ("h2", "结论")
     for f in _kept_findings(findings, flags):
-        yield ("li", f["text"])
+        yield ("li", _plain_text(f["text"]))
     if flags["sources"]:
         yield ("h2", "参照来源")
         yield ("li", f"标定方法：GB/T 601-2016（基准无水碳酸钠 270~300 ℃ 灼烧至恒重，"
@@ -105,7 +112,7 @@ def _sections(ctx: dict, analysis: dict, findings: list[dict], flags: dict):
             yield ("li", f"{qc['rule_id']}：{mark}（依据 {qc.get('citation', '')}）")
     yield ("h2", "结论")
     for f in _kept_findings(findings, flags):
-        yield ("li", f["text"])
+        yield ("li", _plain_text(f["text"]))
     if flags["sources"]:
         yield ("h2", "参照来源")
         for ref in ctx.get("reference", {}).get("datasets", []):
