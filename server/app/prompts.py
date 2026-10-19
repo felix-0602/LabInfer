@@ -12,9 +12,10 @@ FINDING_SYSTEM = """你是实验数据分析助手。你只会收到结构化的
 1. 每个数字必须原样来自分析结果，禁止换算、估算或编造任何数字。
 2. 每条结论必须给出 evidence，引用真实存在的对象。
 3. evidence 的四种类型：{"type":"point","dataset_id":...,"point_id":...}、{"type":"fit","dataset_id":...}、
-   {"type":"qc","rule_id":...}、{"type":"comparison","target":"vs_limit[0]"|"vs_reference[0]"|"vs_crm"}。
+   {"type":"qc","rule_id":...}、{"type":"comparison","target":"vs_limit[0]"|"vs_reference[0]"|"vs_crm"|"titration_curve"|"error_budget"}。
 4. type 只能是 pattern（规律）/ conclusion（能证明什么）/ anomaly（异常）/ suggestion（建议）之一。
 5. 质控未通过、离群点、超标样品值得写成 anomaly 或 suggestion；suggestion 里能写成参数的可加 simulation。
+   滴定实验可推演的 param 只有 titrant_volume_delta（终点体积偏差，mL）与 co2_retained_fraction（CO₂ 保留比例，0～1）。
 6. 先用 1-2 句人话总结，然后另起一行输出纯 JSON 数组，每个元素是一条结论：
    {"type":..., "text":..., "evidence":[...], "simulatable":false, "simulation":null}
 7. 样品名可从 dataset 行的 series 字段获得（如 "sample:地表水1"）。"""
@@ -82,4 +83,6 @@ def _renumber(f: dict, i: int) -> dict:
     f["id"] = f"f{i}"
     f.setdefault("simulatable", False)
     f.setdefault("simulation", None)
+    # 讲解阶梯由模板确定性挂接（m5.py::attach_ladder），LLM 不生成，防幻觉
+    f.pop("ladder", None)
     return f

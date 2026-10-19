@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from ..llm import LlmError, llm_configured
 from ..prompts import llm_findings
-from ..services.findings import compose_findings
+from ..services.findings import attach_ladder, compose_findings
 
 router = APIRouter(prefix="/api/m5", tags=["m5"])
 
@@ -37,6 +37,7 @@ async def findings(body: FindingsRequest, request: Request):
             items = None
     if not items:
         items = compose_findings(analysis, ctx, mine)
+    items = attach_ladder(items, ctx, analysis)
     store.put_findings(ctx["id"], items)
 
     def gen():

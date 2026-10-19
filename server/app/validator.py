@@ -41,7 +41,8 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
         analysis.get("fits"), analysis.get("predictions"), analysis.get("residuals"),
         analysis.get("qc_results"), analysis.get("comparison"),
         analysis.get("titration_curve"), analysis.get("error_budget"),
-        ctx.get("reference"), ctx.get("qc_rules"))
+        ctx.get("reference"), ctx.get("qc_rules"),
+        ctx.get("model_params"), ctx.get("ladder"))   # 模型常数与讲解阶梯里的常数可引用
     point_ids = {r["id"] for r in dataset.get("rows", [])}
     ds_ids = {dataset.get("id")}
     qc_ids = {q.get("rule_id") for q in analysis.get("qc_results", [])}
