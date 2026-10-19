@@ -59,7 +59,10 @@ async def chat(messages: list[dict], model: str | None = None, temperature: floa
     base = settings.glm_base_url.rstrip("/")
     validate_outbound_url(f"{base}/chat/completions")
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        # trust_env=False：出网策略由 validate_outbound_url 全权管理，忽略环境变量里的
+        # 代理配置。否则本机 shell 常见的 all_proxy=socks://127.0.0.1:7897 会让 httpx
+        # 直接抛 "Unknown scheme for proxy URL"（httpx 不支持裸 socks://）。
+        async with httpx.AsyncClient(timeout=timeout, trust_env=False) as client:
             resp = await client.post(
                 f"{base}/chat/completions",
                 headers={"Authorization": f"Bearer {settings.glm_api_key}"},

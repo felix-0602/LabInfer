@@ -116,6 +116,6 @@
 
 为 M1、M2 准备好已经校正过的结果作为备份。演示时网络或模型出问题，也能把流程走完。
 
-- M1：`scripts/seed_demo.py` 按数据记录页照片（`design/assets/DEMO-01.jpg`）的 sha256 烘焙识别缓存，上传原图即命中，不调 VLM。照片是团队真实记录，缓存内容与种子数据一致。
+- M1：`scripts/seed_demo.py` 按数据记录页照片（`design/assets/DEMO-01.jpg`）的 sha256 烘焙识别缓存，上传原图即命中，不调 VLM。照片是团队真实记录，缓存内容与种子数据一致。烘焙走白名单政策：只有 `server/demo_cache/manifest.json` 登记的图片写进入库的演示缓存，其余识别结果写不入库的运行时缓存（`server/data/runtime_cache/`），用户数据不进 git，读取两处都查。
 - M2：滴定演示不经过文献取数（参照是理论值与标准条文），暂无烘焙需求；曲线类模板接入时再备。
 - M2、M8 的代码与设计稿不在演示切换范围内，归各自负责人；接口约束见 [contracts.md](contracts.md#演示切换对-m2--m8-的边界约束-050)。

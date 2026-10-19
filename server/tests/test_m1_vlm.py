@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -92,7 +93,18 @@ def test_compress_image_limits_long_edge():
     assert max(img.size) <= 1568
 
 
-def test_m1_vlm_recognize_and_cache_bake(tmp_path, monkeypatch):
+def test_m1_bakes_by_whitelist_not_polluting_demo_cache(tmp_path, monkeypatch):
+    """白名单政策：未登记的图片识别结果只写运行时缓存（不入库），演示缓存目录不被污染。"""
+    import app.cache as cache_mod
+
+    demo_dir = tmp_path / "demo"
+    rt_dir = tmp_path / "runtime"
+    demo_dir.mkdir()
+    rt_dir.mkdir()
+    monkeypatch.setattr(cache_mod, "DEMO_CACHE_DIR", demo_dir)
+    monkeypatch.setattr(cache_mod, "RUNTIME_CACHE_DIR", rt_dir)
+    monkeypatch.setattr(cache_mod, "_demo_digests", None)   # manifest 不存在 → 白名单为空
+
     store = Store(tmp_path)
     seed(store)
     client = TestClient(create_app(store))
@@ -103,30 +115,37 @@ def test_m1_vlm_recognize_and_cache_bake(tmp_path, monkeypatch):
         return {k: v for k, v in FAKE_DS.items()}
     monkeypatch.setattr("app.routers.m1.recognize_record", fake_recognize)
 
-    mem = {}
-
-    def fake_cache_get(kind, key):
-        return mem.get(key)
-
-    def fake_cache_put(kind, key, payload):
-        mem[key] = payload
-    monkeypatch.setattr("app.routers.m1.cache_get", fake_cache_get)
-    monkeypatch.setattr("app.routers.m1.cache_put", fake_cache_put)
+    before = set((demo_dir / "m1").glob("*.json"))            # seed 烘焙的演示图结果
 
     r = client.post("/api/m1/records", data={"context_id": "ctx_demo"},
                     files={"image": ("note.png", io.BytesIO(_png_bytes(64, 64)), "image/png")})
     assert r.status_code == 201
-    ds = r.json()
-    assert ds["rows"][0]["series"] == "std"
-    assert "cached" not in ds
-    assert len(mem) == 1
-    ctx = store.get_context("ctx_demo")
-    assert ctx["datasets"]["mine"] == ds["id"]
+    assert "cached" not in r.json()
+    assert set((demo_dir / "m1").glob("*.json")) == before     # 演示缓存不新增（只有 seed 那份）
+    rt_files = list((rt_dir / "m1").glob("*.json"))
+    assert len(rt_files) == 1                                 # 运行时缓存一份
 
     r2 = client.post("/api/m1/records", data={"context_id": "ctx_demo"},
                      files={"image": ("note.png", io.BytesIO(_png_bytes(64, 64)), "image/png")})
-    assert r2.status_code == 201
-    assert r2.json().get("cached") is True
+    assert r2.status_code == 201 and r2.json().get("cached") is True   # 命中运行时缓存
+
+
+def test_whitelist_manifest_grants_demo_bake(tmp_path, monkeypatch):
+    import app.cache as cache_mod
+
+    demo_dir = tmp_path / "demo"
+    demo_dir.mkdir()
+    img = tmp_path / "photo.jpg"
+    img.write_bytes(b"demo-image-bytes")
+    (demo_dir / "manifest.json").write_text(
+        json.dumps({"images": ["../photo.jpg"]}), encoding="utf-8")
+    monkeypatch.setattr(cache_mod, "DEMO_CACHE_DIR", demo_dir)
+    monkeypatch.setattr(cache_mod, "RUNTIME_CACHE_DIR", tmp_path / "rt")
+    monkeypatch.setattr(cache_mod, "_demo_digests", None)
+
+    digest = cache_mod.sha256_file(img)
+    assert cache_mod.is_demo_image(digest) is True
+    assert cache_mod.is_demo_image("f" * 64) is False
 
 
 def test_m1_unconfigured_returns_503(tmp_path):

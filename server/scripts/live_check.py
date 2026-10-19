@@ -19,8 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# 必须在 import app 之前：真实识别的烘焙缓存指向临时目录，不污染仓库的 demo_cache
+# 必须在 import app 之前：真实识别的烘焙缓存指向临时目录，不污染仓库的 demo_cache 与 runtime_cache
 os.environ.setdefault("LABINFER_DEMO_CACHE", tempfile.mkdtemp(prefix="labinfer-live-cache-"))
+os.environ.setdefault("LABINFER_RUNTIME_CACHE", tempfile.mkdtemp(prefix="labinfer-live-rtcache-"))
 
 from fastapi.testclient import TestClient
 from PIL import Image
