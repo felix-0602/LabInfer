@@ -80,3 +80,26 @@ def test_sections_absent_without_constants(demo_result):
         ctx["model_params"].pop(k)
     r = analyze(ctx, mine, {})
     assert "titration_curve" not in r and "error_budget" not in r
+
+
+def test_titration_with_literature_reference_does_not_crash(demo_result):
+    """回归：上下文挂了文献参照时 _analyze_titration 曾因缺 ref_datasets 参数 NameError→500。"""
+    mine, ctx = build_demo_objects()
+    lit = {
+        "schema_version": "0.7.0", "id": "ds_lit_curve", "source": "literature",
+        "meta": {"title": "HCl 滴定 Na₂CO₃ 曲线", "doi": "10.xxxx/x", "figure": "图 2"},
+        "columns": [{"key": "V_lit", "name": "V(HCl)", "unit": "mL"},
+                    {"key": "ph", "name": "pH", "unit": ""}],
+        "rows": [{"id": f"L{i}", "series": "std", "values": {"V_lit": v, "ph": p}}
+                 for i, (v, p) in enumerate([(28.5, 5.4), (30.0, 3.9), (31.5, 2.9)], start=1)],
+    }
+    ctx["reference"]["datasets"] = [{
+        "dataset_id": lit["id"],
+        "columns": {"titrant_volume": "V_lit", "ph": "ph"},
+        "meta": {"v_eq_ml": 30.0}, "space": "raw",
+    }]
+    r = analyze(ctx, mine, {lit["id"]: lit})       # 修复前这里直接 NameError
+    curve = r["titration_curve"]
+    assert len(curve["literature"]) == 1
+    xs = [p["x"] for p in curve["literature"][0]["points"]]
+    assert xs[1] == pytest.approx(0.0, abs=0.01)   # 文献计量点换算后落在 ΔV=0
