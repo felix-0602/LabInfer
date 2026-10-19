@@ -131,8 +131,8 @@ def test_guide_structure_consistency(tmp_path):
 
 
 def test_finding_term_marks_resolve_and_export_strips(tmp_path):
-    """0.8.0 起 Finding.text 允许 term 标记：保底文案的标记必须全部指向登记术语；
-    M7 导出是纯文字载体，标记剥成显示文字。"""
+    """0.8.0 起 Finding.text 允许 term/num 标记：保底文案的标记必须全部指向登记术语；
+    M7 导出是纯文字载体，两类标记都剥成显示文字。"""
     import re
     c = make_client(tmp_path)
     c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
@@ -142,8 +142,9 @@ def test_finding_term_marks_resolve_and_export_strips(tmp_path):
     marked = set(re.findall(r"\]\(term:([a-z0-9_]+)\)", sse))
     assert marked                                    # 保底路径确实带了标记
     assert marked <= term_ids
+    assert "](num:" in sse                           # 全精度进 num 标记、正文只显示位数
     md = c.post("/api/m7/export", json={"context_id": "ctx_demo", "format": "md"}).text
-    assert "(term:" not in md and "总碱度" in md      # 报告纯文字、判定信息不丢
+    assert "(term:" not in md and "(num:" not in md and "总碱度" in md
 
 
 def test_m1_without_cache_returns_503(tmp_path):

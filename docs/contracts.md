@@ -542,7 +542,8 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 - ExperimentContext：新增 `guide`（教学导读层，形状与 M8 前端约定一致，规则见 [wiki.md](wiki.md#表达标准)）：`status`（draft/reviewed）、`audience_level`（对齐 ladder.base_level）、`generated_at`、`sources`（出处登记表，`source_id` 索引，`verified: false` 即「待核」）、`glossary`（`term_id` 索引的术语首现解释）、`field_notes`（按字段路径给 01 页的键名人话）、`sections`（`show_in` 声明出现在 01/03 哪页，正文术语用 `[文字](term:term_id)` 标记，`rung_id` 可回挂讲解阶梯）。M3 透传；01/03 页与 M5 读取——学习不只发生在实验前。
 - `GET /api/m3/templates` 每项新增 `has_guide: boolean`。
 - M5：`FINDING_SYSTEM` 增补语言标准（第 8～15 条，出处 wiki.md#表达标准）：保留全部逻辑链；结论分两遍写（首句纯中文判定句，无符号无括号；数字与符号从第二句「报告口径」起）；术语与符号首现挂 term 标记，解释进卡片（定义 + 帮助句，不用比喻与缩略语）；不写压缩电报腔与长复句；结论独立成短句；多步推理加路标；讲学生数据具体到哪份哪个值；输出前按读者思维通读。ctx 带 `guide` 时术语表（含 term_id 与帮助句）注入用户消息。
-- Finding.text 自 0.8.0 起允许 `[文字](term:term_id)` 标记：term_id 必须在 `guide.glossary` 里，M5 校验器把未知标记剥成纯文字，M7 报告导出把标记剥成纯文字，解释卡由 M8 工作台渲染（标记与 M8 卡片渲染需同批合并）。
+- Finding.text 自 0.8.0 起允许两类标记：`[文字](term:term_id)`（term_id 必须在 `guide.glossary` 里，M5 校验器把未知标记剥成纯文字）与 `[62.58](num:62.578)`（正文显示报告位数，`num:` 后为分析结果原值，同样过数字溯源校验）。M7 报告导出把标记剥成显示文字，解释卡与全精度展开由 M8 工作台渲染（标记与 M8 渲染需同批合并）。
+- glossary 词条新增可选 `help`（帮助理解的一句，与 `plain` 同守「常用词通用词、写辨别性特征」的卡片口径）。
 - 无数据结构破坏：Finding、AnalysisResult、Dataset 均不变；模块输出 `schema_version` 随 `CONTRACT_VERSION` 升至 0.8.0。
 
 ### 0.7.1（2026-10-19）

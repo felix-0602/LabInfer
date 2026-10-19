@@ -106,6 +106,27 @@ def test_llm_confidence_95_allowed_with_u95(tmp_path, monkeypatch):
     assert "95% 置信" in r.text          # 未因数字无溯源被剔
 
 
+def test_llm_num_mark_full_value_checked(tmp_path, monkeypatch):
+    """num 标记里的全精度同样过数字溯源：伪造原值的整条剔除，有效的保留。"""
+    client = make_client(tmp_path)
+    _enable_llm(monkeypatch)
+    payload = ('好。\n'
+               '[{"type":"conclusion",'
+               '"text":"碱灰平行 2（s2）总碱度 [62.58](num:99.99)%，高于纯 Na₂CO₃ 理论值 58.47%。",'
+               '"evidence":[{"type":"point","dataset_id":"ds_mine_demo","point_id":"s2"},'
+               '{"type":"comparison","target":"vs_limit[1]"}]},'
+               '{"type":"pattern","text":"拟合 R²=[0.9998](num:0.99976)。",'
+               '"evidence":[{"type":"fit","dataset_id":"ds_mine_demo"}]}]')
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        return payload
+    monkeypatch.setattr("app.prompts.chat", fake_chat)
+    r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200
+    assert "(num:99.99)" not in r.text       # 伪造原值（偏离真值超容差）：整条被剔
+    assert "(num:0.99976)" in r.text        # 真原值：保留
+
+
 def test_no_llm_configured_uses_template(tmp_path):
     client = make_client(tmp_path)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})

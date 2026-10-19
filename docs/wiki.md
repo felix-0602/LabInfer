@@ -80,7 +80,7 @@
 
 索引全部走 id，不靠文案匹配：`glossary` 以 `term_id` 索引（Finding.text 与 guide 正文的 `[文字](term:term_id)` 标记、`field_notes[].term_id` 都引用它，符号 c̄、R²、±、ΔV、过原点回归也各有一条词条）；`sources` 以 `source_id` 索引（sections 与 glossary 引用它，`verified: false` 即「待核」，演示里不显示该条出处，但整节不因此消失）；`sections` 以 `section_id` 索引，`show_in` 声明出现在 01（context）/03（literature）哪页、`order` 定页内顺序（01 页 4～8 节、03 页 1～3 节）、`rung_id` 可回挂讲解阶梯（01 读全文，04 挑一句挂到学生自己的数据上）。`field_notes` 按上下文字段路径索引（`variables` 用列 key、`qc_rules` 用 rule_id、`reference.limits` 用下标），缺哪个前端显示原始键名，不报错——可分批交付。
 
-`Finding.text` 自 0.8.0 起允许 term 标记（校验器剥未知 id，M7 报告剥成纯文字）；解释卡由 M8 在工作台渲染，M8 未接好标记前旧界面按原文显示——**此开关需与 M8 的卡片渲染同批合并**。
+`Finding.text` 自 0.8.0 起允许两类标记：`[文字](term:term_id)`（术语/符号卡，id 必须在 `guide.glossary` 里）与 `[62.58](num:62.578)`（报告位数显示、全精度可展开，num: 后是分析结果里的原值）。标记内外的数字都过数字溯源校验（显示位数在全精度 0.5% 容差内可过）；M7 报告导出把两类标记剥成显示文字；解释卡与全精度展开由 M8 在工作台渲染，M8 未接好标记前旧界面按原文显示——**此开关需与 M8 的卡片渲染同批合并**。
 
 ### tpl_alkali_titration（草稿，待产品负责人调优）
 

@@ -11,11 +11,11 @@ from ..config import CONTRACT_VERSION
 router = APIRouter(prefix="/api/m7", tags=["m7"])
 
 _INCLUDE_KEYS = ("figure", "anomalies", "suggestions", "quality_control", "sources")
-_TERM_MARK_RE = re.compile(r"\[([^\]]+)\]\(term:[a-z0-9_]+\)")
+_TERM_MARK_RE = re.compile(r"\[([^\]]+)\]\((?:term:[a-z0-9_]+|num:[-+0-9.eE]+)\)")
 
 
 def _plain_text(text: str) -> str:
-    """报告是纯文字载体：Finding.text 里的 term 标记剥成显示文字（卡片只在工作台里点）。"""
+    """报告是纯文字载体：Finding.text 里的 term/num 标记剥成显示文字（展开只在工作台里点）。"""
     return _TERM_MARK_RE.sub(r"\1", text)
 
 

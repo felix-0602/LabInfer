@@ -30,9 +30,10 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
         "f_pattern", "pattern",
         f"[标定](term:standardization)的线性关系很好：每一份基准碳酸钠称得越多，"
         f"滴定耗掉的盐酸就越多，三份整齐落在「称多少、耗多少」的直线上。"
-        f"报告口径：三份平均 [c̄(HCl)](term:c_bar)={_num(d['c_hcl'])} mol/L，"
-        f"[过原点回归](term:regression_origin)的斜率另算一遍是 {_num(d['c_regression'])}，"
-        f"两种算法互相印证（[R²](term:r_squared)={_num(fit['r2'])}，n={fit['n']}）。",
+        f"报告口径：三份平均 [c̄(HCl)](term:c_bar)=[{_num(d['c_hcl'])}](num:{d['c_hcl']}) mol/L，"
+        f"[过原点回归](term:regression_origin)的斜率另算一遍是 "
+        f"[{_num(d['c_regression'])}](num:{d['c_regression']})，"
+        f"两种算法互相印证（[R²](term:r_squared)=[{_num(fit['r2'])}](num:{fit['r2']})，n={fit['n']}）。",
         [{"type": "fit", "dataset_id": ds_id}],
     ))
 
