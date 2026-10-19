@@ -18,3 +18,15 @@ const snap = await res.json();
 const out = new URL("../src/shadow/snapshot.json", import.meta.url);
 await writeFile(out, JSON.stringify(snap, null, 1) + "\n");
 console.log(`已写入 ${out.pathname}：${snap.datasets.length} 个数据集，${snap.findings.length} 条结论`);
+
+// 可推演的结论顺带把 M6 推演结果也存下来，演示保底时推演面板照样能展开、拖滑块（数值全部来自 M6，前端不插值）
+const sims = {};
+for (const f of snap.findings) {
+  if (!f.simulatable || !f.simulation) continue;
+  const r = await post("/api/m6/simulate", { schema_version: "0.6.0", context_id: ctx, finding_id: f.id, ...f.simulation });
+  if (!r.ok) throw new Error(`M6 simulate ${f.id} 失败: ${r.status}`);
+  sims[f.id] = await r.json();
+}
+const simOut = new URL("../src/shadow/simulations.json", import.meta.url);
+await writeFile(simOut, JSON.stringify(sims, null, 1) + "\n");
+console.log(`已写入 ${simOut.pathname}：${Object.keys(sims).length} 条推演`);

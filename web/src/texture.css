@@ -1,0 +1,263 @@
+/* 秩序 × 破坏（design/index.html · P5、03 视觉规范的「质感层」「锚点构图」「印刷秩序纹样」）。
+   海报在边缘，工具在中心：质感只放在封面、侧栏底部、空状态、页面留白和导出页；
+   表格、校准画布、图表、结论卡片保持干净。 */
+
+/* ---------- 质感：颗粒、半调、折痕 ---------- */
+.tex-grain { position: relative; }
+.tex-grain::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 1.4 -0.2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay; opacity: var(--grain, 0.35);
+}
+.halftone {
+  position: absolute; pointer-events: none;
+  background: radial-gradient(circle, currentColor 0 1.1px, transparent 1.6px) 0 0 / 7px 7px;
+}
+.halftone.fade-r { -webkit-mask: linear-gradient(to right, #000, transparent); mask: linear-gradient(to right, #000, transparent); }
+.halftone.fade-t { -webkit-mask: linear-gradient(to top, #000, transparent); mask: linear-gradient(to top, #000, transparent); }
+.halftone.fade-radial { -webkit-mask: radial-gradient(closest-side, #000, transparent); mask: radial-gradient(closest-side, #000, transparent); }
+.crease-v, .crease-h { position: absolute; pointer-events: none; z-index: 4; }
+.crease-v { top: 0; bottom: 0; width: 6px; background: linear-gradient(to right, rgba(0,0,0,0.35), rgba(255,255,255,0.18) 45%, rgba(0,0,0,0.25)); mix-blend-mode: overlay; }
+.crease-h { left: 0; right: 0; height: 6px; background: linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(255,255,255,0.18) 45%, rgba(0,0,0,0.25)); mix-blend-mode: overlay; }
+.ghost-num {
+  position: absolute; pointer-events: none; z-index: 0; font-family: var(--f-display); font-variation-settings: "wdth" 125;
+  font-weight: 800; line-height: 0.8; color: transparent; -webkit-text-stroke: 1px var(--silver-2);
+}
+
+/* ---------- 仪器语言：十字准星、角标框、刻度尺 ---------- */
+.cross { position: absolute; width: 22px; height: 22px; pointer-events: none; }
+.cross::before, .cross::after { content: ""; position: absolute; background: currentColor; }
+.cross::before { left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-0.5px); }
+.cross::after { top: 50%; left: 0; right: 0; height: 1px; transform: translateY(-0.5px); }
+.corners { position: absolute; inset: 0; pointer-events: none; }
+.corners::before, .corners::after { content: ""; position: absolute; width: 14px; height: 14px; border: 1px solid currentColor; }
+.corners::before { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.corners::after { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.ruler-v {
+  position: absolute; width: 10px; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, currentColor 0 1px, transparent 1px 8px);
+  -webkit-mask: linear-gradient(to right, #000 40%, transparent 40%); mask: linear-gradient(to right, #000 40%, transparent 40%);
+}
+.ruler-v::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, currentColor 0 1px, transparent 1px 40px); }
+
+/* ---------- 印刷秩序纹样：套准标记、色条、裁切线、切割垫、条码 ---------- */
+.reg { position: absolute; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 0.75px currentColor; color: var(--ink-3); pointer-events: none; }
+.reg::before, .reg::after { content: ""; position: absolute; background: currentColor; }
+.reg::before { left: 50%; top: -5px; bottom: -5px; width: 0.75px; }
+.reg::after { top: 50%; left: -5px; right: -5px; height: 0.75px; }
+.colorbar { position: absolute; display: flex; pointer-events: none; }
+.colorbar i { width: 12px; height: 12px; }
+.colorbar i:nth-child(1) { background: var(--ink); } .colorbar i:nth-child(2) { background: var(--ink-2); }
+.colorbar i:nth-child(3) { background: var(--silver); } .colorbar i:nth-child(4) { background: var(--paper-3); }
+.colorbar i:nth-child(5) { background: var(--cobalt); } .colorbar i:nth-child(6) { background: var(--cobalt-soft); }
+.crops { position: absolute; pointer-events: none; color: var(--ink-3); }
+.crops::before, .crops::after { content: ""; position: absolute; inset: -14px; }
+.crops::before { background:
+  linear-gradient(currentColor, currentColor) 0 14px / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) 14px 0 / 0.75px 10px no-repeat,
+  linear-gradient(currentColor, currentColor) 100% 14px / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) calc(100% - 14px) 0 / 0.75px 10px no-repeat; }
+.crops::after { background:
+  linear-gradient(currentColor, currentColor) 0 calc(100% - 14px) / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) 14px 100% / 0.75px 10px no-repeat,
+  linear-gradient(currentColor, currentColor) 100% calc(100% - 14px) / 10px 0.75px no-repeat,
+  linear-gradient(currentColor, currentColor) calc(100% - 14px) 100% / 0.75px 10px no-repeat; }
+.mat {
+  background-color: var(--paper-2);
+  background-image: linear-gradient(rgba(10, 11, 16, 0.05) 0.5px, transparent 0.5px), linear-gradient(90deg, rgba(10, 11, 16, 0.05) 0.5px, transparent 0.5px),
+                    linear-gradient(rgba(10, 11, 16, 0.06) 0.75px, transparent 0.75px), linear-gradient(90deg, rgba(10, 11, 16, 0.06) 0.75px, transparent 0.75px);
+  background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+}
+.barcode {
+  display: inline-block; width: 46px; height: 12px; flex: none;
+  background: repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 3px, var(--ink) 3px 5px, transparent 5px 6px, var(--ink) 6px 7px, transparent 7px 10px, var(--ink) 10px 13px, transparent 13px 14px);
+}
+
+/* ---------- 外壳 ---------- */
+.rail .rail-mood { position: absolute; left: 0; right: 0; bottom: 0; height: 260px; color: var(--cobalt); opacity: 0.55; z-index: 0; }
+.rail-foot { position: relative; z-index: 1; }
+.statusbar .barcode { width: 40px; height: 10px; opacity: 0.55; }
+
+/* ---------- 锚点构图 ---------- */
+.vfig { position: relative; overflow: hidden; }
+.vignette { position: absolute; inset: 0 0 26px 0; isolation: isolate; --v-bg: var(--paper-0); }
+.vfig:not(:has(figcaption)) .vignette { inset: 0; }
+.vfig figcaption { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; }
+.vignette.tex-grain::after { -webkit-mask: radial-gradient(closest-side, #000 40%, transparent); mask: radial-gradient(closest-side, #000 40%, transparent); --grain: 0.5; }
+.vignette .v-stage { position: absolute; inset: 8% 6%; container-type: size; }
+.vignette .v-box {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: min(100cqw, calc(100cqh * var(--ar))); aspect-ratio: var(--ar); color: var(--ink-3);
+}
+.vignette .v-obj { position: absolute; inset: 0; z-index: 3; height: auto; }
+.vignette .v-obj img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* 秩序：超大描边词，压在一切之下 */
+.v-word {
+  position: absolute; z-index: 0; white-space: nowrap; pointer-events: none;
+  font-size: var(--ws, 150px); line-height: 0.8; letter-spacing: -0.03em;
+  color: transparent; -webkit-text-stroke: 1px var(--silver);
+}
+/* 秩序：过物件中心的刻度轴，两端渐隐 */
+.v-axis-h, .v-axis-v { position: absolute; z-index: 1; pointer-events: none; color: var(--silver); }
+.v-axis-h { left: -12%; right: -12%; top: 50%; height: 9px;
+  background: linear-gradient(currentColor, currentColor) 0 0 / 100% 0.5px no-repeat,
+              repeating-linear-gradient(to right, currentColor 0 0.5px, transparent 0.5px 12px) 0 0 / 100% 5px no-repeat,
+              repeating-linear-gradient(to right, currentColor 0 0.5px, transparent 0.5px 60px) 0 0 / 100% 9px no-repeat;
+  -webkit-mask: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); mask: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); }
+.v-axis-v { top: -12%; bottom: -12%; left: 50%; width: 9px;
+  background: linear-gradient(currentColor, currentColor) 0 0 / 0.5px 100% no-repeat,
+              repeating-linear-gradient(to bottom, currentColor 0 0.5px, transparent 0.5px 12px) 0 0 / 5px 100% no-repeat;
+  -webkit-mask: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent); mask: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent); }
+.v-box > .corners { z-index: 1; inset: -6px; color: var(--ink-3); }
+
+/* 破坏：半调网点剪影 / 钴蓝剪影，用物件图做遮罩，相对本体错位 */
+.v-half, .v-sil, .v-scan {
+  position: absolute; inset: 0; pointer-events: none;
+  -webkit-mask: var(--img) center / contain no-repeat; mask: var(--img) center / contain no-repeat;
+}
+.v-half { z-index: 1; background: radial-gradient(circle, var(--cobalt) 0 1.2px, transparent 1.7px) 0 0 / 6px 6px; opacity: 0.75; }
+.v-sil { z-index: 2; background: var(--cobalt); opacity: 0.85; mix-blend-mode: multiply; }
+.v-scan { z-index: 5; background: repeating-linear-gradient(to bottom, rgba(30, 59, 255, 0.55) 0 1px, transparent 1px 4px); clip-path: inset(38% 0 44% 0); mix-blend-mode: multiply; }
+/* 破坏：钴蓝压印色块 */
+.v-block { position: absolute; z-index: 4; background: var(--cobalt); mix-blend-mode: multiply; opacity: 0.9; pointer-events: none; }
+/* 破坏：水平切片错位。切片底色先压住原图这一带，再把这一带的图平移；偶尔抖一下 */
+.v-slice {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  background: var(--img) center / contain no-repeat;
+  transform: translateX(var(--shift));
+  animation: v-jitter 7s steps(1) infinite;
+}
+.v-slice::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--v-bg); transform: translateX(calc(var(--shift) * -1)); }
+@keyframes v-jitter {
+  0%, 90%, 100% { transform: translateX(var(--shift)); }
+  92% { transform: translateX(calc(var(--shift) * -1.8)); }
+  95% { transform: translateX(calc(var(--shift) * 2.4)); }
+}
+/* 破坏：碎片，从物件上剥下一块并移位 */
+.v-shard { position: absolute; inset: 0; z-index: 4; pointer-events: none; background: var(--img) center / contain no-repeat; filter: drop-shadow(0 6px 8px rgba(10, 11, 16, 0.25)); }
+
+/* 秩序：引线标注 */
+.v-tag { position: absolute; z-index: 6; width: 0; height: 0; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; }
+.v-tag .dot { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 1.5px var(--cobalt); z-index: 1; }
+.v-tag .lead { position: absolute; left: 0; top: 0; height: 0.75px; background: var(--ink-2); transform-origin: 0 0; }
+.v-tag span { position: absolute; translate: 4px -50%; padding: 1px 5px; background: rgba(255, 255, 255, 0.88); box-shadow: inset 0 0 0 0.5px rgba(10, 11, 16, 0.25); line-height: 1.5; }
+.v-tag.left span { translate: calc(-100% - 4px) -50%; }
+/* 秩序：编号 + 条码 */
+.v-serial { position: absolute; right: 0; bottom: -2px; z-index: 6; display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.1em; color: var(--ink-3); }
+
+/* 进场：秩序层先画好，破坏层随后错位到位 */
+.vfig .v-axis-h { animation: v-draw-x 900ms var(--ease-inout) 200ms both; }
+.vfig .v-axis-v { animation: v-draw-y 900ms var(--ease-inout) 260ms both; }
+@keyframes v-draw-x { from { clip-path: inset(0 50% 0 50%); } }
+@keyframes v-draw-y { from { clip-path: inset(50% 0 50% 0); } }
+.vfig .v-word { animation: rv-fade 900ms var(--ease-out) 120ms both; }
+.vfig .v-sil, .vfig .v-half { animation: v-misregister 900ms var(--ease-out) 500ms both; }
+@keyframes v-misregister { from { translate: 0 0; opacity: 0; } }
+.vfig .v-block { animation: v-stamp 360ms var(--ease-spring) 900ms both; }
+@keyframes v-stamp { from { opacity: 0; transform: scale(1.3); } }
+.vfig .v-shard { animation: rv-fade 500ms var(--ease-out) 800ms backwards; }
+.vfig .v-tag { animation: rv-fade 400ms var(--ease-out) 1000ms both; }
+.vfig .v-tag:nth-of-type(2n) { animation-delay: 1100ms; }
+.vfig .v-scan { animation: v-scanline 4.5s linear 1200ms infinite both; }
+@keyframes v-scanline { 0% { clip-path: inset(0 0 100% 0); } 60%, 100% { clip-path: inset(100% 0 0 0); } }
+
+/* ---------- 各屏位置 ---------- */
+/* S1：左侧超大描边编号「01」、套准与色条；右栏颗粒 */
+.s1-main { position: relative; overflow: hidden; }
+.s1-main > :not(.ghost-num):not(.reg):not(.colorbar) { position: relative; z-index: 1; }
+.s1-ghost { right: -24px; bottom: 40px; font-size: 360px; }
+.side-pane.tex-grain::after { --grain: 0.25; }
+.side-pane .s1-anchor { height: 380px; margin: -8px -8px 16px; flex: none; }
+.s1-anchor .v-word { --ws: 140px; }
+
+/* S2：照片四周的裁切线、套准标记、色条 */
+.photo-pane .print-frame { position: absolute; inset: 24px 24px 56px; pointer-events: none; }
+.side-pane .s2-anchor { height: 150px; margin-top: 16px; flex: none; }
+.s2-anchor .v-word { --ws: 110px; }
+
+/* S3：空状态的颗粒与半调；校准画布是切割垫 */
+.lit-empty .halftone.fade-r { left: 0; top: 0; bottom: 0; width: 360px; color: var(--silver-2); z-index: 0; }
+.lit-empty.tex-grain::after { --grain: 0.2; }
+.lit-empty .s3-orb { width: 300px; height: 300px; flex: none; }
+.lit-empty .s3-orb { overflow: visible; }
+.lit-empty .vignette { --v-bg: var(--paper-1); }
+.lit-empty .s3-orb .vignette { inset: 0; }
+.lit-empty .s3-orb .v-stage { inset: 6%; }
+.lit-empty .cross { color: var(--ink-3); }
+.s3b .canvas.mat { background-color: var(--paper-2); }
+.s3b .fig-inner > .crops { inset: 0; z-index: 2; }
+.s3b .rp .s3-anchor { height: 170px; margin-top: auto; flex: none; }
+.s3-anchor .v-word { --ws: 92px; }
+
+/* S4：标题行 c̄ 与图例之间的浑天仪，只有锚点有质感 */
+.s4 .s4-anchor { width: 240px; height: 150px; flex: 0 1 240px; }
+.s4 .s4-anchor .vignette { --v-bg: var(--paper-1); }
+.s4 .s4-anchor .v-word { --ws: 104px; -webkit-text-stroke-color: var(--silver-2); }
+.s4 .s4-anchor .v-serial, .s4 .s4-anchor .v-tag { display: none; }
+
+/* S5：桌面颗粒、报告页裁切线；钢笔尖的墨线流向「导出」按钮 */
+.desk.tex-grain::after { --grain: 0.3; }
+.desk { position: relative; }
+.desk .page { position: relative; z-index: 1; }
+.page-crops { inset: -1px; color: var(--ink-2); z-index: 0; }
+.opts .s5-anchor { flex: 1 1 auto; min-height: 220px; margin-top: 8px; display: flex; flex-direction: column; }
+.opts .s5-anchor .vignette { position: relative; inset: auto; flex: none; height: 180px; }
+.opts .s5-anchor .v-stage { inset: 10% 0 0 36%; }
+.opts .s5-anchor .v-word { --ws: 88px; }
+.opts .s5-anchor .v-serial { display: none; }
+.opts .s5-anchor figcaption { position: static; }
+.ink-line { flex: 1 1 0; min-height: 24px; width: 100%; display: block; overflow: visible; }
+.ink-line path { stroke-dashoffset: 0; animation: ink-flow 2.4s linear infinite; }
+@keyframes ink-flow { to { stroke-dashoffset: -14; } }
+
+/* S0 封面：颗粒、对折折痕、主视觉背后的半调光斑、准星与刻度尺 */
+.cover.tex-grain::after { --grain: 0.45; z-index: 1; }
+.cover .halftone.fade-radial { z-index: 0; color: rgba(140, 155, 255, 0.35); }
+.cover .cross { color: rgba(231, 233, 240, 0.6); }
+.cover .ruler-v { color: rgba(231, 233, 240, 0.4); }
+.cover .side-label {
+  left: 22px; top: 50%; transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.3em; color: rgba(231, 233, 240, 0.5);
+}
+/* INFER 的钴蓝故障切片常驻；motion.css 里另有偶发的抖动 */
+.glitch-static { position: relative; }
+.glitch-static::before, .glitch-static::after { content: attr(data-text); position: absolute; left: 0; top: 0; pointer-events: none; -webkit-text-stroke: 0; }
+.glitch-static::before { color: var(--cobalt); clip-path: inset(46% 0 49% 0); transform: translateX(16px); }
+.glitch-static::after { color: var(--night-text); clip-path: inset(74% 0 23.5% 0); transform: translateX(-12px); }
+
+@media (max-width: 960px) {
+  .s1-ghost { font-size: 200px; }
+  .s4 .s4-anchor { display: none; }
+}
+.cover .cover-glow { left: 47%; top: 30vh; width: 56vh; height: 56vh; }
+
+/* S4 滴定管刻度：仪器语言承担功能，读数 = 计量点体积 + ΔV */
+.chart .burette-base { stroke: rgba(10, 11, 16, 0.25); stroke-width: 0.5; }
+.chart .burette-tick { stroke: var(--ink-3); stroke-width: 0.75; }
+.chart .burette-label { letter-spacing: 0.08em; }
+.s2-anchor .v-tag:not(:last-child) { display: none; }
+
+/* ---------- 程序绘制的「照片」位（design/render/*.py）：双色调映射 ---------- */
+.duo-night { background: var(--cobalt); isolation: isolate; overflow: hidden; }
+.duo-night > img { filter: grayscale(1) contrast(1.35) brightness(0.95); mix-blend-mode: multiply; }
+.duo-day { background: #fff; isolation: isolate; overflow: hidden; }
+.duo-day > img { filter: grayscale(1) contrast(1.25) brightness(1.05); }
+.duo-day::after { content: ""; position: absolute; inset: 0; background: var(--cobalt); mix-blend-mode: screen; pointer-events: none; }
+.duo-night > img, .duo-day > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* 封面样片：右上角；读数挪到样片左侧，与样片顶边对齐，避开 INFER 大字 */
+.cover .specimen { position: absolute; right: 56px; top: 104px; width: 150px; height: 188px; margin: 0; box-shadow: 0 0 0 0.5px rgba(231, 233, 240, 0.4);
+  translate: calc(var(--mx) * -8px) calc(var(--my) * -5px); transition: translate 900ms var(--ease-out);
+  animation: specimen-in 900ms var(--ease-out) 1000ms both; }
+@keyframes specimen-in { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+.cover .specimen-cap { position: absolute; right: 56px; top: 300px; white-space: nowrap; text-align: right; font-size: 10px; line-height: 1.7; letter-spacing: 0.1em; color: rgba(231, 233, 240, 0.6);
+  animation: rv-fade 600ms var(--ease-out) 1400ms both; }
+.cover .cover-readout { top: 104px; right: 230px; }
+
+/* S3 空状态：左侧期刊微距底纹 */
+.lit-empty .journal { position: absolute; left: 0; top: 0; bottom: 0; width: 520px; opacity: 0.4; z-index: 0; pointer-events: none;
+  -webkit-mask: linear-gradient(to right, #000 30%, transparent); mask: linear-gradient(to right, #000 30%, transparent);
+  animation: journal-in 1200ms var(--ease-out) both; }
+@keyframes journal-in { from { opacity: 0; transform: translateX(-24px); } }
+@media (max-width: 900px) { .cover .specimen, .cover .specimen-cap { display: none; } .cover .cover-readout { top: 150px; right: 56px; } }

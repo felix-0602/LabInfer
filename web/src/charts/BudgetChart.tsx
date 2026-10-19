@@ -1,4 +1,5 @@
 import type { ErrorBudget } from "../types";
+import { Bar, Chart, Fade, GrowRect } from "./reveal";
 import { fmt, linear } from "./scale";
 
 const W = 760, H = 420, M = { l: 180, r: 96, t: 32, b: 40 };
@@ -15,19 +16,19 @@ export function BudgetChart({ budget }: { budget: ErrorBudget }) {
   const rowH = Math.min(36, (H - M.t - M.b) / rows.length);
 
   return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="误差预算">
-      <text className="axis-label" x={M.l} y={M.t - 12}>相对偏差 / %　实测是仪器可解释的 {budget.ratio} 倍</text>
+    <Chart w={W} h={H} label="误差预算">
+      <Fade><text className="axis-label" x={M.l} y={M.t - 12}>相对偏差 / %　实测是仪器可解释的 {budget.ratio} 倍</text></Fade>
       {rows.map((r, i) => {
         const y = M.t + i * rowH;
         return (
-          <g key={r.label + i}>
+          <Bar key={r.label + i} i={i}>
             <text className="tick" x={M.l - 10} y={y + rowH / 2 + 4} textAnchor="end">{r.label}</text>
-            <rect className={r.cls} x={M.l} y={y + 6} width={Math.max(1, sx(r.v) - M.l)} height={rowH - 12} />
+            <GrowRect className={r.cls} x={M.l} y={y + 6} width={Math.max(1, sx(r.v) - M.l)} height={rowH - 12} />
             <text className="pt-label" x={sx(r.v) + 6} y={y + rowH / 2 + 4}>{fmt(r.v * 100, 2)}%</text>
-          </g>
+          </Bar>
         );
       })}
       <line className="axis" x1={M.l} x2={M.l} y1={M.t} y2={M.t + rows.length * rowH} />
-    </svg>
+    </Chart>
   );
 }

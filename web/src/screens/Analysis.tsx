@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import anchor from "../../../design/assets/GEN-09.webp";
 import { api } from "../api";
 import { BudgetChart } from "../charts/BudgetChart";
@@ -6,6 +6,9 @@ import { FitChart } from "../charts/FitChart";
 import { PrecisionChart } from "../charts/PrecisionChart";
 import { TitrationChart } from "../charts/TitrationChart";
 import type { AnalysisResult, Finding, Simulation } from "../types";
+import { CountUp, STREAM_GAP, Segmented, reducedMotion, stagger } from "../motion";
+import { loadShadowSims } from "../shadow";
+import { Vignette } from "../vignette";
 import { errorText, useWorkbench } from "../workbench";
 
 type Tab = "titration" | "fit" | "precision" | "budget";
@@ -22,6 +25,9 @@ function pointsOf(f: Finding, a: AnalysisResult): Set<string> {
   }
   return out;
 }
+
+// 已经播过进场的结论（按对象记）：回到分析页时不再重播，重新解读得到的新对象会重播
+const played = new WeakSet<Finding>();
 
 function evidenceLabel(e: Finding["evidence"][number]): string {
   switch (e.type) {
@@ -47,8 +53,34 @@ export function Analysis() {
   const [sim, setSim] = useState<{ finding: Finding; result: Simulation; idx: number } | null>(null);
   const [simBusy, setSimBusy] = useState<string | null>(null);
   const [simError, setSimError] = useState<string | null>(null);
+  // 推演面板展开的是哪条结论；折叠时图上的推演曲线 / 投影一起收起，结果留着，再展开不用重算
+  const [simOpen, setSimOpen] = useState<string | null>(null);
 
   useEffect(() => { if (!tab || !tabs.includes(tab)) setTab(tabs[0] ?? null); }, [tabs, tab]);
+
+  // 结论逐条流式出现：新结论按到达顺序排进场延迟（一次到齐时也按 STREAM_GAP 逐条放出），
+  // 每条出现时它引用的点在图上闪一下
+  const entering = useRef(new Map<Finding, number>());
+  let queued = 0;
+  for (const f of s.findings) {
+    if (!played.has(f) && !entering.current.has(f)) entering.current.set(f, queued++ * STREAM_GAP);
+  }
+  const [flash, setFlash] = useState<{ ids: Set<string>; key: number }>({ ids: new Set(), key: 0 });
+  const timers = useRef(new Map<Finding, number>());
+  useEffect(() => {
+    if (!a) return;
+    for (const [f, delay] of entering.current) {
+      if (played.has(f) || timers.current.has(f)) continue;
+      timers.current.set(f, window.setTimeout(() => {
+        played.add(f);
+        setFlash((p) => ({ ids: pointsOf(f, a), key: p.key + 1 }));
+      }, delay + 120));
+    }
+  }, [s.findings, a]);
+  useEffect(() => () => {
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+  }, []);
 
   if (!a) return <div className="pane main-pane center"><p className="dim">{s.busy ?? "还没有分析结果"}</p></div>;
 
@@ -69,7 +101,14 @@ export function Analysis() {
     setSimBusy(f.id);
     setSimError(null);
     try {
-      const result = await api.simulate({ context_id: s.ctx.id, finding_id: f.id, ...f.simulation });
+      let result: Simulation;
+      if (s.shadow) {
+        const cached = (await loadShadowSims())[f.id];
+        if (!cached) throw new Error("演示保底里没有这条推演，需要后端");
+        result = cached;
+      } else {
+        result = await api.simulate({ context_id: s.ctx.id, finding_id: f.id, ...f.simulation });
+      }
       // 滑块从「不调整」那一端开始：取最接近 0 的点（推演曲线由 M6 给出，前端只选点不插值）
       let idx = 0;
       result.curve.forEach((p, i) => { if (Math.abs(p.x) < Math.abs(result.curve[idx].x)) idx = i; });
@@ -83,23 +122,40 @@ export function Analysis() {
     }
   };
 
-  const simPoint = sim ? sim.result.curve[sim.idx] : null;
-  const simTarget = sim?.finding.evidence.find((e) => e.type === "point");
-  const projection = sim && simPoint && simTarget?.type === "point" && sim.finding.simulation?.param === "titrant_volume_delta"
+  const toggleSim = (f: Finding) => {
+    if (simOpen === f.id) { setSimOpen(null); return; }
+    setSimOpen(f.id);
+    if (sim?.finding.id !== f.id) void runSim(f);
+  };
+  const shown = sim && simOpen === sim.finding.id ? sim : null;
+  const simPoint = shown ? shown.result.curve[shown.idx] : null;
+  const simTarget = shown?.finding.evidence.find((e) => e.type === "point");
+  const projection = shown && simPoint && simTarget?.type === "point" && shown.finding.simulation?.param === "titrant_volume_delta"
     ? { point_id: simTarget.point_id, y: simPoint.y, label: `ΔV ${simPoint.x} mL → ${simPoint.y}%` }
     : null;
-  const simCurve = sim?.finding.simulation?.param === "co2_retained_fraction" ? sim.result.curve : null;
+  const simCurve = shown?.finding.simulation?.param === "co2_retained_fraction" ? shown.result.curve : null;
 
-  const chartProps = { highlight, anomalies, onHover: setHoverPt };
+  const chartProps = { highlight, anomalies, onHover: setHoverPt, flash };
+
+  // 滴定管刻度跟随当前关注的那一份：悬停的点 > 选中结论的点 > 第一个异常点 > 第一份
+  const tc = a.titration_curve;
+  const focus = tc && (tc.endpoints.find((e) => e.point_id === hoverPt)
+    ?? tc.endpoints.find((e) => highlight.has(e.point_id))
+    ?? tc.endpoints.find((e) => anomalies.has(e.point_id))
+    ?? tc.endpoints.find((e) => e.dv_ml < tc.indicator.dv_window_ml[0] || e.dv_ml > tc.indicator.dv_window_ml[1])
+    ?? tc.endpoints[0]);
+  const volCol = s.dataset?.columns.find((c) => c.key === "V" || c.unit === "mL")?.key;
+  const vRead = focus && volCol ? s.dataset?.rows.find((r) => r.id === focus.point_id)?.values[volCol] : null;
+  const burette = focus && typeof vRead === "number" ? { point_id: focus.point_id, veq: vRead - focus.dv_ml } : null;
 
   return (
     <div className="s4">
       <section className="pane chart-area">
         <div className="headline">
           {d.c_hcl != null ? (
-            <div className="metric">
+            <div className="metric rv" style={stagger(0)}>
               <div className="eyebrow mono">c̄(HCl) · {fit?.n ?? "—"} 份平行标定</div>
-              <div className="big display">{d.c_hcl.toFixed(4)}<small>mol·L⁻¹</small></div>
+              <div className="big display"><CountUp value={d.c_hcl} digits={4} delay={200} /><small>mol·L⁻¹</small></div>
             </div>
           ) : fit && (
             <div className="metric">
@@ -107,7 +163,7 @@ export function Analysis() {
               <div className="big display">{fit.slope}</div>
             </div>
           )}
-          <div className="vs mono">
+          <div className="vs mono rv" style={stagger(2)}>
             {d.rel_avg_dev_c != null && (
               <span>相对平均偏差 <b className={stdRule && !stdRule.pass ? "bad" : ""}>{(d.rel_avg_dev_c * 100).toFixed(2)}%</b>
                 {stdRule && <> · 限值 {(stdRule.limit * 100).toFixed(1)}%</>}</span>
@@ -117,18 +173,15 @@ export function Analysis() {
             )}
             {fit && <span>{tabs.includes("titration") ? "V–m 过原点 " : ""}R² {fit.r2} · n = {fit.n}</span>}
           </div>
-          <figure className="anchor s4-anchor"><img src={anchor} alt="" /><figcaption className="mono">OBJ. 04 · ARMILLARY · 规律</figcaption></figure>
+          <Vignette id="GEN-09" className="s4-anchor" src={anchor} />
         </div>
 
-        <div className="seg">
-          {tabs.map((t) => (
-            <button key={t} className={t === tab ? "on" : ""} onClick={() => setTab(t)}>{TAB_LABEL[t]}</button>
-          ))}
+        <Segmented items={tabs} value={tab} label={(t) => TAB_LABEL[t]} onChange={setTab}>
           {!a.titration_curve && <span className="mono dim small">滴定曲线、误差预算等 M4 输出 0.7.0 字段后出现</span>}
-        </div>
+        </Segmented>
 
-        <div className="chart-box">
-          {tab === "titration" && a.titration_curve && <TitrationChart curve={a.titration_curve} simulated={simCurve} {...chartProps} />}
+        <div className="chart-box" key={tab ?? "none"}>
+          {tab === "titration" && a.titration_curve && <TitrationChart curve={a.titration_curve} simulated={simCurve} burette={burette} {...chartProps} />}
           {tab === "fit" && <FitChart analysis={a} {...chartProps} />}
           {tab === "precision" && <PrecisionChart analysis={a} projection={projection} {...chartProps} />}
           {tab === "budget" && a.error_budget && <BudgetChart budget={a.error_budget} />}
@@ -145,12 +198,14 @@ export function Analysis() {
         <div className="f-list">
           {s.findings.map((f) => {
             const pts = pointsOf(f, a);
+            const delay = entering.current.get(f);
             const linked = hoverPt != null && pts.has(hoverPt);
             const canSim = f.simulatable && f.simulation;
             return (
               <article
                 key={f.id}
-                className={"f-card " + f.type + (selected === f.id ? " selected" : "") + (linked ? " linked" : "")}
+                className={"f-card " + f.type + (selected === f.id ? " selected" : "") + (linked ? " linked" : "") + (delay != null ? " entering" : "")}
+                style={delay != null ? { "--d": `${delay}ms` } as CSSProperties : undefined}
                 onClick={() => {
                   setSelected(selected === f.id ? null : f.id);
                   // 结论引用了某张图的整节（滴定曲线 / 误差预算），切到那张图
@@ -173,35 +228,52 @@ export function Analysis() {
                     if (n.has(r.rung_id + f.id)) n.delete(r.rung_id + f.id); else n.add(r.rung_id + f.id);
                     setOpenLadder(n);
                   }}>
-                    <b>↑ {r.level} 级</b> {openLadder.has(r.rung_id + f.id) ? r.text : "展开讲解"}
+                    <b>↑ {r.level} 级</b> {openLadder.has(r.rung_id + f.id) ? <span className="ladder-text">{r.text}</span> : "展开讲解"}
                   </div>
                 ))}
-                {canSim && (
-                  <div className="sim-ctl" onClick={(e) => e.stopPropagation()}>
-                    {sim?.finding.id === f.id ? (
-                      <>
-                        <input
-                          type="range" min={0} max={sim.result.curve.length - 1} step={1} value={sim.idx}
-                          onChange={(e) => setSim({ ...sim, idx: Number(e.target.value) })}
-                        />
-                        <div className="sim-read mono">
-                          {Object.entries(sim.result.predicted).length > 0 && simPoint && (
-                            <span>{f.simulation!.param} = <b>{simPoint.x}{f.simulation!.unit}</b> → <b>{simPoint.y}</b></span>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <button className="btn ghost small" disabled={s.shadow || simBusy === f.id} onClick={() => runSim(f)}>
-                        {s.shadow ? "推演需要后端" : simBusy === f.id ? "M6 推演中…" : `推演 ${f.simulation!.param} · ${f.simulation!.from}→${f.simulation!.to}${f.simulation!.unit}`}
+                {canSim && (() => {
+                  const open = simOpen === f.id;
+                  const mine = sim?.finding.id === f.id ? sim : null;
+                  const sp = f.simulation!;
+                  return (
+                    <div className={"sim-ctl" + (open ? " open" : "")} onClick={(e) => e.stopPropagation()}>
+                      <button className="sim-head mono" aria-expanded={open} onClick={(e) => {
+                        const panel = e.currentTarget.parentElement;
+                        toggleSim(f);
+                        // 展开后面板可能落在列表可视区外，等高度动画走完再滚进来
+                        if (!open) setTimeout(() => panel?.scrollIntoView({ block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" }), 360);
+                      }}>
+                        <i className="chev" aria-hidden />
+                        <span>推演 · {sp.param} {sp.from}→{sp.to}{sp.unit}</span>
+                        <span className="dim">{open ? "收起" : mine ? "展开" : "展开推演"}</span>
                       </button>
-                    )}
-                    {simError && sim?.finding.id !== f.id && <div className="small bad">{simError}</div>}
-                  </div>
-                )}
+                      <div className="sim-body"><div>
+                        {mine ? (
+                          <>
+                            <input
+                              type="range" min={0} max={mine.result.curve.length - 1} step={1} value={mine.idx}
+                              aria-label={sp.param}
+                              onChange={(e) => setSim({ ...mine, idx: Number(e.target.value) })}
+                            />
+                            <div className="sim-read mono">
+                              {open && simPoint && (
+                                <span>{sp.param} = <b>{simPoint.x}{sp.unit}</b> → <b>{simPoint.y}</b></span>
+                              )}
+                            </div>
+                          </>
+                        ) : simBusy === f.id ? (
+                          <p className="small dim thinking">M6 推演中…</p>
+                        ) : simError ? (
+                          <div className="small bad">{simError} <button className="btn ghost small" onClick={() => void runSim(f)}>重试</button></div>
+                        ) : null}
+                      </div></div>
+                    </div>
+                  );
+                })()}
               </article>
             );
           })}
-          {s.findingsStatus === "streaming" && <div className="f-card ghost mono dim">M5 正在解读…</div>}
+          {s.findingsStatus === "streaming" && <div className="f-card ghost thinking mono dim">M5 正在解读…</div>}
           {s.findingsStatus === "error" && (
             <div className="f-card ghost">
               <p className="dim">AI 解读没有完成。图表和计算结果不受影响。</p>
@@ -211,7 +283,7 @@ export function Analysis() {
         </div>
         <div className="f-note mono dim small">结论中的数字须能在 M4 计算结果中找到（M5 数字溯源校验）</div>
         <div className="actions end">
-          <button className="btn primary" onClick={() => dispatch({ type: "complete", step: 4, next: 5 })}>生成报告 →</button>
+          <button className="btn primary sheen" onClick={() => dispatch({ type: "complete", step: 4, next: 5 })}>生成报告 →</button>
         </div>
       </aside>
     </div>

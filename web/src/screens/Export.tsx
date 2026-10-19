@@ -5,6 +5,8 @@ import anchor from "../../../design/assets/GEN-10.webp";
 import { api } from "../api";
 import { PrecisionChart } from "../charts/PrecisionChart";
 import { TitrationChart } from "../charts/TitrationChart";
+import { stagger } from "../motion";
+import { Vignette } from "../vignette";
 import { errorText, useWorkbench } from "../workbench";
 
 type Format = "md" | "docx" | "png";
@@ -118,10 +120,11 @@ export function Export() {
 
   return (
     <div className="s5">
-      <section className="desk" style={{ backgroundImage: `url(${desk})` }}>
-        <article className="page">
+      <section className="desk tex-grain" style={{ backgroundImage: `url(${desk})` }}>
+        <article className="page sheet-in">
+          <div className="crops page-crops" />
           <img className="page-band" src={band} alt="" />
-          <div className="page-body">
+          <div className="page-body" key={md === null ? "wait" : "ready"}>
             {s.shadow ? (
               <p className="dim">演示保底模式下没有后端，报告由 M7 生成，这里无法预览。后端恢复后刷新页面重试。</p>
             ) : error ? (
@@ -129,7 +132,7 @@ export function Export() {
             ) : md === null ? (
               <p className="dim mono">M7 正在生成预览…</p>
             ) : (
-              renderMarkdown(md, figure)
+              renderMarkdown(md, figure).map((n, i) => <div key={i} className="rv" style={stagger(i)}>{n}</div>)
             )}
           </div>
         </article>
@@ -154,10 +157,15 @@ export function Export() {
             </label>
           ))}
         </div>
-        <figure className="anchor small s5-anchor"><img src={anchor} alt="" /><figcaption className="mono">OBJ. 05 · NIB · 成文</figcaption></figure>
+        <Vignette id="GEN-10" className="s5-anchor" src={anchor} caption="OBJ. 05 · NIB · 成文：落成一段能交的文字">
+          {/* 墨线：从笔尖墨滴出发，落到「导出」按钮正上方，引导视线 */}
+          <svg className="ink-line" viewBox="0 0 312 100" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M136 0 C 134 34, 96 42, 128 66 S 206 84, 204 100" fill="none" stroke="#1e3bff" strokeWidth="1.5" strokeDasharray="1 6" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          </svg>
+        </Vignette>
         <div className="actions">
           <button className="btn ghost" disabled={!md} onClick={copy}>{copied ? "已复制" : "复制 Markdown"}</button>
-          <button className="btn primary grow" disabled={s.shadow || !!s.busy} onClick={download}>
+          <button className="btn primary grow sheen" disabled={s.shadow || !!s.busy} onClick={download}>
             导出 {FORMAT_NAME[format]}
           </button>
         </div>

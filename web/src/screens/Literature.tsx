@@ -1,10 +1,14 @@
 import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import orb from "../../../design/assets/GEN-03.webp";
 import prism from "../../../design/assets/GEN-08.webp";
+// 左侧期刊微距底纹：程序绘制（design/render/journal.py），只做情绪，内容不可读
+import journal from "../../../design/assets/PHOTO-02.webp";
 import { api } from "../api";
 import { pxToValue } from "../charts/calib";
 import { fmt } from "../charts/scale";
 import type { AxisCalibration, AxisScale, ExtractResult, Figure, FigureDetection, Px, ReferenceDataset } from "../types";
+import { stagger } from "../motion";
+import { Vignette } from "../vignette";
 import { errorText, useWorkbench } from "../workbench";
 
 type Axis = "x" | "y";
@@ -203,9 +207,13 @@ export function Literature() {
   if (!fig || s.shadow) {
     return (
       <div className="split">
-        <section className="pane main-pane center">
+        <section className="pane main-pane center lit-empty tex-grain">
           <div className="display ghost-word">FIGURE → DATA</div>
-          <figure className="anchor"><img src={orb} alt="" /></figure>
+          <div className="journal duo-day"><img src={journal} alt="" /></div>
+          <div className="halftone fade-r" />
+          <div className="cross" style={{ left: 32, top: 32 }} />
+          <div className="cross" style={{ right: 32, top: 32 }} />
+          <Vignette id="GEN-03" className="s3-orb" src={orb} />
           <h2>{isTitration ? "拖入教材或论文里的滴定曲线" : "把论文里的图交给它"}</h2>
           <p className="dim small">PNG / JPG · 建议宽度 ≥ 1200 px · 也可以直接粘贴截图</p>
           {s.shadow ? (
@@ -315,7 +323,7 @@ export function Literature() {
         {detectError && <p className="warn small">识别不可用：{detectError}</p>}
       </aside>
 
-      <section className="canvas">
+      <section className="canvas mat">
         <div className="toolbar">
           {(["image", "layer", "both"] as const).map((v) => (
             <button key={v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{{ image: "原图", layer: "提取层", both: "叠加" }[v]}</button>
@@ -325,6 +333,7 @@ export function Literature() {
         </div>
         <div className={"fig" + (detecting ? " scanning" : "")}>
           <div className="fig-inner" style={{ "--ar": fig.width / fig.height } as CSSProperties}>
+            <div className="crops" />
             {view !== "layer" && <img src={fig.image_url} alt="文献曲线截图" draggable={false} />}
             <svg
               ref={svgRef}
@@ -391,8 +400,8 @@ export function Literature() {
           <table className="mini-table mono">
             <thead><tr><th>ID</th><th>{xs?.name ?? "x"} {xs?.unit}</th><th>{ys?.name ?? "y"} {ys?.unit}</th></tr></thead>
             <tbody>
-              {result?.dataset.rows.map((r) => (
-                <tr key={r.id}><td>{r.id}</td><td>{r.values.x}</td><td>{r.values.y}</td></tr>
+              {result?.dataset.rows.map((r, ri) => (
+                <tr key={r.id} className="rv" style={stagger(ri)}><td>{r.id}</td><td>{r.values.x}</td><td>{r.values.y}</td></tr>
               ))}
               {!result && <tr><td colSpan={3} className="dim">提取后在这里列出</td></tr>}
             </tbody>
@@ -407,7 +416,7 @@ export function Literature() {
             <input className="input" inputMode="decimal" value={vEq} onChange={(e) => setVEq(e.target.value)} placeholder="由图读出" />
           </label>
         )}
-        <figure className="anchor small"><img src={prism} alt="" /><figcaption className="mono">OBJ. 03 · PRISM · 把曲线从图里剥离出来</figcaption></figure>
+        <Vignette id="GEN-08" className="s3-anchor" src={prism} caption="OBJ. 03 · PRISM · 分离：把曲线从图里剥离出来" />
         <div className="actions end">
           {skip}
           <button className="btn primary" disabled={!result || !result.dataset.rows.length || dirty || !!s.busy || (isTitration && !(Number(vEq) > 0))} onClick={attach}>
