@@ -1,5 +1,5 @@
 import bg from "../../../design/assets/GEN-02.webp";
-// 封面主视觉：滴定管 GEN-11 还没渲染，先用通用物件银镜试管 GEN-01
+// 封面主视觉：银镜试管 GEN-01
 import hero from "../../../design/assets/GEN-01.webp";
 import { useWorkbench } from "../workbench";
 
