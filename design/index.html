@@ -82,7 +82,7 @@
     <table class="map-table">
       <thead><tr><th>参考里的手法</th><th></th><th>在 LabInfer 中对应什么</th></tr></thead>
       <tbody>
-        <tr><td>铬银 / 液态金属物体（P4）</td><td class="arrow">→</td><td>滴定的一切都从滴定管上读出来。所以主视觉物体就是<b>滴定管</b>（GEN-11，Blender 渲染）：铬银活塞、玻璃管身、钴蓝液柱和悬在管尖的一滴，材质不是装饰，而是实验本身。</td></tr>
+        <tr><td>铬银 / 液态金属物体（P4）</td><td class="arrow">→</td><td>主视觉物体是<b>银镜试管</b>（GEN-01，Blender 渲染）：玻璃上镀出的一层银镜，铬银与液态金属的质感正是这套审美的锚点。它是通用的化学实验意象，不绑定某一个实验，换演示案例也不用换。</td></tr>
         <tr><td>十字准星、刻度尺（P3）</td><td class="arrow">→</td><td>M2 坐标校准的<b>真实操作对象</b>：校准点就是十字准星，坐标轴就是刻度尺，分析图顶部的滴定管刻度把 ΔV 换回学生在滴定管上的真实读数（mL）。仪器语言在这里不是装饰，而是功能。</td></tr>
         <tr><td>玻璃球 + 球心十字（R10–R12）</td><td class="arrow">→</td><td>M2 拖动校准点时出现的<b>放大镜</b>，用来精确对准刻度。</td></tr>
         <tr><td>单一强调色（P1）</td><td class="arrow">→</td><td>颜色有固定语义：<b style="color:var(--cobalt)">钴蓝 = 机器读出或代码算出的数据</b>（识别结果、提取点、拟合线、推演），墨黑 = 原始资料和文献，<b style="color:var(--signal)">红 = 异常，且只用于异常</b>（取自 R5 的那一抹红）。</td></tr>
@@ -96,7 +96,7 @@
     <table class="map-table">
       <thead><tr><th>步骤</th><th></th><th>锚点物件 · 寓意 · 典故</th></tr></thead>
       <tbody>
-        <tr><td>S0 封面</td><td class="arrow">→</td><td><b>滴定管</b>（GEN-11）· 演示案例 001 的专属物件，只出现在封面；换实验时只换这一件</td></tr>
+        <tr><td>S0 封面</td><td class="arrow">→</td><td><b>银镜试管</b>（GEN-01）· 封面主视觉，只出现在封面；通用意象，换实验不用换</td></tr>
         <tr><td>S1 上下文</td><td class="arrow">→</td><td><b>高分子链球棍模型</b>（GEN-06）· 建模：把实验抽象成结构与公式 · 鲍林、沃森–克里克搭模型推结构</td></tr>
         <tr><td>S2 我的数据</td><td class="arrow">→</td><td><b>游标卡尺</b>（GEN-07）· 读数：把刻度变成数字 · 维尼尔 1631</td></tr>
         <tr><td>S3 文献取数</td><td class="arrow">→</td><td><b>三棱镜</b>（GEN-03 玻璃球 + GEN-08）· 分离：把曲线从图里剥离出来 · 牛顿 1666</td></tr>
@@ -104,7 +104,7 @@
         <tr><td>S5 导出</td><td class="arrow">→</td><td><b>钢笔尖与钴蓝墨滴</b>（GEN-10）· 成文：落成一段能交的文字</td></tr>
       </tbody>
     </table>
-    <p style="color:var(--ink-2);font-size:14px;margin:12px 0 0">除封面外，物件都是通用的科研意象，不绑定具体实验；换成任何实验模板，画面都成立。物件统一用铬银 + 钴蓝两种材质，放在功能区之外，配「OBJ. 编号 + 英文名 + 寓意」的博物馆标签。</p>
+    <p style="color:var(--ink-2);font-size:14px;margin:12px 0 0">包括封面在内，物件都是通用的科研意象，不绑定具体实验；换成任何实验模板，画面都成立。物件统一用铬银 + 钴蓝两种材质，放在功能区之外，配「OBJ. 编号 + 英文名 + 寓意」的博物馆标签。</p>
     <div class="callout"><b>总判断：海报在边缘，工具在中心。</b>参考图都是海报，海报要的是冲击力；工具要的是长时间看不累。所以强烈的表达只放在封面、空状态、关键数字和导出页这几处，工作区保持安静，仪器语言只在承担功能的地方出现。</div>
   </section>
 
@@ -159,7 +159,7 @@
             <div class="topline"><span>LABINFER — RESEARCH INSTRUMENT</span><span>HACKATHON 2026 · 科研创新赛道</span><span>N° 001</span></div>
             <div class="halftone fade-radial" style="left:880px;top:420px;width:420px;height:420px;color:rgba(140,155,255,.35)"></div>
             <div class="giant display"><div>LAB</div><div class="fill glitch" data-text="INFER">INFER</div></div>
-            <figure class="slot contain hero-obj" data-slot="GEN-11"></figure>
+            <figure class="slot contain hero-obj" data-slot="GEN-01"></figure>
             <div class="crease-v" style="left:50%"></div>
             <div class="crease-h" style="top:58%"></div>
             <figure class="slot duo-night specimen" data-slot="PHOTO-01"></figure>
@@ -190,11 +190,11 @@
           <div class="id">S0 · 封面</div>
           <h3>开场：从数据到结论</h3>
           <dl>
-            <dt>剧情</dt><dd>答辩第一屏。超大字 LABINFER 被滴定管压住，右下角读数里的 c(HCl) 是一个问号，整场演示就是把这个问号填上。</dd>
+            <dt>剧情</dt><dd>答辩第一屏。超大字 LABINFER 被银镜试管压住，右下角读数里的 c(HCl) 是一个问号，整场演示就是把这个问号填上。</dd>
             <dt>用户操作</dt><dd>点「载入演示案例」进入 S1；「新建实验」走空白模板。</dd>
             <dt>模块</dt><dd>M8</dd>
-            <dt>动效</dt><dd>进场：背景先亮起，大字描边由左向右描出（600ms），滴定管从下方 24px 弹入（弹簧曲线），管尖那一滴随后落下一次。c(HCl) 的「?」在 S4 得出结果后回到封面时替换为 0.1027。</dd>
-            <dt>素材位</dt><dd><code>GEN-11</code> 主视觉，<code>GEN-02</code> 背景，<code>PHOTO-01</code> 右上样片</dd><dt>质感层</dt><dd>胶片颗粒、居中的对折折痕（R5）、「INFER」的钴蓝故障切片、主视觉背后的半调网点光斑。</dd>
+            <dt>动效</dt><dd>进场：背景先亮起，大字描边由左向右描出（600ms），试管从下方 24px 弹入（弹簧曲线）。c(HCl) 的「?」在 S4 得出结果后回到封面时替换为 0.1027。</dd>
+            <dt>素材位</dt><dd><code>GEN-01</code> 主视觉，<code>GEN-02</code> 背景，<code>PHOTO-01</code> 右上样片</dd><dt>质感层</dt><dd>胶片颗粒、居中的对折折痕（R5）、「INFER」的钴蓝故障切片、主视觉背后的半调网点光斑。</dd>
           </dl>
         </aside>
       </div>

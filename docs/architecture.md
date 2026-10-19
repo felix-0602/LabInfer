@@ -24,6 +24,7 @@
 - **后端**：一个 Python 服务（FastAPI），每个模块是一组路由，挂在 `/api/m{编号}/` 下。M2、M4 等都依赖 numpy、OpenCV、开源 VLM，放在同一个进程里，部署最简单。
 - **共享存储**：数据集和实验上下文存成 JSON 文件，通过 `/api/datasets/`、`/api/contexts/` 读写。哪个模块产出数据集，就由哪个模块写入存储。
 - **前端**：M8 是独立的单页应用，只通过 HTTP 调后端，不直接读写文件。
+- **单用户**：服务按单用户部署，没有登录、租户和资源归属。各接口按路径 id 直接读写资源（如 M2 `POST /api/m2/figures/{id}/extract` 按图 id 取图），不校验调用者是否拥有该资源。这在单用户下是设计使然；改成多用户（例如 M8 上云共用一个后端）之前，必须先给 figures、datasets、contexts 等资源加归属绑定与校验。
 
 接口的具体定义见 [contracts.md](contracts.md#http-接口)。
 
