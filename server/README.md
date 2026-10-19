@@ -17,6 +17,8 @@ uv pip install --python .venv/bin/python \
 
 ## 运行
 
+前后端一键启动用仓库根目录的 `./start.sh`（见根 README「快速启动」）。只手动起后端：
+
 ```bash
 . .venv/bin/activate
 python -m scripts.seed_demo          # 写入演示数据集与上下文，并按 design/assets/DEMO-01.jpg 烘焙 M1 演示缓存
