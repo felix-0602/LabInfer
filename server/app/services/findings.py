@@ -28,7 +28,8 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
 
     findings.append(_f(
         "f_pattern", "pattern",
-        f"标定——即用基准物质把盐酸准确浓度测出来的操作——三份平行线性良好："
+        f"标定——即用基准物质（组成稳定、能当标准砝码用的碳酸钠）把盐酸准确浓度"
+        f"测出来的操作——三份平行线性良好："
         f"称的基准 Na₂CO₃ 越多、消耗的盐酸体积越大，滴定体积与称样量成过原点直线"
         f"（R²={_num(fit['r2'])}，n={fit['n']}），三份平均 c̄(HCl)={_num(d['c_hcl'])} mol/L"
         f"（过原点回归 {_num(d['c_regression'])}）。",
@@ -53,7 +54,9 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
         findings.append(_f(
             "f_co2", "suggestion",
             f"近终点前煮沸驱除 CO₂：溶解的 CO₂ 会形成缓冲——即有成分在抵抗 pH 变化——"
-            f"使突跃（计量点附近 pH 陡变的一段）变缓、黄色迟迟不变橙，终点提前"
+            f"带来两个后果：一是颜色变得慢、突跃（计量点附近 pH 陡变的一段）不再陡峭，"
+            f"近终点更要半滴半滴地加；二是 pH 提前降进变色区，按「刚变橙就停」判，"
+            f"终点会落在计量点之前"
             f"（理论曲线按 CO₂ 未逸出的封闭体系计算，计量点 pH {curve['ph_eq']}）。"
             f"驱除越彻底，突跃越陡、计量点 pH 越高，终点越靠近理论计量点。",
             [{"type": "comparison", "target": "titration_curve"}],

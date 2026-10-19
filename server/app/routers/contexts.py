@@ -102,28 +102,28 @@ ALKALI_TITRATION_TEMPLATE = {
             "model": {"label": "分析模型",
                       "plain": "这套数据按什么路子算：先标定盐酸浓度，再算碱灰总碱度。"},
             "model_params.molar_mass_na2co3_g_mol": {"label": "Na₂CO₃ 摩尔质量",
-                      "plain": "一摩尔无水碳酸钠的质量 105.99 g，把称出的克数换算成物质的量时用。"},
+                      "plain": "一摩尔（固定个数分子）无水碳酸钠的质量，把称出的克数换算成物质的量时用。"},
             "model_params.molar_mass_na2o_g_mol": {"label": "Na₂O 摩尔质量",
-                      "plain": "一摩尔氧化钠的质量 61.979 g，总碱度统一折算成它来报告。"},
+                      "plain": "总碱度统一折算成它来报告的折算基准。"},
             "model_params.stock_volume_ml": {"label": "试液定容体积",
-                      "plain": "碱灰溶解后准确稀释到的总体积 250 mL。"},
+                      "plain": "碱灰溶解后准确稀释到的总体积。"},
             "model_params.aliquot_volume_ml": {"label": "每次移取体积",
-                      "plain": "每份滴定从试液里移出的体积 25.00 mL。"},
+                      "plain": "每份滴定从试液里移出的体积。"},
             "model_params.pka1": {"label": "碳酸 pKa₁",
-                      "plain": "碳酸第一步解离的强度常数（6.35），画理论滴定曲线用。"},
+                      "plain": "碳酸分两步解离，这是第一步的强度常数；画理论滴定曲线用。"},
             "model_params.pka2": {"label": "碳酸 pKa₂",
-                      "plain": "碳酸第二步解离的强度常数（10.33），画理论滴定曲线用。"},
+                      "plain": "碳酸第二步解离的强度常数；画理论滴定曲线用。"},
             "model_params.initial_water_ml": {"label": "溶解水量",
-                      "plain": "溶解基准碳酸钠用的水约 30 mL（教材 25～35 mL 取中值）。"},
+                      "plain": "溶解基准碳酸钠用的水量（教材 25～35 mL 取中值）。"},
             "model_params.indicator": {"label": "指示剂",
-                      "plain": "甲基橙，pH 3.1～4.4 间由黄变橙，替眼睛报「反应完成」。",
+                      "plain": "甲基橙，酸性强到一定程度时由黄变橙，替眼睛报「反应完成」。",
                       "term_id": "indicator"},
             "model_params.balance_error_g": {"label": "天平称量误差",
-                      "plain": "单次称量最大误差 0.0001 g；差减法称两次，共 ±0.0002 g。"},
+                      "plain": "差减法要称两次、误差相加；误差预算里称量项的来源。"},
             "model_params.burette_error_ml": {"label": "滴定管读数误差",
-                      "plain": "单次读数最大误差 0.01 mL；一次滴定初读末读各一次。"},
+                      "plain": "一次滴定初读末读各一次、误差相加；误差预算里读数项的来源。"},
             "variables.m": {"label": "基准物称样质量",
-                      "plain": "每份基准无水碳酸钠称了多少克（0.15～0.20 g）。"},
+                      "plain": "每份基准无水碳酸钠称了多少克。"},
             "variables.V": {"label": "HCl 滴定体积",
                       "plain": "滴到变色那一下累计消耗的盐酸毫升数。"},
             "variables.ms": {"label": "碱灰试样质量",
@@ -136,7 +136,7 @@ ALKALI_TITRATION_TEMPLATE = {
             "qc_rules.outlier_grubbs": {"label": "离群值检查",
                       "plain": "格拉布斯检验判断某个可疑值是不是该剔除（GB/T 4883）。"},
             "reference.limits[0]": {"label": "总碱度参照上限",
-                      "plain": "纯 Na₂CO₃ 的理论总碱度 58.47%（以 Na₂O 计）；碱灰超过它，说明混了别的碱。"},
+                      "plain": "纯 Na₂CO₃ 的理论总碱度（以 Na₂O 计）；碱灰超过它，说明混了别的碱。"},
         },
         "sections": [
             {"section_id": "overview", "title": "这个实验在干什么：两步咬合",
@@ -158,9 +158,12 @@ ALKALI_TITRATION_TEMPLATE = {
                      "分析化学的办法是先按大概浓度配一瓶——量浓盐酸约 9 mL 稀释到 1 L，"
                      "得到约 0.1 mol/L——再用基准物质把浓度定准，这就是标定。"
                      "基准物质要够纯、够稳定、称得准：无水碳酸钠在 270～300 ℃ 烘至恒重后"
-                     "不吸潮也不变质，摩尔质量又大（105.99 g/mol），同样万分之一的称量误差"
-                     "折到物质的量上更小，所以教材选它。每种基准物各有代价：另一种常用的硼砂"
-                     "摩尔质量更大，但必须放在控湿干燥器里保存，否则结晶水一变，"
+                     "不易吸潮也不变质（吸湿性小，但称量动作还是要快），"
+                     "摩尔质量又大（105.99 g/mol）。摩尔质量大为什么是优点？"
+                     "标一份要的碳酸钠的物质的量是固定的，摩尔质量越大、要称的克数就越多，"
+                     "同一台天平那点绝对误差折成百分比就越小。"
+                     "每种基准物各有代价：另一种常用的硼砂（带结晶水的硼酸钠）"
+                     "摩尔质量更大，但必须放在控湿干燥器里保存，否则所含结晶水的量一变，"
                      "称出来的就不再是那个化合物。称样量定在 0.15～0.20 g、滴定体积要求 20 mL 以上，"
                      "是为了让天平和滴定管各自的误差都压在千分之一左右（详见「数字上的讲究」一节）。",
              "terms": [],
@@ -173,10 +176,11 @@ ALKALI_TITRATION_TEMPLATE = {
                      "它落在[滴定突跃](term:titration_jump)之内，也正好落进甲基橙的变色区"
                      "（pH 3.1～4.4，由黄变橙），所以选它做[指示剂](term:indicator)。"
                      "终点的手感是「黄色刚变成橙色就停」：橙色意味着刚踏进变色区，"
-                     "再往深红滴就过了。近终点前还要加热煮沸赶走溶解的 CO₂："
-                     "CO₂ 溶入水形成的碳酸会抵抗 pH 变化"
-                     "（[缓冲](term:buffering)），让本该陡峭的突跃变缓，黄色迟迟不肯变橙，"
-                     "终点就会提前。教材里还有甲基红与溴甲酚绿配成的混合指示剂，"
+                     "再往深红滴就过了。近终点前还要加热煮沸赶走溶解的 CO₂。"
+                     "CO₂ 溶进水生成的碳酸会抵抗 pH 变化（[缓冲](term:buffering)），"
+                     "带来两个后果：一是颜色变得慢，突跃不再陡峭，近终点更要半滴半滴地加；"
+                     "二是 pH 提前降进变色区，按「刚变橙就停」判，终点会落在计量点之前。"
+                     "教材里还有甲基红与溴甲酚绿配成的混合指示剂，"
                      "两条变色带叠在一起，变色更锐，道理相同。",
              "terms": ["equivalence_point", "titration_jump", "indicator", "buffering"],
              "sources": ["src_textbook_exp3", "src_ac_book", "src_gb601_boil"]},
@@ -192,7 +196,7 @@ ALKALI_TITRATION_TEMPLATE = {
                      "所以称约 2 g 溶解后定容到 250 mL，每次移取 25.00 mL 来滴，"
                      "取三份[平行测定](term:parallel_determination)。",
              "terms": ["soda_ash", "parallel_determination"],
-             "sources": ["src_textbook_exp3", "src_gb601", "src_guide_online"]},
+             "sources": ["src_textbook_exp3", "src_guide_online"]},
             {"section_id": "precision", "title": "平行、偏差与数字上的讲究",
              "show_in": ["context"], "order": 5, "rung_id": "L5-mass-range",
              "summary": "称样与体积的下限不是拍脑袋，是让天平和滴定管各占约千分之一的误差。",
@@ -228,17 +232,17 @@ ALKALI_TITRATION_TEMPLATE = {
                      "pH 就大幅下坠的那段近乎竖直的陡壁，[化学计量点](term:equivalence_point)"
                      "（本实验约 pH 3.9）就藏在陡壁中间。第三，曲线有两个台阶而不是一个："
                      "第一个小台阶（约 pH 8.3）是碱被中和了一半的瞬间，不是终点。"
-                     "你的数据不是一条曲线，是三个孤立的点——三份各自滴到变色那一下的体积；"
+                     "学生的数据不是一条曲线，是三个孤立的点——三份各自滴到变色那一下的体积；"
                      "把它们放到曲线的横轴上，就是在回答「我的终点落在陡壁的哪个位置」。",
              "terms": ["titration_jump", "equivalence_point"],
              "sources": ["src_ac_book", "src_textbook_exp3"]},
             {"section_id": "why-compare", "title": "为什么要拿文献曲线和自己的终点比",
              "show_in": ["literature"], "order": 3, "rung_id": None,
              "summary": "浓度不同比不了数字，换成滴定分数后比的是「终点落没落在突跃段里」。",
-             "body": "03 页要把教材（或论文）里的滴定曲线和你的三个终点画到一张图上。"
-                     "麻烦在于：文献用的盐酸浓度、称样量都和你不同，同样 25 mL，含义完全不一样。"
+             "body": "03 页要把教材（或论文）里的滴定曲线和学生自己的三个终点画到一张图上。"
+                     "麻烦在于：文献用的盐酸浓度、称样量都和学生不同，同样 25 mL，含义完全不一样。"
                      "所以 M4 先把双方换算到同一个坐标——滴入体积除以各自的计量点体积，"
-                     "得到滴定分数，1.0 就是刚好反应完的位置。换算后，你的终点落在文献曲线的"
+                     "得到滴定分数，1.0 就是刚好反应完的位置。换算后，终点落在文献曲线的"
                      "突跃段之内，说明终点判断合理；落在突跃边缘之外，就要回头怀疑终点颜色判断"
                      "或 CO₂ 干扰。这是「拿参照对比判断自己」在曲线上的样子：不是比数字相等，"
                      "而是比位置合理。",
@@ -258,7 +262,7 @@ ALKALI_TITRATION_TEMPLATE = {
              "anchor": {"type": "comparison", "target": "titration_curve"}, "trigger": None,
              "source": "实验教材 实验目的 3；分析化学教材 酸碱滴定章"},
             {"rung_id": "L4-co2", "level": 4, "title": "为什么近终点要防 CO₂",
-             "concept": "溶解的 CO₂ 形成的碳酸会抵抗 pH 变化（缓冲作用），本该陡峭的突跃变缓，黄色迟迟不变橙，终点提前",
+             "concept": "溶解的 CO₂ 生成的碳酸会抵抗 pH 变化（缓冲作用），带来两个后果：颜色变得慢、突跃不再陡峭；pH 提前降进变色区，按「刚变橙就停」判的终点落在计量点之前",
              "anchor": {"type": "comparison", "target": "titration_curve"}, "trigger": None,
              "source": "分析化学教材；GB/T 601-2016 HCl 标定条（煮沸步骤，待核）"},
             {"rung_id": "L5-error-type", "level": 5, "title": "误差分系统与随机",
