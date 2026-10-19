@@ -84,6 +84,34 @@ def _simulate_titration_delta(preds: list[dict], frm: float, to: float, mid: flo
     }
 
 
+def _simulate_co2_retention(curve: dict, frm: float, to: float, mid: float) -> dict:
+    """残留 CO₂ 比例对滴定曲线的影响（0.7.0）：x 为 ΔV（mL），y 为 pH。
+    fraction=1 即封闭体系理论曲线；比例越小代表煮沸驱除越多，总碳按比例缩减，
+    计量点 pH 上移、突跃更陡。近似只在计量点附近窗口内有意义。"""
+    from ..models.titration import ph_at
+
+    basis = curve["basis"]
+    params = {"pka1": basis["pka1"], "pka2": basis["pka2"],
+              "molar_mass_na2co3_g_mol": basis.get("molar_mass_na2co3", 105.99),
+              "initial_water_ml": basis.get("initial_water_ml", 30.0)}
+    v_eq, mass, c = basis["v_eq_ml"], basis["mass_g"], basis["c_mol_l"]
+
+    n = 161
+    step = 4.0 / (n - 1)
+    pts = [{"x": round(-2.0 + step * i, 3),
+            "y": round(ph_at(v_eq - 2.0 + step * i, mass, c, params,
+                             co2_retained=mid), 3)}
+           for i in range(n)]
+    return {
+        "schema_version": CONTRACT_VERSION,
+        "finding_id": "",
+        "predicted": {"co2_retained_fraction": mid,
+                      "ph_eq": round(ph_at(v_eq, mass, c, params,
+                                           co2_retained=mid), 2)},
+        "curve": pts,
+    }
+
+
 @router.post("/simulate")
 def simulate(body: SimulateRequest, request: Request):
     store = request.app.state.store
@@ -108,6 +136,16 @@ def simulate(body: SimulateRequest, request: Request):
             return JSONResponse(status_code=422, content={
                 "error": {"code": "NOT_SIMULATABLE", "message": "无可推演的平行样品", "detail": {}}})
         out = _simulate_titration_delta(preds, body.frm, body.to, mid)
+    elif body.param == "co2_retained_fraction":
+        curve = analysis.get("titration_curve")
+        if not curve:
+            return JSONResponse(status_code=422, content={
+                "error": {"code": "NOT_SIMULATABLE",
+                          "message": "分析结果缺少 titration_curve（model_params 需要 pka1/pka2）",
+                          "detail": {}}})
+        frm = max(0.0, min(body.frm, body.to))    # 比例只在 0～1 有意义
+        to = min(1.0, max(body.frm, body.to))
+        out = _simulate_co2_retention(curve, frm, to, (frm + to) / 2)
     else:
         return JSONResponse(status_code=422, content={
             "error": {"code": "NOT_SIMULATABLE",

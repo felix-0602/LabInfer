@@ -3,7 +3,8 @@ from pathlib import Path
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import JSONResponse
 
-from ..cache import cache_get, cache_put, sha256_bytes
+from ..cache import (cache_get, cache_put, is_demo_image, runtime_cache_put,
+                     sha256_bytes)
 from ..config import CONTRACT_VERSION
 from ..llm import LlmError, llm_configured
 from ..storage import new_id
@@ -37,7 +38,10 @@ async def create_record(request: Request, image: UploadFile = File(...),
             return JSONResponse(status_code=503, content={
                 "error": {"code": "VLM_UNAVAILABLE", "message": f"视觉识别失败: {e}", "detail": {}}})
         bake = dict(ds)
-        cache_put("m1", digest, bake)
+        if is_demo_image(digest):
+            cache_put("m1", digest, bake)        # 白名单图：进入库的演示缓存
+        else:
+            runtime_cache_put("m1", digest, bake)  # 其余：运行时缓存（不入库）
     else:
         return JSONResponse(status_code=503, content={
             "error": {"code": "VLM_UNAVAILABLE",

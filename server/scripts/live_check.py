@@ -19,8 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# 必须在 import app 之前：真实识别的烘焙缓存指向临时目录，不污染仓库的 demo_cache
+# 必须在 import app 之前：真实识别的烘焙缓存指向临时目录，不污染仓库的 demo_cache 与 runtime_cache
 os.environ.setdefault("LABINFER_DEMO_CACHE", tempfile.mkdtemp(prefix="labinfer-live-cache-"))
+os.environ.setdefault("LABINFER_RUNTIME_CACHE", tempfile.mkdtemp(prefix="labinfer-live-rtcache-"))
 
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -176,7 +177,7 @@ def main() -> int:
     t = step("演示保底快照")
     r = client.get(f"/api/snapshot/{ctx['id']}")
     snap = r.json()
-    ok(snap["schema_version"] == "0.6.0" and snap["findings"] and snap["analysis"]["fits"],
+    ok(snap["schema_version"] == "0.7.0" and snap["findings"] and snap["analysis"]["fits"],
        "快照含上下文、数据集、分析与结论")
     results["snapshot"] = time.time() - t
 

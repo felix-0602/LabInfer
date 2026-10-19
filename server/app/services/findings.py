@@ -34,6 +34,30 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
         [{"type": "fit", "dataset_id": ds_id}],
     ))
 
+    curve = analysis.get("titration_curve")
+    if curve:
+        w = curve["indicator"]["dv_window_ml"]
+        worst_ep = max(curve["endpoints"], key=lambda e: abs(e["dv_ml"])) \
+            if curve["endpoints"] else None
+        text = (f"理论滴定曲线（封闭体系）计量点 pH {curve['ph_eq']}，"
+                f"{curve['indicator']['name']} 变色窗 ΔV {w[0]}～{w[1]} mL。")
+        if worst_ep:
+            text += (f"三份终点中 {worst_ep['point_id']} 偏离计量点最远"
+                     f"（ΔV {worst_ep['dv_ml']} mL，pH {worst_ep['ph']}），"
+                     f"提示该份终点判断偏差最大。")
+        findings.append(_f("f_curve", "pattern", text,
+                           [{"type": "comparison", "target": "titration_curve"}]))
+
+    budget = analysis.get("error_budget")
+    if budget:
+        findings.append(_f(
+            "f_budget", "anomaly",
+            f"实测标定相对平均偏差 {round(budget['observed_rel_dev'] * 100, 2)}% 是仪器误差预算 "
+            f"{budget['expected_rel_dev']}（天平与滴定管方和根，取各份最大）的 "
+            f"{budget['ratio']} 倍，离散不能用称量与读数误差解释，指向操作因素（如终点判断）。",
+            [{"type": "comparison", "target": "error_budget"}],
+        ))
+
     preds = analysis.get("predictions", [])
     mean_w = d.get("w_na2o_mean_pct")
     worst = None
