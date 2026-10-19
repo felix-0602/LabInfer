@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import demoPhoto from "../../../design/assets/DEMO-01.jpg";
 import anchor from "../../../design/assets/GEN-07.webp";
 import type { Dataset, Row } from "../types";
+import { Anchor, stagger } from "../motion";
 import { useWorkbench } from "../workbench";
 
 // 低于这个置信度的格子要用户过目（architecture.md · M1）
@@ -71,9 +72,9 @@ export function MyData() {
     <div className="split">
       <section className="pane photo-pane">
         {photo ? (
-          <img className="record-photo" src={photo} alt="手写实验记录照片" />
+          <div className={"record-wrap" + (s.busy ? " scanning" : "")}><img className="record-photo develop" src={photo} alt="手写实验记录照片" /></div>
         ) : (
-          <div className="dropzone">
+          <div className={"dropzone rv" + (s.busy ? " scanning" : "")}>
             <div className="display ghost-word">DATA</div>
             <p>上传手写实验记录的照片，M1 会把它识别成表格。</p>
             <div className="actions">
@@ -105,8 +106,8 @@ export function MyData() {
       </section>
 
       <aside className="pane side-pane wide">
-        <h2>核对识别结果</h2>
-        <p className="dim">低置信度的格子已用钴蓝斜纹标出，点击即可修改，Tab 跳到下一个。确认后数据会被锁定。</p>
+        <h2 className="rv" style={stagger(0)}>核对识别结果</h2>
+        <p className="dim rv" style={stagger(1)}>低置信度的格子已用钴蓝斜纹标出，点击即可修改，Tab 跳到下一个。确认后数据会被锁定。</p>
         {draft ? (
           <table className="data-table">
             <thead>
@@ -117,11 +118,11 @@ export function MyData() {
               </tr>
             </thead>
             <tbody>
-              {draft.rows.map((r) => {
+              {draft.rows.map((r, ri) => {
                 const confs = Object.values(r.confidence ?? {});
                 const minConf = confs.length ? Math.min(...confs) : null;
                 return (
-                  <tr key={r.id}>
+                  <tr key={r.id} className="rv" style={stagger(2 + ri)}>
                     <td className="mono dim">{r.id}<div className="small">{r.series}</div></td>
                     {draft.columns.map((c) => {
                       const key = cellKey(r.id, c.key);
@@ -162,14 +163,14 @@ export function MyData() {
         ) : (
           <div className="empty dim">{s.busy ?? "还没有识别结果"}</div>
         )}
-        <figure className="anchor small"><img src={anchor} alt="" /><figcaption className="mono">OBJ. 02 · VERNIER CALIPER · 读数：把刻度变成数字</figcaption></figure>
+        <Anchor className="small" src={anchor} caption="OBJ. 02 · VERNIER CALIPER · 读数：把刻度变成数字" />
         <div className="actions end">
           {draft && (
             <span className="mono dim small">
               {draft.rows.length} 行 · {pending.length ? `${pending.length} 处待确认` : "全部已过目"}
             </span>
           )}
-          <button className="btn primary" disabled={!draft || !!s.busy} onClick={confirm}>
+          <button className="btn primary sheen" disabled={!draft || !!s.busy} onClick={confirm}>
             {pending.length ? "仍有待确认，照此确认 →" : "确认数据 →"}
           </button>
         </div>

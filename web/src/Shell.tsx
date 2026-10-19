@@ -1,15 +1,21 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { STEPS, useWorkbench } from "./workbench";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { s, dispatch } = useWorkbench();
   const current = STEPS.find((x) => x.step === s.step);
   const ids = [s.ctx?.id, s.dataset?.id].filter(Boolean).join(" · ");
+  const stage = useRef<HTMLElement>(null);
+  const railIndex = STEPS.findIndex((x) => x.step === s.step);
+
+  // 换屏后回到顶部，新屏的进场动画从第一行开始
+  useLayoutEffect(() => { stage.current?.scrollTo(0, 0); }, [s.step]);
 
   return (
     <div className="shell">
       <nav className="rail">
-        <button className="logo" onClick={() => dispatch({ type: "go", step: 0 })} title="回到封面">LI</button>
+        <button className="logo" onClick={() => dispatch({ type: "go", step: 0 })} title="回到封面">L<i>I</i></button>
+        {railIndex >= 0 && <span className="rail-ind" style={{ transform: `translateY(${railIndex * 72}px)` }} />}
         {STEPS.map(({ step, label }) => {
           const reachable = !!s.ctx && (step <= s.step || s.done.has(step) || s.done.has((step - 1) as typeof step));
           return (
@@ -19,27 +25,27 @@ export function Shell({ children }: { children: ReactNode }) {
               disabled={!reachable}
               onClick={() => dispatch({ type: "go", step })}
             >
-              <span className="mono">0{step}{s.done.has(step) ? " ✓" : ""}</span>
+              <span className="mono">0{step}{s.done.has(step) && <span className="ok"> ✓</span>}</span>
               <span>{label}</span>
             </button>
           );
         })}
         <div className="rail-foot mono">SCHEMA {s.ctx?.schema_version ?? "—"}</div>
       </nav>
-      <header className="topbar">
+      <header className={"topbar" + (s.busy ? " is-busy" : "")}>
         <b>{s.ctx?.name.split("（")[0] ?? "LabInfer"}</b>
         <span className="mono dim">{ids}</span>
         <span className="spacer" />
-        {s.busy && <span className="busy mono">{s.busy}…</span>}
+        {s.busy && <span key={s.busy} className="busy mono">{s.busy}…</span>}
         <span className={"badge mono" + (s.shadow ? " warn" : "")}>{s.shadow ? "演示保底数据" : "真实数据"}</span>
       </header>
       {s.notice && (
-        <div className={"notice " + s.notice.tone}>
+        <div key={s.notice.text} className={"notice " + s.notice.tone}>
           {s.notice.text}
           <button className="link" onClick={() => dispatch({ type: "patch", patch: { notice: null } })}>知道了</button>
         </div>
       )}
-      <main className="stage">{children}</main>
+      <main className="stage" ref={stage}><div className="screen" key={s.step}>{children}</div></main>
       <footer className="statusbar mono">
         <span>{current?.module}</span>
         <span className="spacer" />

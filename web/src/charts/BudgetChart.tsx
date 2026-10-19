@@ -1,4 +1,5 @@
 import type { ErrorBudget } from "../types";
+import { stagger } from "../motion";
 import { fmt, linear } from "./scale";
 
 const W = 760, H = 420, M = { l: 180, r: 96, t: 32, b: 40 };
@@ -16,13 +17,13 @@ export function BudgetChart({ budget }: { budget: ErrorBudget }) {
 
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="误差预算">
-      <text className="axis-label" x={M.l} y={M.t - 12}>相对偏差 / %　实测是仪器可解释的 {budget.ratio} 倍</text>
+      <text className="axis-label c-fade" x={M.l} y={M.t - 12}>相对偏差 / %　实测是仪器可解释的 {budget.ratio} 倍</text>
       {rows.map((r, i) => {
         const y = M.t + i * rowH;
         return (
-          <g key={r.label + i}>
+          <g key={r.label + i} className="c-row" style={stagger(i)}>
             <text className="tick" x={M.l - 10} y={y + rowH / 2 + 4} textAnchor="end">{r.label}</text>
-            <rect className={r.cls} x={M.l} y={y + 6} width={Math.max(1, sx(r.v) - M.l)} height={rowH - 12} />
+            <rect className={r.cls + " c-grow"} x={M.l} y={y + 6} width={Math.max(1, sx(r.v) - M.l)} height={rowH - 12} />
             <text className="pt-label" x={sx(r.v) + 6} y={y + rowH / 2 + 4}>{fmt(r.v * 100, 2)}%</text>
           </g>
         );

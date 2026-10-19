@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { api, streamFindings } from "./api";
+import { navigate } from "./motion";
 import { loadShadow } from "./shadow";
 import { Shell } from "./Shell";
 import { Cover } from "./screens/Cover";
@@ -9,13 +10,24 @@ import { Literature } from "./screens/Literature";
 import { Analysis } from "./screens/Analysis";
 import { Export } from "./screens/Export";
 import type { Dataset } from "./types";
-import { WorkbenchContext, errorText, initialState, reducer, type Workbench } from "./workbench";
+import { WorkbenchContext, errorText, initialState, reducer, type Action, type Workbench } from "./workbench";
 
 const DEMO_TEMPLATE = "tpl_alkali_titration";
 
 export function App() {
-  const [s, dispatch] = useReducer(reducer, initialState);
-  const patch = (p: Partial<typeof s>) => dispatch({ type: "patch", patch: p });
+  const [s, rawDispatch] = useReducer(reducer, initialState);
+  const patch = (p: Partial<typeof s>) => rawDispatch({ type: "patch", patch: p });
+
+  // 换步骤的动作走整屏转场，方向由前后步骤决定；其余动作直接派发
+  const stepRef = useRef(s.step);
+  stepRef.current = s.step;
+  const dispatch = useCallback((a: Action) => {
+    const from = stepRef.current;
+    const to = a.type === "go" ? a.step : a.type === "complete" ? a.next ?? from : from;
+    if (to === from) return rawDispatch(a);
+    const kind = from === 0 ? "cover-out" : to === 0 ? "cover-in" : to > from ? "fwd" : "back";
+    navigate(kind, () => rawDispatch(a));
+  }, []);
 
   useEffect(() => {
     api.health()
@@ -39,12 +51,12 @@ export function App() {
       notice: { tone: "info", text: `${reason}，已加载演示保底数据。推演和导出需要后端。` },
     });
     dispatch({ type: "go", step: 1 });
-  }, []);
+  }, [dispatch]);
 
   const runFindings = useCallback(async (contextId: string) => {
     patch({ findings: [], findingsStatus: "streaming" });
     try {
-      await streamFindings(contextId, (finding) => dispatch({ type: "finding", finding }));
+      await streamFindings(contextId, (finding) => rawDispatch({ type: "finding", finding }));
       patch({ findingsStatus: "done" });
     } catch (e) {
       patch({ findingsStatus: "error", notice: { tone: "error", text: `AI 解读失败：${errorText(e)}` } });
@@ -114,7 +126,7 @@ export function App() {
     rerunFindings: async () => {
       if (s.ctx && !s.shadow) await runFindings(s.ctx.id);
     },
-  }), [s, enterShadow, runFindings]);
+  }), [s, dispatch, enterShadow, runFindings]);
 
   const screen = [<Cover />, <ContextScreen />, <MyData />, <Literature />, <Analysis />, <Export />][s.step];
 

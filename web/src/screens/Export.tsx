@@ -5,6 +5,7 @@ import anchor from "../../../design/assets/GEN-10.webp";
 import { api } from "../api";
 import { PrecisionChart } from "../charts/PrecisionChart";
 import { TitrationChart } from "../charts/TitrationChart";
+import { Anchor, stagger } from "../motion";
 import { errorText, useWorkbench } from "../workbench";
 
 type Format = "md" | "docx" | "png";
@@ -119,9 +120,9 @@ export function Export() {
   return (
     <div className="s5">
       <section className="desk" style={{ backgroundImage: `url(${desk})` }}>
-        <article className="page">
+        <article className="page sheet-in">
           <img className="page-band" src={band} alt="" />
-          <div className="page-body">
+          <div className="page-body" key={md === null ? "wait" : "ready"}>
             {s.shadow ? (
               <p className="dim">演示保底模式下没有后端，报告由 M7 生成，这里无法预览。后端恢复后刷新页面重试。</p>
             ) : error ? (
@@ -129,7 +130,7 @@ export function Export() {
             ) : md === null ? (
               <p className="dim mono">M7 正在生成预览…</p>
             ) : (
-              renderMarkdown(md, figure)
+              renderMarkdown(md, figure).map((n, i) => <div key={i} className="rv" style={stagger(i)}>{n}</div>)
             )}
           </div>
         </article>
@@ -154,10 +155,10 @@ export function Export() {
             </label>
           ))}
         </div>
-        <figure className="anchor small s5-anchor"><img src={anchor} alt="" /><figcaption className="mono">OBJ. 05 · NIB · 成文</figcaption></figure>
+        <Anchor className="small s5-anchor" src={anchor} caption="OBJ. 05 · NIB · 成文" />
         <div className="actions">
           <button className="btn ghost" disabled={!md} onClick={copy}>{copied ? "已复制" : "复制 Markdown"}</button>
-          <button className="btn primary grow" disabled={s.shadow || !!s.busy} onClick={download}>
+          <button className="btn primary grow sheen" disabled={s.shadow || !!s.busy} onClick={download}>
             导出 {FORMAT_NAME[format]}
           </button>
         </div>

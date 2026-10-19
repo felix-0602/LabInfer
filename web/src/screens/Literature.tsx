@@ -5,6 +5,7 @@ import { api } from "../api";
 import { pxToValue } from "../charts/calib";
 import { fmt } from "../charts/scale";
 import type { AxisCalibration, AxisScale, ExtractResult, Figure, FigureDetection, Px, ReferenceDataset } from "../types";
+import { Anchor, stagger } from "../motion";
 import { errorText, useWorkbench } from "../workbench";
 
 type Axis = "x" | "y";
@@ -205,7 +206,7 @@ export function Literature() {
       <div className="split">
         <section className="pane main-pane center">
           <div className="display ghost-word">FIGURE → DATA</div>
-          <figure className="anchor"><img src={orb} alt="" /></figure>
+          <Anchor src={orb} />
           <h2>{isTitration ? "拖入教材或论文里的滴定曲线" : "把论文里的图交给它"}</h2>
           <p className="dim small">PNG / JPG · 建议宽度 ≥ 1200 px · 也可以直接粘贴截图</p>
           {s.shadow ? (
@@ -391,8 +392,8 @@ export function Literature() {
           <table className="mini-table mono">
             <thead><tr><th>ID</th><th>{xs?.name ?? "x"} {xs?.unit}</th><th>{ys?.name ?? "y"} {ys?.unit}</th></tr></thead>
             <tbody>
-              {result?.dataset.rows.map((r) => (
-                <tr key={r.id}><td>{r.id}</td><td>{r.values.x}</td><td>{r.values.y}</td></tr>
+              {result?.dataset.rows.map((r, ri) => (
+                <tr key={r.id} className="rv" style={stagger(ri)}><td>{r.id}</td><td>{r.values.x}</td><td>{r.values.y}</td></tr>
               ))}
               {!result && <tr><td colSpan={3} className="dim">提取后在这里列出</td></tr>}
             </tbody>
@@ -407,7 +408,7 @@ export function Literature() {
             <input className="input" inputMode="decimal" value={vEq} onChange={(e) => setVEq(e.target.value)} placeholder="由图读出" />
           </label>
         )}
-        <figure className="anchor small"><img src={prism} alt="" /><figcaption className="mono">OBJ. 03 · PRISM · 把曲线从图里剥离出来</figcaption></figure>
+        <Anchor className="small" src={prism} caption="OBJ. 03 · PRISM · 把曲线从图里剥离出来" />
         <div className="actions end">
           {skip}
           <button className="btn primary" disabled={!result || !result.dataset.rows.length || dirty || !!s.busy || (isTitration && !(Number(vEq) > 0))} onClick={attach}>

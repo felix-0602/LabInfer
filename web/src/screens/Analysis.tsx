@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import anchor from "../../../design/assets/GEN-09.webp";
 import { api } from "../api";
 import { BudgetChart } from "../charts/BudgetChart";
@@ -6,6 +6,7 @@ import { FitChart } from "../charts/FitChart";
 import { PrecisionChart } from "../charts/PrecisionChart";
 import { TitrationChart } from "../charts/TitrationChart";
 import type { AnalysisResult, Finding, Simulation } from "../types";
+import { Anchor, CountUp, STREAM_GAP, Segmented, stagger } from "../motion";
 import { errorText, useWorkbench } from "../workbench";
 
 type Tab = "titration" | "fit" | "precision" | "budget";
@@ -22,6 +23,9 @@ function pointsOf(f: Finding, a: AnalysisResult): Set<string> {
   }
   return out;
 }
+
+// 已经播过进场的结论（按对象记）：回到分析页时不再重播，重新解读得到的新对象会重播
+const played = new WeakSet<Finding>();
 
 function evidenceLabel(e: Finding["evidence"][number]): string {
   switch (e.type) {
@@ -49,6 +53,30 @@ export function Analysis() {
   const [simError, setSimError] = useState<string | null>(null);
 
   useEffect(() => { if (!tab || !tabs.includes(tab)) setTab(tabs[0] ?? null); }, [tabs, tab]);
+
+  // 结论逐条流式出现：新结论按到达顺序排进场延迟（一次到齐时也按 STREAM_GAP 逐条放出），
+  // 每条出现时它引用的点在图上闪一下
+  const entering = useRef(new Map<Finding, number>());
+  let queued = 0;
+  for (const f of s.findings) {
+    if (!played.has(f) && !entering.current.has(f)) entering.current.set(f, queued++ * STREAM_GAP);
+  }
+  const [flash, setFlash] = useState<{ ids: Set<string>; key: number }>({ ids: new Set(), key: 0 });
+  const timers = useRef(new Map<Finding, number>());
+  useEffect(() => {
+    if (!a) return;
+    for (const [f, delay] of entering.current) {
+      if (played.has(f) || timers.current.has(f)) continue;
+      timers.current.set(f, window.setTimeout(() => {
+        played.add(f);
+        setFlash((p) => ({ ids: pointsOf(f, a), key: p.key + 1 }));
+      }, delay + 120));
+    }
+  }, [s.findings, a]);
+  useEffect(() => () => {
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+  }, []);
 
   if (!a) return <div className="pane main-pane center"><p className="dim">{s.busy ?? "还没有分析结果"}</p></div>;
 
@@ -90,16 +118,16 @@ export function Analysis() {
     : null;
   const simCurve = sim?.finding.simulation?.param === "co2_retained_fraction" ? sim.result.curve : null;
 
-  const chartProps = { highlight, anomalies, onHover: setHoverPt };
+  const chartProps = { highlight, anomalies, onHover: setHoverPt, flash };
 
   return (
     <div className="s4">
       <section className="pane chart-area">
         <div className="headline">
           {d.c_hcl != null ? (
-            <div className="metric">
+            <div className="metric rv" style={stagger(0)}>
               <div className="eyebrow mono">c̄(HCl) · {fit?.n ?? "—"} 份平行标定</div>
-              <div className="big display">{d.c_hcl.toFixed(4)}<small>mol·L⁻¹</small></div>
+              <div className="big display"><CountUp value={d.c_hcl} digits={4} delay={200} /><small>mol·L⁻¹</small></div>
             </div>
           ) : fit && (
             <div className="metric">
@@ -107,7 +135,7 @@ export function Analysis() {
               <div className="big display">{fit.slope}</div>
             </div>
           )}
-          <div className="vs mono">
+          <div className="vs mono rv" style={stagger(2)}>
             {d.rel_avg_dev_c != null && (
               <span>相对平均偏差 <b className={stdRule && !stdRule.pass ? "bad" : ""}>{(d.rel_avg_dev_c * 100).toFixed(2)}%</b>
                 {stdRule && <> · 限值 {(stdRule.limit * 100).toFixed(1)}%</>}</span>
@@ -117,17 +145,14 @@ export function Analysis() {
             )}
             {fit && <span>{tabs.includes("titration") ? "V–m 过原点 " : ""}R² {fit.r2} · n = {fit.n}</span>}
           </div>
-          <figure className="anchor s4-anchor"><img src={anchor} alt="" /><figcaption className="mono">OBJ. 04 · ARMILLARY · 规律</figcaption></figure>
+          <Anchor className="s4-anchor" src={anchor} caption="OBJ. 04 · ARMILLARY · 规律" />
         </div>
 
-        <div className="seg">
-          {tabs.map((t) => (
-            <button key={t} className={t === tab ? "on" : ""} onClick={() => setTab(t)}>{TAB_LABEL[t]}</button>
-          ))}
+        <Segmented items={tabs} value={tab} label={(t) => TAB_LABEL[t]} onChange={setTab}>
           {!a.titration_curve && <span className="mono dim small">滴定曲线、误差预算等 M4 输出 0.7.0 字段后出现</span>}
-        </div>
+        </Segmented>
 
-        <div className="chart-box">
+        <div className="chart-box" key={tab ?? "none"}>
           {tab === "titration" && a.titration_curve && <TitrationChart curve={a.titration_curve} simulated={simCurve} {...chartProps} />}
           {tab === "fit" && <FitChart analysis={a} {...chartProps} />}
           {tab === "precision" && <PrecisionChart analysis={a} projection={projection} {...chartProps} />}
@@ -145,12 +170,14 @@ export function Analysis() {
         <div className="f-list">
           {s.findings.map((f) => {
             const pts = pointsOf(f, a);
+            const delay = entering.current.get(f);
             const linked = hoverPt != null && pts.has(hoverPt);
             const canSim = f.simulatable && f.simulation;
             return (
               <article
                 key={f.id}
-                className={"f-card " + f.type + (selected === f.id ? " selected" : "") + (linked ? " linked" : "")}
+                className={"f-card " + f.type + (selected === f.id ? " selected" : "") + (linked ? " linked" : "") + (delay != null ? " entering" : "")}
+                style={delay != null ? { "--d": `${delay}ms` } as CSSProperties : undefined}
                 onClick={() => {
                   setSelected(selected === f.id ? null : f.id);
                   // 结论引用了某张图的整节（滴定曲线 / 误差预算），切到那张图
@@ -173,7 +200,7 @@ export function Analysis() {
                     if (n.has(r.rung_id + f.id)) n.delete(r.rung_id + f.id); else n.add(r.rung_id + f.id);
                     setOpenLadder(n);
                   }}>
-                    <b>↑ {r.level} 级</b> {openLadder.has(r.rung_id + f.id) ? r.text : "展开讲解"}
+                    <b>↑ {r.level} 级</b> {openLadder.has(r.rung_id + f.id) ? <span className="ladder-text">{r.text}</span> : "展开讲解"}
                   </div>
                 ))}
                 {canSim && (
@@ -201,7 +228,7 @@ export function Analysis() {
               </article>
             );
           })}
-          {s.findingsStatus === "streaming" && <div className="f-card ghost mono dim">M5 正在解读…</div>}
+          {s.findingsStatus === "streaming" && <div className="f-card ghost thinking mono dim">M5 正在解读…</div>}
           {s.findingsStatus === "error" && (
             <div className="f-card ghost">
               <p className="dim">AI 解读没有完成。图表和计算结果不受影响。</p>
@@ -211,7 +238,7 @@ export function Analysis() {
         </div>
         <div className="f-note mono dim small">结论中的数字须能在 M4 计算结果中找到（M5 数字溯源校验）</div>
         <div className="actions end">
-          <button className="btn primary" onClick={() => dispatch({ type: "complete", step: 4, next: 5 })}>生成报告 →</button>
+          <button className="btn primary sheen" onClick={() => dispatch({ type: "complete", step: 4, next: 5 })}>生成报告 →</button>
         </div>
       </aside>
     </div>

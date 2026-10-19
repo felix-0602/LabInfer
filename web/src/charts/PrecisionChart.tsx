@@ -1,4 +1,5 @@
 import type { AnalysisResult } from "../types";
+import { stagger } from "../motion";
 import { fmt, linear, niceTicks, pad } from "./scale";
 
 const W = 760, H = 420, M = { l: 64, r: 150, t: 24, b: 48 };
@@ -11,10 +12,12 @@ interface Props {
   onHover: (pointId: string | null) => void;
   // M6 推演：某个平行份在调整参数后的预测值（直接取 Simulation.curve 的点）
   projection?: { point_id: string; y: number; label: string } | null;
+  // 结论流式出现时，它引用的点闪一下（key 变化即重播）
+  flash?: { ids: Set<string>; key: number };
 }
 
 // 平行样精密度：各份报告值 ± U95、平均值、允许带（来自 qc 规则限值）、理论上限
-export function PrecisionChart({ analysis, highlight, anomalies, onHover, projection }: Props) {
+export function PrecisionChart({ analysis, highlight, anomalies, onHover, projection, flash }: Props) {
   const preds = analysis.predictions;
   if (!preds.length) return <div className="empty dim">没有样品测定结果</div>;
   const d = analysis.fits[0]?.derived ?? {};
@@ -33,6 +36,7 @@ export function PrecisionChart({ analysis, highlight, anomalies, onHover, projec
 
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="平行测定精密度">
+      <g className="c-frame">
       {niceTicks(y0, y1).map((t) => (
         <g key={t}>
           <line className="grid" x1={M.l} x2={W - M.r} y1={sy(t)} y2={sy(t)} />
@@ -41,21 +45,22 @@ export function PrecisionChart({ analysis, highlight, anomalies, onHover, projec
       ))}
       <line className="axis" x1={M.l} x2={M.l} y1={M.t} y2={H - M.b} />
       <text className="axis-label" x={M.l} y={M.t - 8}>w(Na₂O) / {unit}</text>
+      </g>
 
       {mean != null && bandHalf != null && (
-        <g>
+        <g className="c-band">
           <rect className="band" x={M.l} width={W - M.r - M.l} y={sy(mean + bandHalf)} height={Math.max(1, sy(mean - bandHalf) - sy(mean + bandHalf))} />
           <text className="band-label" x={W - M.r + 8} y={sy(mean) - 10}>允许带 ±{fmt(rule!.limit * 100, 2)}%</text>
         </g>
       )}
       {mean != null && (
-        <g>
+        <g className="c-fade">
           <line className="mean-line" x1={M.l} x2={W - M.r} y1={sy(mean)} y2={sy(mean)} />
           <text className="fit-label" x={W - M.r + 8} y={sy(mean) + 4}>均值 {mean}{unit}</text>
         </g>
       )}
       {limit && (
-        <g>
+        <g className="c-fade">
           <line className="limit-line" x1={M.l} x2={W - M.r} y1={sy(limit.limit)} y2={sy(limit.limit)} />
           <text className="tick" x={W - M.r + 8} y={sy(limit.limit) + 4} textAnchor="start">理论 {limit.limit}{unit}</text>
         </g>
@@ -65,12 +70,13 @@ export function PrecisionChart({ analysis, highlight, anomalies, onHover, projec
         const on = highlight.has(p.point_id);
         const off = anomalies.has(p.point_id);
         return (
-          <g key={p.point_id} className="pt-group" onMouseEnter={() => onHover(p.point_id)} onMouseLeave={() => onHover(null)}>
+          <g key={p.point_id} className="pt-group c-pop" style={stagger(i)} onMouseEnter={() => onHover(p.point_id)} onMouseLeave={() => onHover(null)}>
             <line className="errbar" x1={sx(i)} x2={sx(i)} y1={sy(p.as_reported - p.u95)} y2={sy(p.as_reported + p.u95)} />
             <line className="errbar" x1={sx(i) - 6} x2={sx(i) + 6} y1={sy(p.as_reported - p.u95)} y2={sy(p.as_reported - p.u95)} />
             <line className="errbar" x1={sx(i) - 6} x2={sx(i) + 6} y1={sy(p.as_reported + p.u95)} y2={sy(p.as_reported + p.u95)} />
             <circle className={"pt" + (off ? " bad" : "") + (on ? " on" : "")} cx={sx(i)} cy={sy(p.as_reported)} r={on ? 7 : 5} />
             {on && <circle className="ring" cx={sx(i)} cy={sy(p.as_reported)} r={13} />}
+            {flash?.ids.has(p.point_id) && <circle key={flash.key} className={"flash" + (off ? " bad" : "")} cx={sx(i)} cy={sy(p.as_reported)} r={6} />}
             <text className={"pt-label" + (off ? " bad" : "")} x={sx(i) + 12} y={sy(p.as_reported) + 4}>
               {p.point_id} · {p.as_reported}{unit} ± {p.u95}
             </text>
@@ -84,7 +90,7 @@ export function PrecisionChart({ analysis, highlight, anomalies, onHover, projec
         if (i < 0) return null;
         const p = preds[i];
         return (
-          <g>
+          <g className="c-sim" key={projection.label}>
             <line className="sim-line" x1={sx(i)} x2={sx(i) + 28} y1={sy(p.as_reported)} y2={sy(projection.y)} />
             <circle className="sim-pt" cx={sx(i) + 28} cy={sy(projection.y)} r={5} />
             <text className="sim-label" x={sx(i) + 38} y={sy(projection.y) + 4}>推演 {projection.label}</text>

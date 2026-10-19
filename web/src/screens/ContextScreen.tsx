@@ -1,4 +1,5 @@
 import anchor from "../../../design/assets/GEN-06.webp";
+import { Anchor, stagger } from "../motion";
 import { useWorkbench } from "../workbench";
 
 const RULE_NAMES: Record<string, string> = {
@@ -24,10 +25,10 @@ export function ContextScreen() {
   return (
     <div className="split">
       <section className="pane main-pane">
-        <div className="eyebrow mono">STEP 01 · 实验上下文 · 预置模板</div>
-        <h1 className="h-title">{title}</h1>
-        {sub && <div className="h-sub display">{sub.replace("）", "")}</div>}
-        <dl className="kv">
+        <div className="eyebrow mono rv" style={stagger(0)}>STEP 01 · 实验上下文 · 预置模板</div>
+        <h1 className="h-title rv" style={stagger(1)}>{title}</h1>
+        {sub && <div className="h-sub display rv" style={stagger(2)}>{sub.replace("）", "")}</div>}
+        <dl className="kv rv-lines">
           <dt>目的</dt><dd>{ctx.purpose}</dd>
           <dt>模型</dt><dd className="mono">{ctx.model}</dd>
           {tpl && (<><dt>公式</dt><dd className="mono cobalt">{tpl.formula}</dd></>)}
@@ -60,18 +61,18 @@ export function ContextScreen() {
             ))}
           </dd>
         </dl>
-        <div className="actions">
-          <button className="btn primary" onClick={() => dispatch({ type: "complete", step: 1, next: 2 })}>
+        <div className="actions rv" style={stagger(9)}>
+          <button className="btn primary sheen" onClick={() => dispatch({ type: "complete", step: 1, next: 2 })}>
             确认，上传我的数据 →
           </button>
         </div>
       </section>
       <aside className="pane side-pane">
-        <figure className="anchor"><img src={anchor} alt="" /><figcaption className="mono">OBJ. 01 · MODEL · 把实验抽象成结构与公式</figcaption></figure>
-        <div className="eyebrow mono">实验模板库 · {s.templates.length} 项</div>
+        <Anchor src={anchor} caption="OBJ. 01 · MODEL · 把实验抽象成结构与公式" />
+        <div className="eyebrow mono rv" style={stagger(3)}>实验模板库 · {s.templates.length} 项</div>
         <ul className="tpl-list">
-          {s.templates.map((t) => (
-            <li key={t.id} className={t.model === ctx.model ? "on" : ""}>
+          {s.templates.map((t, i) => (
+            <li key={t.id} className={"rv" + (t.model === ctx.model ? " on" : "")} style={stagger(4 + i)}>
               <div><b>{t.name}</b> <span className={"tag mono" + (t.status === "演示" ? " cobalt" : "")}>{t.status}</span></div>
               <div className="mono dim small">{t.formula}</div>
             </li>
