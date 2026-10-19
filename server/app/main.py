@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import CONTRACT_VERSION
-from .routers import contexts, datasets, m1, m4, m5, m6, m7, snapshot
+from .routers import contexts, datasets, m1, m2, m4, m5, m6, m7, snapshot
 from .storage import Store, store_from_env
 
 
@@ -21,7 +21,7 @@ def create_app(store: Store | None = None) -> FastAPI:
     def health():
         return {"status": "ok", "contract_version": CONTRACT_VERSION}
 
-    for r in (datasets.router, contexts.router, m1.router, m4.router,
+    for r in (datasets.router, contexts.router, m1.router, m2.router, m4.router,
               m5.router, m6.router, m7.router, snapshot.router):
         app.include_router(r)
     return app
