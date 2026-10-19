@@ -1,10 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # LabInfer 一键启动：后端 FastAPI(:8000) + 前端 Vite(:5173，/api 代理到后端)。
+# 纯 POSIX sh：./start.sh 与 sh start.sh 等价（Ubuntu 的 sh=dash 实测通过）。
 #
 # 首次运行自动装依赖：后端 uv venv + requirements.txt（直连失败自动切清华镜像），
 # 前端 npm install。有 server/.env 会自动加载（GLM key 等）；没有也能起——
 # M5 降级为模板结论，M1/M2 演示图走烘焙缓存，不依赖模型。
-set -euo pipefail
+set -eu
 cd "$(dirname "$0")"
 
 usage() {
@@ -20,7 +21,9 @@ usage() {
 EOF
 }
 
-MODE=both SEED=1 RELOAD=""
+MODE=both
+SEED=1
+RELOAD=""
 for arg in "$@"; do
   case "$arg" in
     --backend|-b)  MODE=backend ;;
@@ -35,7 +38,16 @@ done
 log() { printf '\033[36m[start]\033[0m %s\n' "$*"; }
 die() { printf '\033[31m[start]\033[0m %s\n' "$*" >&2; exit 1; }
 
-port_busy() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+# POSIX 无 /dev/tcp（bash 专用），用 ss/netstat 探测；都没有就不拦，交给 uvicorn 自己报错
+port_busy() {
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | grep -q ":$1 "
+  elif command -v netstat >/dev/null 2>&1; then
+    netstat -ltn 2>/dev/null | grep -q ":$1 "
+  else
+    return 1
+  fi
+}
 
 BACKEND_PID=""
 cleanup() {
