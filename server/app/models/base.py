@@ -78,7 +78,7 @@ class TitrationStandardizationModel(AnalysisModel):
     x_role = "mass"
     y_role = "volume"
     optional_roles = ["sample_mass"]
-    simulatable_params = ["titrant_volume_delta"]
+    simulatable_params = ["titrant_volume_delta", "co2_retained_fraction"]
     formula = ("c(HCl) = 2m/(M(Na₂CO₃)·V)；"
                "w(Na₂O) = c̄·V·M(Na₂O)/2 × V容/V移 ÷ m样 ×100%")
 

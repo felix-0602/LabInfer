@@ -73,5 +73,6 @@ def test_findings_reference_real_objects(demo_result):
                 assert ev["point_id"] in point_ids
             elif ev["type"] == "qc":
                 assert ev["rule_id"] in qc_ids
-    sim = [f for f in findings if f["simulatable"]]
-    assert sim and sim[0]["simulation"]["param"] == "titrant_volume_delta"
+    sim_params = {f["id"]: f["simulation"]["param"] for f in findings if f["simulatable"]}
+    assert sim_params.get("f_worst") == "titrant_volume_delta"
+    assert sim_params.get("f_co2") == "co2_retained_fraction"   # 0.7.0：煮沸推演入口

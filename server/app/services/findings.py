@@ -47,6 +47,15 @@ def _titration_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
                      f"提示该份终点判断偏差最大。")
         findings.append(_f("f_curve", "pattern", text,
                            [{"type": "comparison", "target": "titration_curve"}]))
+        findings.append(_f(
+            "f_co2", "suggestion",
+            f"近终点前煮沸驱除 CO₂：溶解的 CO₂ 形成缓冲，使突跃变缓、终点提前"
+            f"（理论曲线按 CO₂ 未逸出的封闭体系计算，计量点 pH {curve['ph_eq']}）。"
+            f"驱除越彻底，突跃越陡、计量点 pH 越高，终点越靠近理论计量点。",
+            [{"type": "comparison", "target": "titration_curve"}],
+            simulatable=True,
+            simulation={"param": "co2_retained_fraction", "from": 0, "to": 1, "unit": ""},
+        ))
 
     budget = analysis.get("error_budget")
     if budget:
@@ -198,4 +207,42 @@ def compose_findings(analysis: dict, ctx: dict, dataset: dict) -> list[dict]:
              {"type": "qc", "rule_id": "crm_within_u95"}],
         ))
 
+    return findings
+
+
+def attach_ladder(findings: list[dict], ctx: dict, analysis: dict) -> list[dict]:
+    """按 wiki.md#讲解阶梯 的规则给结论挂讲解（契约 0.7.0 可选字段）。
+
+    - 锚点必须逐字出现在本条 evidence 里（同 type；comparison 比 target、qc 比 rule_id）；
+    - trigger.qc_fail 要求该质控规则本次未通过；
+    - 出处标「待核」的级不进演示；
+    - 只挂 base_level 之上的级，往上递最多 2 级（level 最低的优先，不越级）。
+    """
+    ladder = ctx.get("ladder") or {}
+    rungs = ladder.get("rungs") or []
+    base = ladder.get("base_level") or 0
+    failed = {q["rule_id"] for q in analysis.get("qc_results", []) if not q.get("pass")}
+    avail = [r for r in rungs
+             if r.get("level", 0) > base and "待核" not in (r.get("source") or "")]
+
+    def anchored(rung: dict, evidence: list[dict]) -> bool:
+        a = rung.get("anchor") or {}
+        for ev in evidence:
+            if ev.get("type") != a.get("type"):
+                continue
+            if a.get("type") == "comparison" and ev.get("target") != a.get("target"):
+                continue
+            if a.get("type") == "qc" and ev.get("rule_id") != a.get("rule_id"):
+                continue
+            return True
+        return False
+
+    for f in findings:
+        trig_ok = lambda r: (not r.get("trigger")
+                             or r["trigger"].get("qc_fail") in failed)
+        hits = sorted((r for r in avail if anchored(r, f.get("evidence") or []) and trig_ok(r)),
+                      key=lambda r: r["level"])
+        if hits:
+            f["ladder"] = [{"rung_id": r["rung_id"], "level": r["level"],
+                            "text": f"{r['title']}：{r['concept']}"} for r in hits[:2]]
     return findings

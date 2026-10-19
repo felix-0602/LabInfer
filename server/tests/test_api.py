@@ -143,6 +143,36 @@ def test_simulate_co2_retention(tmp_path):
     assert len(body["curve"]) == 161
 
 
+def test_m5_co2_entry_and_ladder(tmp_path):
+    """煮沸滑块的入口：模板结论带 co2_retained_fraction 推演；讲解阶梯按 wiki 规则挂接。"""
+    import json as _json
+
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    r = c.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200
+    items = []
+    for line in r.text.splitlines():
+        if line.startswith("data: ") and '"id"' in line:
+            items.append(_json.loads(line[len("data: "):]))
+
+    co2 = next(f for f in items if f["id"] == "f_co2")
+    assert co2["simulatable"] is True
+    assert co2["simulation"]["param"] == "co2_retained_fraction"
+    assert co2["simulation"]["from"] == 0 and co2["simulation"]["to"] == 1
+
+    # 锚点 titration_curve：往上递最低两级（4、6 级）；「待核」级不进演示
+    curve_f = next(f for f in items if f["id"] == "f_curve")
+    assert [rung["rung_id"] for rung in curve_f["ladder"]] == \
+        ["L4-indicator", "L6-endpoint-error"]
+    budget_f = next(f for f in items if f["id"] == "f_budget")
+    assert [rung["rung_id"] for rung in budget_f["ladder"]] == ["L6-budget"]
+    assert "L4-co2" not in r.text and "L7-gb601" not in r.text
+    # 锚点未命中 evidence 的结论不挂阶梯
+    worst_f = next(f for f in items if f["id"] == "f_worst")
+    assert "ladder" not in worst_f
+
+
 CUSTOM_TPL = {
     "name": "混合碱总碱度（自定义模板示例）",
     "purpose": "以 HCl 滴定混合碱，测总碱度",
