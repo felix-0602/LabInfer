@@ -3,8 +3,15 @@
 import re
 
 _NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
+_TERM_MARK_RE = re.compile(r"\[([^\]]+)\]\(term:([a-z0-9_]+)\)")
 _ALLOWED_TYPES = {"pattern", "conclusion", "anomaly", "suggestion"}
 _ALLOWED_EVIDENCE = {"point", "fit", "qc", "comparison"}
+
+
+def strip_unknown_term_marks(text: str, valid_ids: set[str]) -> str:
+    """term 标记只许指向 ctx 术语表里登记过的 term_id，未知的剥成纯显示文字。"""
+    return _TERM_MARK_RE.sub(
+        lambda m: m.group(0) if m.group(2) in valid_ids else m.group(1), text)
 
 
 def collect_numbers(*sources) -> list[float]:
@@ -43,6 +50,11 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
         analysis.get("titration_curve"), analysis.get("error_budget"),
         ctx.get("reference"), ctx.get("qc_rules"),
         ctx.get("model_params"), ctx.get("ladder"))   # 模型常数与讲解阶梯里的常数可引用
+    # 置信水平 95% 是 u95 的方法常数，不在任何测量值里；分析带不确定度时允许写进正文
+    if analysis.get("error_budget") or any(
+            isinstance(p, dict) and p.get("u95") is not None
+            for p in analysis.get("predictions", [])):
+        whitelist.append(95.0)
     point_ids = {r["id"] for r in dataset.get("rows", [])}
     ds_ids = {dataset.get("id")}
     qc_ids = {q.get("rule_id") for q in analysis.get("qc_results", [])}
@@ -53,6 +65,7 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
     has_budget = analysis.get("error_budget") is not None
 
     kept, dropped = [], []
+    term_ids = {g.get("term_id") for g in (ctx.get("guide") or {}).get("glossary") or []}
     for raw in findings:
         why = None
         if not isinstance(raw, dict):
@@ -62,6 +75,8 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
         elif not raw.get("text") or not str(raw.get("text")).strip():
             why = "text 为空"
         else:
+            if term_ids:
+                raw["text"] = strip_unknown_term_marks(str(raw["text"]), term_ids)
             for n in (float(x) for x in _NUM_RE.findall(str(raw["text"]))):
                 if not _number_allowed(n, whitelist):
                     why = f"数字无溯源: {n:g}"

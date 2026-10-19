@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.7.1（示例版本号勘误与接口补登记）**
+**当前版本：0.8.0（ExperimentContext 新增教学导读层 guide）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -21,7 +21,7 @@ M1、M2 输出，M4 读取。列不限制名称，行用 `series` 标注类别�
 
 ```jsonc
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "id": "ds_mine_01",
   "source": "my_experiment",          // my_experiment | literature
   "meta": {
@@ -56,7 +56,7 @@ M3 输出，M4、M5 读取。
 
 ```jsonc
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "id": "ctx_01",
   "name": "HCl 标定与碱灰总碱度（GB/T 601-2016 无水碳酸钠法）",
   "purpose": "以基准无水碳酸钠标定 HCl 浓度，测定碱灰总碱度（以 Na₂O 计），检查平行测定精密度",
@@ -103,7 +103,31 @@ M3 输出，M4、M5 读取。
         "concept": "Na₂CO₃ 有两个化学计量点，第二个落在甲基橙变色区内",
         "anchor": { "type": "comparison", "target": "titration_curve" },
         "trigger": null,               // null = 锚点存在即可出现；或 { "qc_fail": "standardization_rpad" }
-        "source": "分析化学教材 酸碱滴定章" } ] }
+        "source": "分析化学教材 酸碱滴定章" } ] },
+  "guide": {                           // 0.8.0 可选：教学导读层，形状与 M8 前端约定一致，规则见 wiki.md#表达标准
+    "status": "reviewed",              // draft = AI 刚生成；reviewed = 人核过；前端对 draft 挂「AI 生成，待核」
+    "audience_level": 3,               // 对齐 ladder.base_level：按哪一级读者写
+    "generated_at": "2026-10-19T12:00:00Z",
+    "sources": [                       // 出处登记表，sections/glossary 按 source_id 引用
+      { "source_id": "src_textbook_exp3", "title": "武汉工程大学《分析化学实验》",
+        "locator": "实验 3 HCl 溶液的标定及碱灰总碱度的测定",
+        "quote": "常以 HCl 标准溶液为滴定剂测定总碱度来衡量产品的质量", "verified": true } ],
+    "glossary": [                      // 术语表：首现解释的卡片口径（定义 + 帮助句，无比喻）；M5 提示词注入
+      { "term_id": "primary_standard", "term": "基准物质",
+        "plain": "纯到不拖累计算、放多久都不变、能直接称量的固体，本实验用无水碳酸钠",
+        "help": "它自己必须先准，才有资格去定别人的浓度",     // 0.8.0 可选：帮助理解的一句，只用基本概念
+        "aliases": ["基准物"], "source": "src_textbook_exp3" },
+      { "term_id": "u95", "term": "不确定度 ±", "plain": "把各项不可避免的小误差合成后给出的范围",
+        "help": "真实值有九成五的把握落在这个范围里", "aliases": ["±", "U95"], "source": "src_jjf" } ],
+    "field_notes": {                   // 字段人话：键 = 上下文字段路径，01 页替换原始键名
+      "model_params.molar_mass_na2co3_g_mol":
+        { "label": "Na₂CO₃ 摩尔质量", "plain": "一摩尔无水碳酸钠的质量 105.99 g", "term_id": null } },
+    "sections": [                      // 分节讲解；show_in 声明出现在 01（context）/03（literature）哪页
+      { "section_id": "overview", "title": "这个实验在干什么：两步咬合",
+        "show_in": ["context", "literature"], "order": 1, "rung_id": null,
+        "summary": "先用很纯的碳酸钠把盐酸的真实浓度测准，再用这支盐酸去测碱灰的总碱度。",
+        "body": "整个实验分两步……用[基准物质](term:primary_standard)……",   // 正文术语用 (term:term_id) 标记
+        "terms": ["primary_standard"], "sources": ["src_textbook_exp3"] } ] }
 }
 ```
 
@@ -142,7 +166,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
 
 ```jsonc
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "context_id": "ctx_01",
   "model": "linear_calibration",
   "transformed": [                     // 拟合空间的作图数据（linear 为恒等；M8 直接绘制）
@@ -195,7 +219,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
 
 ```jsonc
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "context_id": "ctx_demo",
   "model": "titration_standardization",
   "transformed": [                     // V–m 平面，M8 画散点 + 过原点拟合线
@@ -272,7 +296,7 @@ M5 输出一个数组，M6、M7、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "id": "f1",
   "type": "anomaly",                   // pattern | conclusion | anomaly | suggestion
   "text": "标曲第 5 点（c=0.80）残差 0.0038，格拉布斯检验未判为离群……",
@@ -377,7 +401,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 201：Figure
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "id": "fig_01",
   "image_url": "/api/m2/figures/fig_01/image",
   "width": 1280, "height": 960,                // 原图像素
@@ -393,7 +417,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 200：FigureDetection
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "figure_id": "fig_01",
   "plot_area": { "u0": 96, "v0": 40, "u1": 680, "v1": 512 },  // 绘图区边框
   "axes": {
@@ -443,7 +467,7 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 请求：ExtractRequest
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "calibration": { /* Calibration */ },
   "mode": "auto",                  // auto：按曲线颜色自动提取；manual：使用 points_px
   "series_id": "A",                // auto 时必填
@@ -458,9 +482,9 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 返回 200：ExtractResult
 {
-  "schema_version": "0.7.1",
+  "schema_version": "0.8.0",
   "dataset": {                     // Dataset，source = literature，已写入共享存储
-    "schema_version": "0.7.1",
+    "schema_version": "0.8.0",
     "id": "ds_lit_01",
     "source": "literature",
     "meta": { "title": "图1(b) · 纳氏试剂法标准曲线", "doi": "10.3866/PKU.DXHX201807034", "figure": "图1(b)",
@@ -510,6 +534,17 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 ---
 
 ## 变更记录
+
+### 0.8.0（2026-10-19）
+
+面向「还没建立科研思维、化学实验思维的本科生」的兼容新增，全部为可选字段：
+
+- ExperimentContext：新增 `guide`（教学导读层，形状与 M8 前端约定一致，规则见 [wiki.md](wiki.md#表达标准)）：`status`（draft/reviewed）、`audience_level`（对齐 ladder.base_level）、`generated_at`、`sources`（出处登记表，`source_id` 索引，`verified: false` 即「待核」）、`glossary`（`term_id` 索引的术语首现解释）、`field_notes`（按字段路径给 01 页的键名人话）、`sections`（`show_in` 声明出现在 01/03 哪页，正文术语用 `[文字](term:term_id)` 标记，`rung_id` 可回挂讲解阶梯）。M3 透传；01/03 页与 M5 读取——学习不只发生在实验前。
+- `GET /api/m3/templates` 每项新增 `has_guide: boolean`。
+- M5：`FINDING_SYSTEM` 增补语言标准（第 8～15 条，出处 wiki.md#表达标准）：保留全部逻辑链；结论分两遍写（首句纯中文判定句，无符号无括号；数字与符号从第二句「报告口径」起）；术语与符号首现挂 term 标记，解释进卡片（定义 + 帮助句，不用比喻与缩略语）；不写压缩电报腔与长复句；结论独立成短句；多步推理加路标；讲学生数据具体到哪份哪个值；输出前按读者思维通读。ctx 带 `guide` 时术语表（含 term_id 与帮助句）注入用户消息。
+- Finding.text 自 0.8.0 起允许两类标记：`[文字](term:term_id)`（term_id 必须在 `guide.glossary` 里，M5 校验器把未知标记剥成纯文字）与 `[62.58](num:62.578)`（正文显示报告位数，`num:` 后为分析结果原值，同样过数字溯源校验）。M7 报告导出把标记剥成显示文字，解释卡与全精度展开由 M8 工作台渲染（标记与 M8 渲染需同批合并）。
+- glossary 词条新增可选 `help`（帮助理解的一句，与 `plain` 同守「常用词通用词、写辨别性特征」的卡片口径）。
+- 无数据结构破坏：Finding、AnalysisResult、Dataset 均不变；模块输出 `schema_version` 随 `CONTRACT_VERSION` 升至 0.8.0。
 
 ### 0.7.1（2026-10-19）
 

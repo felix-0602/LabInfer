@@ -16,7 +16,7 @@ def make_client(tmp_path):
 
 def test_health_and_templates(tmp_path):
     c = make_client(tmp_path)
-    assert c.get("/api/health").json()["contract_version"] == "0.7.1"
+    assert c.get("/api/health").json()["contract_version"] == "0.8.0"
     templates = c.get("/api/m3/templates").json()
     ids = {t["id"] for t in templates}
     assert {"tpl_alkali_titration", "tpl_iodine_clock"} <= ids
@@ -69,6 +69,84 @@ def test_create_context_from_template_and_put_dataset(tmp_path):
     assert ctx_id
 
 
+def test_context_carries_guide(tmp_path):
+    """教学导读层（0.8.0 可选字段）随模板实例化透传，01/03 页与 M5 提示词都读它。"""
+    c = make_client(tmp_path)
+    r = c.get("/api/m3/contexts/ctx_demo")
+    assert r.status_code == 200
+    guide = r.json()["guide"]
+    assert guide["status"] == "reviewed" and guide["audience_level"] == 3
+    terms = {g["term"] for g in guide["glossary"]}
+    assert {"标定", "基准物质", "总碱度", "系统误差"} <= terms
+    assert all(g["term_id"] and g["plain"] for g in guide["glossary"])
+    sections = {s["section_id"]: s for s in guide["sections"]}
+    assert {"overview", "indicator", "precision", "thinking"} <= set(sections)
+    assert sections["overview"]["show_in"] == ["context", "literature"]
+    lit = [s for s in guide["sections"] if "literature" in s["show_in"]]
+    assert 1 <= len(lit) <= 3                       # 03 页 1～3 节（M8 约定）
+    assert len([s for s in guide["sections"] if "context" in s["show_in"]]) <= 8
+    for s in sections.values():
+        assert s["summary"] and s["body"] and s["sources"]
+    src_ids = {s["source_id"] for s in guide["sources"]}
+    assert all(set(s["sources"]) <= src_ids for s in sections.values())
+    assert "model_params.molar_mass_na2co3_g_mol" in guide["field_notes"]
+    # 待核出处不整节消失，只按 verified 降级显示（src_gb601_boil）
+    boil = next(s for s in guide["sources"] if s["source_id"] == "src_gb601_boil")
+    assert boil["verified"] is False
+    # 模板列表标「有导读」
+    tpl = next(t for t in c.get("/api/m3/templates").json()
+               if t["id"] == "tpl_alkali_titration")
+    assert tpl["has_guide"] is True
+
+
+def test_guide_structure_consistency(tmp_path):
+    """guide 内部索引自洽（M8 渲染前提）：term 链接、source 引用、长度与页面节数。"""
+    import re
+    c = make_client(tmp_path)
+    guide = c.get("/api/m3/contexts/ctx_demo").json()["guide"]
+    term_ids = {g["term_id"] for g in guide["glossary"]}
+    src_ids = {s["source_id"] for s in guide["sources"]}
+
+    for s in guide["sections"]:
+        linked = set(re.findall(r"\]\(term:([a-z0-9_]+)\)", s["body"]))
+        assert linked <= term_ids, f"{s['section_id']} 链接了未登记术语: {linked - term_ids}"
+        assert set(s["sources"]) <= src_ids
+        assert 0 < len(s["summary"]) <= 50
+        assert len(s["body"]) >= 150                    # 不设 300 下限：说清即止，防为凑字注水
+        assert set(s["terms"]) <= term_ids
+        assert set(s["show_in"]) <= {"context", "literature"}
+    for g in guide["glossary"]:
+        assert g["source"] in src_ids
+        assert 0 < len(g["plain"]) <= 60
+        if g.get("help"):
+            assert 0 < len(g["help"]) <= 60
+    for note in guide["field_notes"].values():
+        assert 0 < len(note["label"]) <= 16
+        assert 0 < len(note["plain"]) <= 60
+        if note.get("term_id"):
+            assert note["term_id"] in term_ids
+    ctx_n = len([s for s in guide["sections"] if "context" in s["show_in"]])
+    lit_n = len([s for s in guide["sections"] if "literature" in s["show_in"]])
+    assert 4 <= ctx_n <= 8 and 1 <= lit_n <= 3          # M8 约定的页面容量
+
+
+def test_finding_term_marks_resolve_and_export_strips(tmp_path):
+    """0.8.0 起 Finding.text 允许 term/num 标记：保底文案的标记必须全部指向登记术语；
+    M7 导出是纯文字载体，两类标记都剥成显示文字。"""
+    import re
+    c = make_client(tmp_path)
+    c.post("/api/m4/analyze", json={"context_id": "ctx_demo"})
+    sse = c.post("/api/m5/findings", json={"context_id": "ctx_demo"}).text
+    guide = c.get("/api/m3/contexts/ctx_demo").json()["guide"]
+    term_ids = {g["term_id"] for g in guide["glossary"]}
+    marked = set(re.findall(r"\]\(term:([a-z0-9_]+)\)", sse))
+    assert marked                                    # 保底路径确实带了标记
+    assert marked <= term_ids
+    assert "](num:" in sse                           # 全精度进 num 标记、正文只显示位数
+    md = c.post("/api/m7/export", json={"context_id": "ctx_demo", "format": "md"}).text
+    assert "(term:" not in md and "(num:" not in md and "总碱度" in md
+
+
 def test_m1_without_cache_returns_503(tmp_path):
     import io
     c = make_client(tmp_path)
@@ -98,7 +176,7 @@ def test_snapshot_full_chain(tmp_path):
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
     snap = r.json()
-    assert snap["schema_version"] == "0.7.1"
+    assert snap["schema_version"] == "0.8.0"
     assert {s["id"] for s in snap["datasets"]} == {"ds_mine_demo"}
     assert snap["analysis"]["fits"] and snap["findings"]
     assert "titration_curve" in snap["analysis"] and "error_budget" in snap["analysis"]
@@ -254,4 +332,4 @@ def test_full_loop_on_sqlite_backend(tmp_path):
 
     r = c.get("/api/snapshot/ctx_demo")
     assert r.status_code == 200
-    assert r.json()["schema_version"] == "0.7.1"
+    assert r.json()["schema_version"] == "0.8.0"

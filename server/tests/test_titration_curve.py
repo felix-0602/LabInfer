@@ -86,7 +86,7 @@ def test_titration_with_literature_reference_does_not_crash(demo_result):
     """回归：上下文挂了文献参照时 _analyze_titration 曾因缺 ref_datasets 参数 NameError→500。"""
     mine, ctx = build_demo_objects()
     lit = {
-        "schema_version": "0.7.1", "id": "ds_lit_curve", "source": "literature",
+        "schema_version": "0.8.0", "id": "ds_lit_curve", "source": "literature",
         "meta": {"title": "HCl 滴定 Na₂CO₃ 曲线", "doi": "10.xxxx/x", "figure": "图 2"},
         "columns": [{"key": "V_lit", "name": "V(HCl)", "unit": "mL"},
                     {"key": "ph", "name": "pH", "unit": ""}],
