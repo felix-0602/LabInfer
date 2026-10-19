@@ -144,6 +144,7 @@ def _sig(v: float) -> float:
 @router.post("/figures/{id}/extract")
 def extract(id: str, request: Request, body: dict):
     store = request.app.state.store
+    # 单用户架构：按路径 id 取图，不做归属校验；改多用户前须补上，见 architecture.md「系统形态」
     rec = _load_figure(store, id)
     if rec is None:
         return _not_found(id)
