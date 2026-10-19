@@ -40,6 +40,7 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
     whitelist = collect_numbers(
         analysis.get("fits"), analysis.get("predictions"), analysis.get("residuals"),
         analysis.get("qc_results"), analysis.get("comparison"),
+        analysis.get("titration_curve"), analysis.get("error_budget"),
         ctx.get("reference"), ctx.get("qc_rules"))
     point_ids = {r["id"] for r in dataset.get("rows", [])}
     ds_ids = {dataset.get("id")}
@@ -47,6 +48,8 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
     n_limit = len(analysis.get("comparison", {}).get("vs_limit", []))
     n_ref = len(analysis.get("comparison", {}).get("vs_reference", []))
     has_crm = analysis.get("comparison", {}).get("vs_crm") is not None
+    has_curve = analysis.get("titration_curve") is not None      # 0.7.0 可选节
+    has_budget = analysis.get("error_budget") is not None
 
     kept, dropped = [], []
     for raw in findings:
@@ -87,6 +90,8 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
                             (tgt.startswith("vs_limit[") and _idx(tgt) < n_limit)
                             or (tgt.startswith("vs_reference[") and _idx(tgt) < n_ref)
                             or (tgt == "vs_crm" and has_crm)
+                            or (tgt == "titration_curve" and has_curve)
+                            or (tgt == "error_budget" and has_budget)
                         )
                         if not ok:
                             why = f"comparison 目标不存在: {tgt}"
