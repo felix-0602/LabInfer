@@ -64,7 +64,7 @@ def test_llm_error_falls_back_to_template(tmp_path, monkeypatch):
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
-    assert "标定线性良好" in r.text
+    assert "三份平行线性良好" in r.text
 
 
 def test_no_llm_configured_uses_template(tmp_path):
@@ -72,3 +72,21 @@ def test_no_llm_configured_uses_template(tmp_path):
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
     assert "event: finding" in r.text
+
+
+def test_llm_prompt_carries_guide_glossary(tmp_path, monkeypatch):
+    """表达标准（wiki.md#表达标准）：ctx 带 guide 时，术语表要进提示词。"""
+    client = make_client(tmp_path)
+    _enable_llm(monkeypatch)
+    captured = {}
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        captured["user"] = messages[1]["content"]
+        captured["system"] = messages[0]["content"]
+        return GOOD
+    monkeypatch.setattr("app.prompts.chat", fake_chat)
+    r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200
+    assert "标定——用基准物质把一瓶只有大概浓度的溶液的准确浓度测出来的操作" in captured["user"]
+    assert "语言标准" in captured["system"]
+    assert "路标" in captured["system"]        # 节奏与路标规则（wiki.md#表达标准）

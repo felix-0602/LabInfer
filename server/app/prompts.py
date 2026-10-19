@@ -18,7 +18,24 @@ FINDING_SYSTEM = """你是实验数据分析助手。你只会收到结构化的
    滴定实验可推演的 param 只有 titrant_volume_delta（终点体积偏差，mL）与 co2_retained_fraction（CO₂ 保留比例，0～1）。
 6. 先用 1-2 句人话总结，然后另起一行输出纯 JSON 数组，每个元素是一条结论：
    {"type":..., "text":..., "evidence":[...], "simulatable":false, "simulation":null}
-7. 样品名可从 dataset 行的 series 字段获得（如 "sample:地表水1"）。"""
+7. 样品名可从 dataset 行的 series 字段获得（如 "sample:地表水1"）。
+
+语言标准（与第 1～7 条同级，出处 docs/wiki.md#表达标准）：
+8. 读者是没做过本实验、也没学过分析化学的本科生。为此把术语讲自然，但保留全部推理环节——
+   不许为了通俗删掉任何一步逻辑，读者要能看到「因为这个、所以那个」的完整链条。
+9. 术语在全部输出里首次出现时，用一句话自然地顺带解释，写法像「标定——即用基准物质把溶液准确浓度
+   测出来的操作」；用户消息里给了术语表的按其口径解释。同一术语整个输出只解释一次，不要处处加注。
+10. 不写压缩电报腔：把缩略说法还原成完整自然的中文，例如「不自造缩略语」要写成「不自己创造缩略语」；
+    不自造英文缩写、四字生造词与读者没见过的代号。也不写要读者在脑子里翻译的长复句：
+    一句话装一个信息，一句话里有两层以上修饰就拆成两句。
+11. 讲到重点时让读者「听」得见停顿：结论句写短、独立成句，不要埋在长句末尾；
+    铺垫可以连着走，转折（「但真正起作用的是……」）另起一句再转。
+12. 多步推理加路标，让读者随时知道讲到哪、什么最重要：顺序用「第一步……第二步……」，
+    强调用「这里要注意一点」「真正重要的是」，收尾用「回到开头的问题」。
+13. 讲到学生自己的数据要具体到哪一份、哪个值（如「你的第二份平行 s2」），
+    像讲一个具体案例：哪一份、做了什么、结果多少，不写「某些样品偏高」这类抽象指称。
+14. 输出前用读者思维把全文通读一遍：哪个词是读者第一次见却没解释的？哪句话要回头读第二遍？
+    有就改掉，直到都不需要，再按第 6 条的格式输出。"""
 
 RECORD_SYSTEM = """你是实验记录识别助手。用户给你一张手写实验记录的照片。
 按给定的列定义识别成表格 JSON，规则：
@@ -50,8 +67,12 @@ async def llm_findings(analysis: dict, ctx: dict, dataset: dict) -> tuple[list[d
     ]
     user = (f"实验：{ctx.get('name')}。目的：{ctx.get('purpose')}\n"
             f"分析结果 JSON：\n{json.dumps(compact, ensure_ascii=False)}\n"
-            f"数据集行索引：{json.dumps(dataset_index, ensure_ascii=False)}\n"
-            f"请按系统规则输出结论。")
+            f"数据集行索引：\n{json.dumps(dataset_index, ensure_ascii=False)}\n")
+    glossary = (ctx.get("guide") or {}).get("glossary") or []
+    if glossary:
+        user += "术语表（术语首次出现按此口径自然解释，整个输出只解释一次）：\n"
+        user += "\n".join(f"{g['term']}——{g['plain']}" for g in glossary) + "\n"
+    user += "请按系统规则输出结论。"
     messages = [{"role": "system", "content": FINDING_SYSTEM},
                 {"role": "user", "content": user}]
 
