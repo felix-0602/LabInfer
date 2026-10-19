@@ -1,0 +1,50 @@
+import type { ReactNode } from "react";
+import { STEPS, useWorkbench } from "./workbench";
+
+export function Shell({ children }: { children: ReactNode }) {
+  const { s, dispatch } = useWorkbench();
+  const current = STEPS.find((x) => x.step === s.step);
+  const ids = [s.ctx?.id, s.dataset?.id].filter(Boolean).join(" · ");
+
+  return (
+    <div className="shell">
+      <nav className="rail">
+        <button className="logo" onClick={() => dispatch({ type: "go", step: 0 })} title="回到封面">LI</button>
+        {STEPS.map(({ step, label }) => {
+          const reachable = !!s.ctx && (step <= s.step || s.done.has(step) || s.done.has((step - 1) as typeof step));
+          return (
+            <button
+              key={step}
+              className={"rail-step" + (s.step === step ? " on" : "")}
+              disabled={!reachable}
+              onClick={() => dispatch({ type: "go", step })}
+            >
+              <span className="mono">0{step}{s.done.has(step) ? " ✓" : ""}</span>
+              <span>{label}</span>
+            </button>
+          );
+        })}
+        <div className="rail-foot mono">SCHEMA {s.ctx?.schema_version ?? "—"}</div>
+      </nav>
+      <header className="topbar">
+        <b>{s.ctx?.name.split("（")[0] ?? "LabInfer"}</b>
+        <span className="mono dim">{ids}</span>
+        <span className="spacer" />
+        {s.busy && <span className="busy mono">{s.busy}…</span>}
+        <span className={"badge mono" + (s.shadow ? " warn" : "")}>{s.shadow ? "演示保底数据" : "真实数据"}</span>
+      </header>
+      {s.notice && (
+        <div className={"notice " + s.notice.tone}>
+          {s.notice.text}
+          <button className="link" onClick={() => dispatch({ type: "patch", patch: { notice: null } })}>知道了</button>
+        </div>
+      )}
+      <main className="stage">{children}</main>
+      <footer className="statusbar mono">
+        <span>{current?.module}</span>
+        <span className="spacer" />
+        <span>{s.online === false ? "后端离线" : s.online ? "后端在线" : "探测后端中"}</span>
+      </footer>
+    </div>
+  );
+}
