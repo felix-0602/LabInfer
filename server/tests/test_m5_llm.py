@@ -32,7 +32,7 @@ def _enable_llm(monkeypatch):
 def test_llm_valid_finding_kept(tmp_path, monkeypatch):
     client = make_client(tmp_path)
     _enable_llm(monkeypatch)
-    async def fake_chat(messages, model=None, temperature=0.2):
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
         return GOOD
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
@@ -45,7 +45,7 @@ def test_llm_retry_after_all_invalid(tmp_path, monkeypatch):
     _enable_llm(monkeypatch)
     calls = []
 
-    async def fake_chat(messages, model=None, temperature=0.2):
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
         calls.append(len(messages))
         return BAD if len(calls) == 1 else GOOD
     monkeypatch.setattr("app.prompts.chat", fake_chat)
@@ -59,7 +59,7 @@ def test_llm_error_falls_back_to_template(tmp_path, monkeypatch):
     client = make_client(tmp_path)
     _enable_llm(monkeypatch)
 
-    async def fake_chat(messages, model=None, temperature=0.2):
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
         raise LlmError("NETWORK", "网络错误")
     monkeypatch.setattr("app.prompts.chat", fake_chat)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})

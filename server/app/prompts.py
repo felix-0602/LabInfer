@@ -21,11 +21,13 @@ FINDING_SYSTEM = """你是实验数据分析助手。你只会收到结构化的
 
 RECORD_SYSTEM = """你是实验记录识别助手。用户给你一张手写实验记录的照片。
 按给定的列定义识别成表格 JSON，规则：
-1. 只输出一个 JSON 对象，不要多余文字。
+1. 只输出一个 JSON 对象（或行数组），不要多余文字。
 2. 每行：{"series":"std"|"blank"|"sample:名称"|"qc:crm","values":{列key:数值或null},"confidence":{列key:0~1}}。
 3. 标准系列行或标定平行行是 series="std"；平行样品（如同一试样的多份滴定）用相同 series 名；质控样 series="qc:crm"。
-4. 看不清、不确定的值一律填 null，不许猜；整行识别不出就省略该行。
-5. 数值不带单位，纯数字。"""
+4. 一页里可能有多张表（例如先「标定」后「样品测定」）：每张表的行都要输出，逐行按用途归入 series，不要只认一张表。
+5. 表头或表旁一次性写明的量（如试样质量、定容体积、移取体积）如果与某个列定义对应，把它填进对应各行该列的 values；对应不上的忽略。
+6. 看不清、不确定的值一律填 null，不许猜；整行识别不出就省略该行。
+7. 数值不带单位，纯数字。"""
 
 
 async def llm_findings(analysis: dict, ctx: dict, dataset: dict) -> tuple[list[dict], list[str]]:
@@ -45,7 +47,7 @@ async def llm_findings(analysis: dict, ctx: dict, dataset: dict) -> tuple[list[d
     messages = [{"role": "system", "content": FINDING_SYSTEM},
                 {"role": "user", "content": user}]
 
-    raw = await chat(messages)
+    raw = await chat(messages, timeout=120)
     items, dropped = _parse_and_validate(raw, analysis, dataset, ctx)
     if not items:
         messages = messages + [
@@ -54,7 +56,7 @@ async def llm_findings(analysis: dict, ctx: dict, dataset: dict) -> tuple[list[d
                 f"以下结论未通过校验被丢弃，原因：{dropped}。"
                 f"请严格只引用分析结果里的数字和真实存在的对象，重新输出。"},
         ]
-        raw = await chat(messages)
+        raw = await chat(messages, timeout=120)
         items, dropped = _parse_and_validate(raw, analysis, dataset, ctx)
     items = [_renumber(f, i) for i, f in enumerate(items, start=1)]
     return items, dropped

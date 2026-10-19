@@ -7,8 +7,18 @@ from PIL import Image
 from app.config import settings
 from app.main import create_app
 from app.storage import Store
-from app.vlm import compress_image
+from app.vlm import compress_image, normalize_series
 from scripts.seed_demo import DEMO_RECORD_IMAGE, main as seed
+
+
+def test_normalize_series_maps_model_variants():
+    assert normalize_series("样品：碱灰") == "sample:碱灰"   # 全角冒号（glm-4.5v 实测输出）
+    assert normalize_series("样品: 碱灰") == "sample:碱灰"
+    assert normalize_series("标定") == "std"
+    assert normalize_series("sample：碱灰") == "sample:碱灰"
+    assert normalize_series("qc:标准物质") == "qc:crm"
+    assert normalize_series("std") == "std"
+    assert normalize_series("") == ""
 
 FAKE_DS = {
     "schema_version": "0.5.0",
