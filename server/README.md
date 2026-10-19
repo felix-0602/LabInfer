@@ -33,7 +33,7 @@ python -m pytest tests -q
 
 ## 环境变量
 
-见 `.env.example`。`LABINFER_STORAGE=sqlite` 启用 SQLite 后端；`LABINFER_DATA` 改数据目录。GLM key 缺失时 M5 降级为模板结论（确定性生成，演示保底也用它）；M1 未命中演示缓存且无 key 时返回 503。
+见 `.env.example`。`LABINFER_STORAGE=sqlite` 启用 SQLite 后端；`LABINFER_DATA` 改数据目录。GLM key 缺失时 M5 降级为模板结论（确定性生成，演示保底也用它）；M1 未命中演示缓存且无 key 时返回 503。本机走 fake-ip 代理（域名全解析进 198.18.0.0/15）时设 `LABINFER_ALLOW_FAKEIP=1` 放行该段出网，其余拒绝规则不变（`app/llm.py`）。
 
 ## 边界
 

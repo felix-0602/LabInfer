@@ -1,6 +1,7 @@
 """GLM 客户端骨架。安全约束：仅 https、拒绝环回/私网/保留地址（对齐项目级约束）。"""
 
 import ipaddress
+import os
 import socket
 from urllib.parse import urlparse
 
@@ -20,6 +21,12 @@ class LlmError(RuntimeError):
         self.status = status
 
 
+# fake-ip 代理环境（TUN 模式）会把所有域名解析进 198.18.0.0/15 基准保留段，
+# 流量实际仍走公网。显式设 LABINFER_ALLOW_FAKEIP=1 才放行这一段，其余拒绝规则不变。
+_FAKEIP_NET = ipaddress.ip_network("198.18.0.0/15")
+_ALLOW_FAKEIP = os.environ.get("LABINFER_ALLOW_FAKEIP", "").strip().lower() in ("1", "true", "yes")
+
+
 def validate_outbound_url(url: str) -> None:
     u = urlparse(url)
     if u.scheme != "https":
@@ -35,6 +42,8 @@ def validate_outbound_url(url: str) -> None:
         raise OutboundError(f"主机解析失败: {host}") from e
     for info in infos:
         ip = ipaddress.ip_address(info[4][0])
+        if _ALLOW_FAKEIP and ip in _FAKEIP_NET:
+            continue
         if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
             raise OutboundError(f"拒绝非公网地址 {host} -> {ip}")
 
@@ -43,13 +52,14 @@ def llm_configured() -> bool:
     return bool(settings.glm_base_url and settings.glm_api_key)
 
 
-async def chat(messages: list[dict], model: str | None = None, temperature: float = 0.2) -> str:
+async def chat(messages: list[dict], model: str | None = None, temperature: float = 0.2,
+               timeout: float = 60) -> str:
     if not llm_configured():
         raise LlmError("NOT_CONFIGURED", "GLM 未配置（LABINFER_GLM_BASE_URL / LABINFER_GLM_API_KEY）")
     base = settings.glm_base_url.rstrip("/")
     validate_outbound_url(f"{base}/chat/completions")
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(
                 f"{base}/chat/completions",
                 headers={"Authorization": f"Bearer {settings.glm_api_key}"},
