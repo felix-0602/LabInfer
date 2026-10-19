@@ -1,0 +1,513 @@
+{
+ "schema_version": "0.6.0",
+ "context": {
+  "schema_version": "0.6.0",
+  "name": "HCl 标定与碱灰总碱度（GB/T 601-2016 无水碳酸钠法）",
+  "purpose": "以基准无水碳酸钠标定 HCl 浓度，测定碱灰总碱度（以 Na₂O 计），检查平行测定精密度",
+  "model": "titration_standardization",
+  "model_params": {
+   "molar_mass_na2co3_g_mol": 105.99,
+   "molar_mass_na2o_g_mol": 61.979,
+   "stock_volume_ml": 250,
+   "aliquot_volume_ml": 25
+  },
+  "variables": {
+   "columns": [
+    {
+     "key": "m",
+     "role": "mass",
+     "unit": "g"
+    },
+    {
+     "key": "V",
+     "role": "volume",
+     "unit": "mL"
+    },
+    {
+     "key": "ms",
+     "role": "sample_mass",
+     "unit": "g",
+     "optional": true
+    }
+   ]
+  },
+  "reference": {
+   "datasets": [],
+   "crm": null,
+   "limits": [
+    {
+     "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）",
+     "value": 58.47,
+     "unit": "%",
+     "operator": "<="
+    }
+   ]
+  },
+  "qc_rules": [
+   {
+    "rule_id": "standardization_rpad",
+    "params": {
+     "max": 0.002
+    },
+    "citation": "GB/T 601-2016 / 分析化学实验教学要求（相对平均偏差 ≤0.2%）"
+   },
+   {
+    "rule_id": "parallel_rpd",
+    "params": {
+     "max": 0.002
+    },
+    "citation": "分析化学实验平行测定要求（相对平均偏差 ≤0.2%）"
+   },
+   {
+    "rule_id": "outlier_grubbs",
+    "params": {
+     "alpha": 0.05
+    },
+    "citation": "GB/T 4883"
+   }
+  ],
+  "id": "ctx_demo",
+  "datasets": {
+   "mine": "ds_mine_demo"
+  }
+ },
+ "datasets": [
+  {
+   "schema_version": "0.6.0",
+   "id": "ds_mine_demo",
+   "source": "my_experiment",
+   "meta": {
+    "title": "HCl 标定与碱灰总碱度 数据记录（演示）",
+    "doi": null,
+    "figure": null,
+    "image_ref": null
+   },
+   "columns": [
+    {
+     "key": "m",
+     "name": "基准 Na₂CO₃ 质量",
+     "unit": "g"
+    },
+    {
+     "key": "V",
+     "name": "HCl 滴定体积",
+     "unit": "mL"
+    },
+    {
+     "key": "ms",
+     "name": "碱灰试样质量",
+     "unit": "g"
+    }
+   ],
+   "rows": [
+    {
+     "id": "p1",
+     "series": "std",
+     "values": {
+      "m": 0.1549,
+      "V": 28.54
+     },
+     "verified": true
+    },
+    {
+     "id": "p2",
+     "series": "std",
+     "values": {
+      "m": 0.1832,
+      "V": 33
+     },
+     "verified": true
+    },
+    {
+     "id": "p3",
+     "series": "std",
+     "values": {
+      "m": 0.167,
+      "V": 31.19
+     },
+     "verified": true
+    },
+    {
+     "id": "s1",
+     "series": "sample:碱灰",
+     "values": {
+      "V": 29.55,
+      "ms": 1.5919
+     },
+     "verified": true
+    },
+    {
+     "id": "s2",
+     "series": "sample:碱灰",
+     "values": {
+      "V": 31.29,
+      "ms": 1.5919
+     },
+     "verified": true
+    },
+    {
+     "id": "s3",
+     "series": "sample:碱灰",
+     "values": {
+      "V": 30.11,
+      "ms": 1.5919
+     },
+     "verified": true
+    }
+   ]
+  }
+ ],
+ "analysis": {
+  "schema_version": "0.6.0",
+  "context_id": "ctx_demo",
+  "model": "titration_standardization",
+  "transformed": [
+   {
+    "dataset_id": "ds_mine_demo",
+    "x_label": "m",
+    "x_unit": "g",
+    "y_label": "V",
+    "y_unit": "mL",
+    "points": [
+     {
+      "point_id": "p1",
+      "x": 0.1549,
+      "y": 28.54
+     },
+     {
+      "point_id": "p2",
+      "x": 0.1832,
+      "y": 33
+     },
+     {
+      "point_id": "p3",
+      "x": 0.167,
+      "y": 31.19
+     }
+    ]
+   }
+  ],
+  "fits": [
+   {
+    "dataset_id": "ds_mine_demo",
+    "slope": 183.452866,
+    "intercept": 0,
+    "r2": 0.99976,
+    "n": 3,
+    "derived": {
+     "c_regression": 0.102859,
+     "c_hcl": 0.102735,
+     "rel_avg_dev_c": 0.013114,
+     "w_na2o_mean_pct": 60.6313,
+     "rel_avg_dev_w": 0.021404,
+     "molar_mass_na2co3": 105.99,
+     "molar_mass_na2o": 61.979
+    }
+   }
+  ],
+  "predictions": [
+   {
+    "dataset_id": "ds_mine_demo",
+    "point_id": "s1",
+    "value": 59.098,
+    "u95": 1.2497,
+    "unit": "%",
+    "input": {
+     "V": 29.55
+    },
+    "factors": {
+     "c_hcl_mol_l": 0.102735,
+     "sample_mass_g": 1.5919,
+     "stock_volume_ml": 250,
+     "aliquot_volume_ml": 25
+    },
+    "as_reported": 59.098
+   },
+   {
+    "dataset_id": "ds_mine_demo",
+    "point_id": "s2",
+    "value": 62.5779,
+    "u95": 1.3233,
+    "unit": "%",
+    "input": {
+     "V": 31.29
+    },
+    "factors": {
+     "c_hcl_mol_l": 0.102735,
+     "sample_mass_g": 1.5919,
+     "stock_volume_ml": 250,
+     "aliquot_volume_ml": 25
+    },
+    "as_reported": 62.5779
+   },
+   {
+    "dataset_id": "ds_mine_demo",
+    "point_id": "s3",
+    "value": 60.218,
+    "u95": 1.2734,
+    "unit": "%",
+    "input": {
+     "V": 30.11
+    },
+    "factors": {
+     "c_hcl_mol_l": 0.102735,
+     "sample_mass_g": 1.5919,
+     "stock_volume_ml": 250,
+     "aliquot_volume_ml": 25
+    },
+    "as_reported": 60.218
+   }
+  ],
+  "residuals": [
+   {
+    "dataset_id": "ds_mine_demo",
+    "point_id": "p1",
+    "residual": -0.00032,
+    "outlier": false,
+    "method": "grubbs",
+    "p": null
+   },
+   {
+    "dataset_id": "ds_mine_demo",
+    "point_id": "p2",
+    "residual": 0.002021,
+    "outlier": false,
+    "method": "grubbs",
+    "p": null
+   },
+   {
+    "dataset_id": "ds_mine_demo",
+    "point_id": "p3",
+    "residual": -0.001701,
+    "outlier": false,
+    "method": "grubbs",
+    "p": null
+   }
+  ],
+  "qc_results": [
+   {
+    "pass": false,
+    "value": 0.01311351838230188,
+    "value_pct": 1.31,
+    "limit": 0.002,
+    "subjects": [
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "p1"
+     },
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "p2"
+     },
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "p3"
+     }
+    ],
+    "rule_id": "standardization_rpad",
+    "citation": "GB/T 601-2016 / 分析化学实验教学要求（相对平均偏差 ≤0.2%）"
+   },
+   {
+    "pass": false,
+    "value": 0.02140370166758297,
+    "value_pct": 2.14,
+    "limit": 0.002,
+    "subjects": [
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "s1"
+     },
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "s2"
+     },
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "s3"
+     }
+    ],
+    "rule_id": "parallel_rpd",
+    "citation": "分析化学实验平行测定要求（相对平均偏差 ≤0.2%）"
+   },
+   {
+    "pass": true,
+    "value": 1.0741103289827418,
+    "limit": 1.1543048513440386,
+    "subjects": [
+     {
+      "dataset_id": "ds_mine_demo",
+      "point_id": "p2"
+     }
+    ],
+    "rule_id": "outlier_grubbs",
+    "citation": "GB/T 4883"
+   }
+  ],
+  "comparison": {
+   "vs_reference": [],
+   "vs_limit": [
+    {
+     "point_id": "s1",
+     "value": 59.098,
+     "limit": 58.47,
+     "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）",
+     "verdict": "exceed"
+    },
+    {
+     "point_id": "s2",
+     "value": 62.5779,
+     "limit": 58.47,
+     "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）",
+     "verdict": "exceed"
+    },
+    {
+     "point_id": "s3",
+     "value": 60.218,
+     "limit": 58.47,
+     "label": "纯 Na₂CO₃ 理论总碱度（以 Na₂O 计）",
+     "verdict": "exceed"
+    }
+   ],
+   "vs_crm": null
+  }
+ },
+ "findings": [
+  {
+   "schema_version": "0.6.0",
+   "id": "f_pattern",
+   "type": "pattern",
+   "text": "基准 Na₂CO₃ 标定线性良好：滴定体积与称样量成过原点直线（R²=0.9998，n=3），三份平行平均 c̄(HCl)=0.1027 mol/L（过原点回归 0.1029）。",
+   "evidence": [
+    {
+     "type": "fit",
+     "dataset_id": "ds_mine_demo"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_conc1",
+   "type": "conclusion",
+   "text": "碱灰平行 1（s1）：总碱度（以 Na₂O 计）(59.1 ± 1.25)%，高于纯 Na₂CO₃ 理论值 58.47%。",
+   "evidence": [
+    {
+     "type": "point",
+     "dataset_id": "ds_mine_demo",
+     "point_id": "s1"
+    },
+    {
+     "type": "comparison",
+     "target": "vs_limit[0]"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_conc2",
+   "type": "conclusion",
+   "text": "碱灰平行 2（s2）：总碱度（以 Na₂O 计）(62.58 ± 1.323)%，高于纯 Na₂CO₃ 理论值 58.47%。",
+   "evidence": [
+    {
+     "type": "point",
+     "dataset_id": "ds_mine_demo",
+     "point_id": "s2"
+    },
+    {
+     "type": "comparison",
+     "target": "vs_limit[1]"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_conc3",
+   "type": "conclusion",
+   "text": "碱灰平行 3（s3）：总碱度（以 Na₂O 计）(60.22 ± 1.273)%，高于纯 Na₂CO₃ 理论值 58.47%。",
+   "evidence": [
+    {
+     "type": "point",
+     "dataset_id": "ds_mine_demo",
+     "point_id": "s3"
+    },
+    {
+     "type": "comparison",
+     "target": "vs_limit[2]"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_mean",
+   "type": "conclusion",
+   "text": "三份平行平均总碱度 60.63%（相对平均偏差 2.14%），报告值以平均值计。",
+   "evidence": [
+    {
+     "type": "fit",
+     "dataset_id": "ds_mine_demo"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_worst",
+   "type": "anomaly",
+   "text": "平行 s2 偏离均值最多（62.58%，滴定体积 31.29 mL），把相对平均偏差拉大到 2.14%。怀疑终点过头或读数错误，建议按 GB/T 601-2016 煮沸驱除 CO₂ 后冷却再滴至终点，重做该份。",
+   "evidence": [
+    {
+     "type": "point",
+     "dataset_id": "ds_mine_demo",
+     "point_id": "s2"
+    },
+    {
+     "type": "qc",
+     "rule_id": "parallel_rpd"
+    }
+   ],
+   "simulatable": true,
+   "simulation": {
+    "param": "titrant_volume_delta",
+    "from": -2,
+    "to": 0,
+    "unit": "mL"
+   }
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_qc1",
+   "type": "anomaly",
+   "text": "质控规则 standardization_rpad 未通过（实测 1.31%，限值 0.2%），依据 GB/T 601-2016 / 分析化学实验教学要求（相对平均偏差 ≤0.2%）。",
+   "evidence": [
+    {
+     "type": "qc",
+     "rule_id": "standardization_rpad"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  },
+  {
+   "schema_version": "0.6.0",
+   "id": "f_qc2",
+   "type": "anomaly",
+   "text": "质控规则 parallel_rpd 未通过（实测 2.14%，限值 0.2%），依据 分析化学实验平行测定要求（相对平均偏差 ≤0.2%）。",
+   "evidence": [
+    {
+     "type": "qc",
+     "rule_id": "parallel_rpd"
+    }
+   ],
+   "simulatable": false,
+   "simulation": null
+  }
+ ]
+}

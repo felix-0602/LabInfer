@@ -1,4 +1,5 @@
-// 契约 0.6.0 的前端视图（docs/contracts.md）。只声明 M8 读到的字段，其余透传不改写。
+// 契约的前端视图（docs/contracts.md）。后端目前出 0.6.0，0.7.0 新增的节都是可选字段，有就画、没有就不显示。
+// 只声明 M8 读到的字段，其余透传不改写。
 
 export type Json = Record<string, unknown>;
 
@@ -96,6 +97,27 @@ export interface AnalysisResult {
   residuals: { dataset_id: string; point_id: string; residual: number; outlier: boolean }[];
   qc_results: QcResult[];
   comparison: { vs_reference: Json[]; vs_limit: LimitVerdict[]; vs_crm: Json | null };
+  titration_curve?: TitrationCurve;
+  error_budget?: ErrorBudget;
+}
+
+// 0.7.0：理论滴定曲线与学生终点，x 为 ΔV（mL），y 为 pH
+export interface TitrationCurve {
+  x_label: string; x_unit: string; y_label: string; y_unit: string;
+  basis: { point_id: string; v_eq_ml: number; closed_system?: boolean; pka1?: number; pka2?: number };
+  theory: { x: number; y: number }[];
+  ph_eq: number;
+  indicator: { name: string; ph_range: [number, number]; dv_window_ml: [number, number] };
+  endpoints: { dataset_id: string; point_id: string; dv_ml: number; ph: number }[];
+  literature: { dataset_id: string; points: { x: number; y: number }[] }[];
+}
+
+// 0.7.0：仪器可解释的相对偏差 vs 实测离散
+export interface ErrorBudget {
+  items: { source: string; rel: number; subject: PointRef }[];
+  expected_rel_dev: number;
+  observed_rel_dev: number;
+  ratio: number;
 }
 
 export type Evidence =
@@ -112,6 +134,8 @@ export interface Finding {
   evidence: Evidence[];
   simulatable: boolean;
   simulation: { param: string; from: number; to: number; unit: string } | null;
+  ladder?: { rung_id: string; level: number; text: string }[];
+  verification?: { status: "verified" | "refuted" | "unverified"; hypothesis: string; reason: string };
 }
 
 export interface Simulation {
