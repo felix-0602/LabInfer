@@ -1,4 +1,6 @@
 import bg from "../../../design/assets/GEN-02.webp";
+// 封面主视觉：滴定管 GEN-11 还没渲染，先用通用物件银镜试管 GEN-01
+import hero from "../../../design/assets/GEN-01.webp";
 import { useWorkbench } from "../workbench";
 
 export function Cover() {
@@ -11,6 +13,7 @@ export function Cover() {
         <span>HACKATHON 2026 · 科研创新赛道</span>
         <span>N° 001</span>
       </div>
+      <img className="cover-hero" src={hero} alt="" />
       <div className="cover-giant display">
         <div>LAB</div>
         <div className="fill">INFER</div>
