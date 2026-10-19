@@ -25,6 +25,8 @@ uvicorn app.main:app --reload --port 8000
 
 演示时上传 `design/assets/DEMO-01.jpg`（真实数据记录页）即命中 M1 缓存，不依赖 VLM。
 
+M2 曲线取数：识别（`/detect`）同样按图片 sha256 命中 `demo_cache/m2/`，未命中且无 key 时返回 503，M8 转手动校准；提取（`/extract`）按颜色取点依赖 OpenCV（`opencv-python-headless`），换算与残差是确定性代码，不依赖 VLM。
+
 ## 测试
 
 ```bash
