@@ -6,6 +6,7 @@ from ..config import CONTRACT_VERSION
 from ..models import REGISTRY, uncertainty as u
 from ..models import qc as qc_engine
 from ..models.base import rel_avg_dev
+from ..models import titration as titration_engine
 
 
 def _role_map(ctx: dict) -> dict:
@@ -134,7 +135,7 @@ def _analyze_titration(ctx: dict, mine_ds: dict, model) -> dict:
         "derived": {k: (round(v, 6) if isinstance(v, float) else v) for k, v in derived.items()},
     }
 
-    return {
+    result = {
         "schema_version": CONTRACT_VERSION,
         "context_id": ctx["id"],
         "model": model.id,
@@ -145,6 +146,23 @@ def _analyze_titration(ctx: dict, mine_ds: dict, model) -> dict:
         "qc_results": qc_results,
         "comparison": comparison,
     }
+
+    # 0.7.0 可选节：model_params 提供常数时才输出（contracts.md「滴定公式」）
+    curve = titration_engine.titration_curve_section(std_rows, c_mean, p, mine_ds["id"])
+    if curve:
+        for ref in ctx.get("reference", {}).get("datasets", []):
+            ds = ref_datasets.get(ref["dataset_id"])
+            if ds is None:
+                continue
+            lit = titration_engine.convert_literature_curve(ds, ref, curve)
+            if lit is not None:
+                curve["literature"].append(lit)
+        result["titration_curve"] = curve
+    budget = titration_engine.error_budget_section(std_rows, p, mine_ds["id"], rad_c)
+    if budget:
+        result["error_budget"] = budget
+
+    return result
 
 
 def analyze(ctx: dict, mine_ds: dict, ref_datasets: dict[str, dict]) -> dict:

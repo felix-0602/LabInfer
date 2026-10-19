@@ -20,6 +20,62 @@ ALKALI_TITRATION_TEMPLATE = {
         "molar_mass_na2o_g_mol": 61.979,
         "stock_volume_ml": 250,              # 碱灰试液定容体积
         "aliquot_volume_ml": 25,             # 每次滴定移取试液体积
+        # 0.7.0：滴定曲线与误差预算的常数（契约「滴定公式」节）
+        "pka1": 6.35, "pka2": 10.33,         # 碳酸 25 ℃
+        "initial_water_ml": 30,              # 溶解基准物的水量（教材 25～35 mL 取中值）
+        "indicator": {"name": "甲基橙", "ph_range": [3.1, 4.4]},
+        "balance_error_g": 0.0001,           # 单次称量最大误差，差减法计两次
+        "burette_error_ml": 0.01,            # 单次读数最大误差，计两次
+    },
+    "ladder": {                              # 讲解阶梯，规则见 docs/wiki.md#讲解阶梯
+        "base_level": 3,
+        "rungs": [
+            {"rung_id": "L3-formula", "level": 3, "title": "浓度与总碱度怎么算",
+             "concept": "相对平均偏差的含义与代入公式计算 c、w",
+             "anchor": {"type": "fit"}, "trigger": None,
+             "source": "实验教材 实验 3 数据处理"},
+            {"rung_id": "L4-indicator", "level": 4, "title": "为什么用甲基橙",
+             "concept": "Na₂CO₃ 有两个化学计量点（约 pH 8.3 与 3.9），第二个落在甲基橙变色区内",
+             "anchor": {"type": "comparison", "target": "titration_curve"}, "trigger": None,
+             "source": "实验教材 实验目的 3；分析化学教材 酸碱滴定章"},
+            {"rung_id": "L4-co2", "level": 4, "title": "为什么近终点要防 CO₂",
+             "concept": "溶解的 CO₂ 形成缓冲，突跃变缓，终点提前",
+             "anchor": {"type": "comparison", "target": "titration_curve"}, "trigger": None,
+             "source": "分析化学教材；GB/T 601-2016 HCl 标定条（煮沸步骤，待核）"},
+            {"rung_id": "L5-error-type", "level": 5, "title": "误差分系统与随机",
+             "concept": "系统误差让三份同向偏移、拉动平均值；随机误差拉大离散。基准物吸水 1% 是系统误差（思考题 2）",
+             "anchor": {"type": "comparison", "target": "vs_limit[0]"}, "trigger": None,
+             "source": "实验教材 思考题 2"},
+            {"rung_id": "L5-mass-range", "level": 5, "title": "为什么称样量 0.15～0.20 g、滴定体积 20 mL 以上",
+             "concept": "天平两次称量 ±0.0002 g、滴定管两次读数 ±0.02 mL，各自控制在约 0.1% 以内",
+             "anchor": {"type": "fit"}, "trigger": None,
+             "source": "分析化学教材 误差与有效数字章"},
+            {"rung_id": "L6-budget", "level": 6, "title": "测量不确定度",
+             "concept": "把称量、读数、定容、移液的贡献合成扩展不确定度，判断偏差是否超出仪器所能解释的范围",
+             "anchor": {"type": "comparison", "target": "error_budget"}, "trigger": None,
+             "source": "JJF 1059.1-2012（GUM 国内版）"},
+            {"rung_id": "L6-endpoint-error", "level": 6, "title": "指示剂终点误差可以定量算",
+             "concept": "林邦误差公式；本实验未煮沸时甲基橙在计量点前约 0.15 mL 开始变色，煮沸后移到计量点后约 0.02 mL",
+             "anchor": {"type": "comparison", "target": "titration_curve"}, "trigger": None,
+             "source": "分析化学教材 终点误差节"},
+            {"rung_id": "L7-gb601", "level": 7, "title": "标准方法怎么保证可靠",
+             "concept": "GB/T 601 对标定的平行份数、人员与重复性限的要求，比教学要求严格",
+             "anchor": {"type": "qc", "rule_id": "standardization_rpad"},
+             "trigger": {"qc_fail": "standardization_rpad"},
+             "source": "GB/T 601-2016（具体份数与限值待核）"},
+            {"rung_id": "L7-next-dual-indicator", "level": 7, "title": "下一步：双指示剂法",
+             "concept": "区分 Na₂CO₃–NaOH 与 Na₂CO₃–NaHCO₃（思考题 3、实验 4），检验总碱度偏高是否因含 NaOH",
+             "anchor": {"type": "comparison", "target": "vs_limit[0]"}, "trigger": None,
+             "source": "实验教材 实验 4"},
+            {"rung_id": "L8-potentiometric", "level": 8, "title": "不用指示剂判终点",
+             "concept": "电位滴定与 Gran 作图",
+             "anchor": {"type": "comparison", "target": "titration_curve"}, "trigger": None,
+             "source": "分析化学教材 电位滴定章"},
+            {"rung_id": "L9-ocean-alkalinity", "level": 9, "title": "科研里的同一件事",
+             "concept": "海水总碱度用开放式电位滴定测定，是碳循环研究的基础量",
+             "anchor": {"type": "comparison", "target": "vs_limit[0]"}, "trigger": None,
+             "source": "Dickson et al., Guide to Best Practices for Ocean CO₂ Measurements（PICES 3, 2007）, SOP 3b"},
+        ],
     },
     "variables": {
         "columns": [
