@@ -50,6 +50,11 @@ def validate_findings(findings: list[dict], analysis: dict, dataset: dict, ctx: 
         analysis.get("titration_curve"), analysis.get("error_budget"),
         ctx.get("reference"), ctx.get("qc_rules"),
         ctx.get("model_params"), ctx.get("ladder"))   # 模型常数与讲解阶梯里的常数可引用
+    # 置信水平 95% 是 u95 的方法常数，不在任何测量值里；分析带不确定度时允许写进正文
+    if analysis.get("error_budget") or any(
+            isinstance(p, dict) and p.get("u95") is not None
+            for p in analysis.get("predictions", [])):
+        whitelist.append(95.0)
     point_ids = {r["id"] for r in dataset.get("rows", [])}
     ds_ids = {dataset.get("id")}
     qc_ids = {q.get("rule_id") for q in analysis.get("qc_results", [])}

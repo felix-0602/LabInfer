@@ -87,6 +87,25 @@ def test_llm_unknown_term_mark_stripped(tmp_path, monkeypatch):
     assert "见说法。" in r.text
 
 
+def test_llm_confidence_95_allowed_with_u95(tmp_path, monkeypatch):
+    """置信水平 95% 是 u95 的方法常数：分析带不确定度时正文可写（行业规范写法）。"""
+    client = make_client(tmp_path)
+    _enable_llm(monkeypatch)
+    payload = ('好。\n'
+               '[{"type":"conclusion",'
+               '"text":"碱灰平行 2（s2）总碱度 62.578%，高于纯 Na₂CO₃ 理论值 58.47%，'
+               '报告为 62.578 ± 0.4，95% 置信。",'
+               '"evidence":[{"type":"point","dataset_id":"ds_mine_demo","point_id":"s2"},'
+               '{"type":"comparison","target":"vs_limit[1]"}]}]')
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        return payload
+    monkeypatch.setattr("app.prompts.chat", fake_chat)
+    r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r.status_code == 200
+    assert "95% 置信" in r.text          # 未因数字无溯源被剔
+
+
 def test_no_llm_configured_uses_template(tmp_path):
     client = make_client(tmp_path)
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})

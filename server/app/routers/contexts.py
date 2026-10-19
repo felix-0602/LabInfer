@@ -111,7 +111,7 @@ ALKALI_TITRATION_TEMPLATE = {
              "aliases": ["R²", "决定系数"], "source": "src_ac_book"},
             {"term_id": "u95", "term": "不确定度 ±",
              "plain": "把每一步难免的小误差都算进去之后，估出的一个上下范围，记号是正负号",
-             "help": "真实值有九成五的把握落在这个范围里，不是测量本身在晃",
+             "help": "真实值有 95% 的把握落在这个范围里，不是测量本身在晃",
              "aliases": ["±", "U95", "扩展不确定度"], "source": "src_jjf"},
             {"term_id": "regression_origin", "term": "过原点回归",
              "plain": "让直线必须经过原点（称 0 克就耗 0 毫升），再由各点算出这条直线的斜率",
