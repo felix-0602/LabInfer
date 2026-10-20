@@ -1,0 +1,10 @@
+# key 与本机运行态绝不进镜像（DEPLOY.md：key 只经 env 注入）
+.env
+.venv
+data
+tests
+.pytest_cache
+.mimosa
+.worktrees
+__pycache__
+*.pyc

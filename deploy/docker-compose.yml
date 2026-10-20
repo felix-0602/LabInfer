@@ -1,0 +1,23 @@
+# LabInfer 线上栈：单容器，8081 对外（安全组已放行，见 DEPLOY.md）。
+# 目录约定（照博客 inward 的布局）：
+#   ~/labinfer-compose/  本文件 + server/（rsync 的后端源码）+ web-dist/（前端构建产物）
+#                        + design/assets/（播种用演示图）+ labinfer.env（GLM key，ssh stdin 写入）
+#   ~/labinfer-data/     数据与运行时识别缓存，容器重建不丢，不随部署覆盖
+services:
+  api:
+    build: ./server
+    image: labinfer-api
+    container_name: labinfer-api
+    ports:
+      - '8081:8000'
+    env_file: labinfer.env
+    environment:
+      - LABINFER_DATA=/data
+      - LABINFER_RUNTIME_CACHE=/data/runtime_cache
+      - LABINFER_WEB_DIST=/web
+    volumes:
+      - ../labinfer-data:/data
+      - ./web-dist:/web:ro
+      # 播种脚本按仓库相对路径找 /design/assets/DEMO-01.jpg（scripts/ 上三级到根）
+      - ./design:/design:ro
+    restart: unless-stopped
