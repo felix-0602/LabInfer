@@ -1,4 +1,6 @@
+import asyncio
 import io
+import time
 
 from fastapi.testclient import TestClient
 
@@ -16,6 +18,8 @@ BAD = '[{"type":"pattern","text":"活化能高达 99.9，非常大。","evidence
 
 
 def make_client(tmp_path):
+    import app.cache as cache_mod
+    cache_mod.RUNTIME_CACHE_DIR = tmp_path / "rt"   # m5 结论缓存按用例隔离，防跨用例/跨运行串缓存
     store = Store(tmp_path)
     seed(store)
     client = TestClient(create_app(store))
@@ -132,6 +136,74 @@ def test_no_llm_configured_uses_template(tmp_path):
     r = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
     assert r.status_code == 200
     assert "event: finding" in r.text
+
+
+def test_llm_findings_cached_on_second_call(tmp_path, monkeypatch):
+    """结论缓存：同 ctx 同分析第二次调用不再出网（glm-5.3 一次生成可达数分钟，公网演示必须秒回）。"""
+    client = make_client(tmp_path)
+    _enable_llm(monkeypatch)
+    calls = []
+
+    async def fake_chat(messages, model=None, temperature=0.2, timeout=60):
+        calls.append(1)
+        return GOOD
+
+    monkeypatch.setattr("app.prompts.chat", fake_chat)
+    r1 = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    r2 = client.post("/api/m5/findings", json={"context_id": "ctx_demo"})
+    assert r1.status_code == r2.status_code == 200
+    assert "碱灰平行 2" in r1.text and "碱灰平行 2" in r2.text
+    assert len(calls) == 1                 # 第二次命中运行时缓存，不再调模型
+
+
+def test_stream_starts_before_llm_finishes(tmp_path, monkeypatch):
+    """公网链路会掐无字节的空闲连接：首字节（keepalive 心跳）必须先于 LLM 完成就到。
+    TestClient 的 httpx 管道会缓冲整条流，这里直接裸调 ASGI 量每个 body chunk 的时刻。"""
+    client = make_client(tmp_path)
+    _enable_llm(monkeypatch)
+
+    async def slow_chat(messages, model=None, temperature=0.2, timeout=60):
+        await asyncio.sleep(0.5)
+        return GOOD
+
+    monkeypatch.setattr("app.prompts.chat", slow_chat)
+
+    async def drive():
+        t0 = time.monotonic()
+        sent = []
+        body_sent = False
+        never = asyncio.Event()          # 真实服务器语义：body 发完后 receive 一直等到断开
+
+        async def receive():
+            nonlocal body_sent
+            if not body_sent:
+                body_sent = True
+                return {"type": "http.request", "body": b'{"context_id": "ctx_demo"}',
+                        "more_body": False}
+            await never.wait()
+            return {"type": "http.disconnect"}
+
+        async def send(message):
+            if message["type"] == "http.response.body":
+                sent.append((time.monotonic() - t0, message.get("body", b"")))
+
+        scope = {"type": "http", "asgi": {"version": "2.0", "spec_version": "2.1"},
+                 "http_version": "1.1", "method": "POST", "scheme": "http",
+                 "path": "/api/m5/findings", "raw_path": b"/api/m5/findings",
+                 "query_string": b"", "root_path": "",
+                 "headers": [(b"content-type", b"application/json")],
+                 "client": ("test", 1), "server": ("test", 80)}
+        await client.app(scope, receive, send)
+        return sent
+
+    sent = asyncio.run(drive())
+    t_first, body_first = sent[0]
+    assert body_first.startswith(b":")            # 心跳注释行先到，不等 LLM
+    assert t_first < 0.4
+    assert sent[-1][0] >= 0.45                    # 结论在 LLM（0.5s）完成后才出
+    tail = b"".join(b for _, b in sent)
+    assert b"event: finding" in tail and b"event: done" in tail
+    assert "碱灰平行 2".encode() in tail
 
 
 def test_llm_prompt_carries_guide_glossary(tmp_path, monkeypatch):
