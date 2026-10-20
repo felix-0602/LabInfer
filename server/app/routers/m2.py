@@ -13,7 +13,7 @@ from ..config import CONTRACT_VERSION
 from ..llm import LlmError, llm_configured
 from ..services.calibration import CalibrationError, residual_px, to_data, validate_calibration
 from ..services.curve_extract import decode_rgb, extract_points
-from ..services.figure_detect import detect_figure
+from ..services.figure_detect import assess_intent, detect_figure
 from ..storage import new_id
 
 router = APIRouter(prefix="/api/m2", tags=["m2"])
@@ -102,26 +102,32 @@ def get_figure_image(id: str, request: Request):
 
 @router.post("/figures/{id}/detect")
 async def detect(id: str, request: Request, context_id: str | None = None):
-    """识别坐标轴与图例。带 context_id 时附 intent（0.9.0）：图与该实验是否同类的确定性裁决。"""
+    """识别坐标轴与图例。带 context_id 时附 intent（0.9.0）：图与该实验是否同类的确定性裁决。
+    识别结果（含 chart 语义）按图哈希缓存；intent 依赖实验上下文，不进缓存、每次现算。"""
     store = request.app.state.store
     rec = _load_figure(store, id)
     if rec is None:
         return _not_found(id)
+    ctx = store.get_context(context_id) if context_id else None
 
     cached = cache_get("m2", rec["sha256"])
     if cached is not None:
         det = cached
         det.setdefault("engine", {})["cached"] = True
     elif llm_configured():
-        ctx = store.get_context(context_id) if context_id else None
         data = Path(rec["path"]).read_bytes()
         try:
-            det = await detect_figure(data, ctx)
+            det = await detect_figure(data)
         except (LlmError, ValueError) as e:
             return _error(503, "VLM_UNAVAILABLE", f"图表识别失败: {e}")
         cache_put("m2", rec["sha256"], dict(det))
     else:
         return _error(503, "VLM_UNAVAILABLE", "视觉模型未配置且未命中演示缓存")
+
+    if ctx is not None:
+        intent = assess_intent(det.get("chart"), ctx)
+        intent["chart"] = det.get("chart")
+        det["intent"] = intent
 
     det["schema_version"] = CONTRACT_VERSION
     det["figure_id"] = id

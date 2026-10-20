@@ -182,6 +182,22 @@ def test_detect_with_context_id_carries_intent(client, monkeypatch):
     assert det["intent"]["reasons"]
 
 
+def test_detect_cache_hit_still_computes_intent(client, monkeypatch):
+    """intent 不进按图哈希的缓存：缓存命中时带 ctx 仍现算；不带 ctx 不出意图（0.8.0 行为）。"""
+    c, _ = client
+    chart = {"type": "titration_curve", "x_quantity": "V / mL", "y_quantity": "pH",
+             "titrant": "HCl", "analyte": None}
+    _fake_vlm(monkeypatch, [], chart=chart)
+    ctx_id = c.post("/api/m3/contexts", json={"template_id": "tpl_alkali_titration"}).json()["id"]
+    fig = _upload(c, doi="10.1/y").json()
+    d1 = c.post(f"/api/m2/figures/{fig['id']}/detect", params={"context_id": ctx_id}).json()
+    assert d1["intent"]["verdict"] == "same" and d1["engine"]["cached"] is False
+    d2 = c.post(f"/api/m2/figures/{fig['id']}/detect", params={"context_id": ctx_id}).json()
+    assert d2["engine"]["cached"] is True and d2["intent"]["verdict"] == "same"
+    d3 = c.post(f"/api/m2/figures/{fig['id']}/detect").json()
+    assert "intent" not in d3
+
+
 # ---------- 颜色提取 ----------
 
 def test_extract_markers_by_color():
@@ -241,7 +257,7 @@ def _fake_vlm(monkeypatch, calls, chart=None):
     async def fake_detect(data, ctx=None):
         calls.append(1)
         obj = {**DETECTION, **({"chart": chart} if chart is not None else {})}
-        det = normalize_detection(obj, 1.0, ctx)
+        det = normalize_detection(obj, 1.0)
         det["engine"] = {"vlm": "fake", "cached": False}
         return det
     monkeypatch.setattr("app.routers.m2.detect_figure", fake_detect)

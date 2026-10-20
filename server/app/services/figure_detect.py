@@ -108,11 +108,12 @@ def _sanitize_chart(obj: dict) -> dict | None:
     }
 
 
-def normalize_detection(obj: dict, k: float, ctx: dict | None = None) -> dict:
+def normalize_detection(obj: dict, k: float) -> dict:
     """把 VLM 输出整理成 FigureDetection（不含 figure_id / engine），像素乘 k 还原到原图。
 
     结构不可用（缺坐标轴、两个轴都没有可用刻度）时抛 ValueError，由路由转 503。
-    带 ctx 时附 intent（0.9.0 可选字段）：确定性规则比对图与实验是否同类，见 assess_intent。
+    chart（图本身的语义）随识别缓存——它只依赖图；intent 不在这里：
+    它依赖实验上下文，由路由在 /detect 时按 ctx 现算（assess_intent，确定性代码）。
     """
     if not isinstance(obj, dict) or not isinstance(obj.get("axes"), dict):
         raise ValueError("识别结果缺少 axes")
@@ -158,14 +159,12 @@ def normalize_detection(obj: dict, k: float, ctx: dict | None = None) -> dict:
     det = {"schema_version": CONTRACT_VERSION, "plot_area": plot_area, "axes": axes,
            "calibration": calibration, "series": series, "warnings": warnings}
     chart = _sanitize_chart(obj)
-    if ctx is not None:
-        intent = assess_intent(chart, ctx)
-        intent["chart"] = chart            # 裁决所依据的事实（VLM 读到的图表语义）一并下发
-        det["intent"] = intent
+    if chart is not None:
+        det["chart"] = chart          # 图本身的语义：只依赖图，可随识别缓存
     return det
 
 
-async def detect_figure(image_bytes: bytes, ctx: dict | None = None) -> dict:
+async def detect_figure(image_bytes: bytes) -> dict:
     jpeg = compress_image(image_bytes)
     w0, _ = _image_size(image_bytes)
     w1, _ = _image_size(jpeg)
@@ -180,6 +179,6 @@ async def detect_figure(image_bytes: bytes, ctx: dict | None = None) -> dict:
         ]},
     ]
     raw = await chat(messages, model=settings.vlm_model)
-    det = normalize_detection(extract_json(raw), k, ctx)
+    det = normalize_detection(extract_json(raw), k)
     det["engine"] = {"vlm": settings.vlm_model, "cached": False}
     return det
