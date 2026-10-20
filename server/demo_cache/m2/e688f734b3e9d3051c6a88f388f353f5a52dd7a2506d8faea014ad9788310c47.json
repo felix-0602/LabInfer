@@ -1,0 +1,217 @@
+{
+  "schema_version": "0.9.0",
+  "plot_area": {
+    "u0": 570.9,
+    "v0": 958.0,
+    "u1": 1224.5,
+    "v1": 1690.2
+  },
+  "axes": {
+    "x": {
+      "label": "VOLUME OF TITRANT, IN DIGITAL COUNTS",
+      "unit": "digital counts",
+      "scale": "linear",
+      "ticks": [
+        {
+          "px": [
+            575.1,
+            1697.2
+          ],
+          "value": 100.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            683.1,
+            1697.2
+          ],
+          "value": 120.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            789.7,
+            1697.2
+          ],
+          "value": 140.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            897.7,
+            1697.2
+          ],
+          "value": 160.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            1005.7,
+            1697.2
+          ],
+          "value": 180.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            1112.3,
+            1697.2
+          ],
+          "value": 200.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            1220.3,
+            1697.2
+          ],
+          "value": 220.0,
+          "confidence": 0.95
+        }
+      ]
+    },
+    "y": {
+      "label": "GRAN FUNCTION F1, IN MILLILITERS",
+      "unit": "milliliters",
+      "scale": "linear",
+      "ticks": [
+        {
+          "px": [
+            558.3,
+            967.8
+          ],
+          "value": 0.016,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1054.8
+          ],
+          "value": 0.014,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1138.9
+          ],
+          "value": 0.012,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1225.9
+          ],
+          "value": 0.01,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1308.7
+          ],
+          "value": 0.008,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1392.8
+          ],
+          "value": 0.006,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1477.0
+          ],
+          "value": 0.004,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1561.1
+          ],
+          "value": 0.002,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            558.3,
+            1679.0
+          ],
+          "value": 0.0,
+          "confidence": 0.95
+        }
+      ]
+    }
+  },
+  "calibration": {
+    "x": {
+      "scale": "linear",
+      "p1": {
+        "px": [
+          575.1,
+          1697.2
+        ],
+        "value": 100.0
+      },
+      "p2": {
+        "px": [
+          1220.3,
+          1697.2
+        ],
+        "value": 220.0
+      }
+    },
+    "y": {
+      "scale": "linear",
+      "p1": {
+        "px": [
+          558.3,
+          1679.0
+        ],
+        "value": 0.0
+      },
+      "p2": {
+        "px": [
+          558.3,
+          967.8
+        ],
+        "value": 0.016
+      }
+    }
+  },
+  "series": [
+    {
+      "id": "A",
+      "label": "F1 Data",
+      "color": "#000000",
+      "marker": "o",
+      "confidence": 0.9
+    },
+    {
+      "id": "B",
+      "label": "F1 Fitted Line",
+      "color": "#000000",
+      "marker": "line",
+      "confidence": 0.9
+    }
+  ],
+  "warnings": [],
+  "chart": {
+    "type": "gran_plot",
+    "x_quantity": "VOLUME OF TITRANT, IN DIGITAL COUNTS",
+    "y_quantity": "GRAN FUNCTION F1, IN MILLILITERS",
+    "titrant": null,
+    "analyte": "bicarbonate"
+  },
+  "engine": {
+    "vlm": "glm-5.3-flash",
+    "cached": false
+  }
+}

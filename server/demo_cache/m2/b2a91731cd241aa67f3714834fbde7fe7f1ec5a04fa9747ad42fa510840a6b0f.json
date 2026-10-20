@@ -1,0 +1,209 @@
+{
+  "schema_version": "0.9.0",
+  "plot_area": {
+    "u0": 493.7,
+    "v0": 967.8,
+    "u1": 1126.3,
+    "v1": 1715.4
+  },
+  "axes": {
+    "x": {
+      "label": "VOLUME OF TITRANT, IN DIGITAL COUNTS",
+      "unit": "DIGITAL COUNTS",
+      "scale": "linear",
+      "ticks": [
+        {
+          "px": [
+            493.7,
+            1715.4
+          ],
+          "value": 0.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            598.9,
+            1715.4
+          ],
+          "value": 200.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            704.1,
+            1715.4
+          ],
+          "value": 400.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            809.3,
+            1715.4
+          ],
+          "value": 600.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            915.9,
+            1715.4
+          ],
+          "value": 800.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            1021.1,
+            1715.4
+          ],
+          "value": 1000.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            1126.3,
+            1715.4
+          ],
+          "value": 1200.0,
+          "confidence": 0.95
+        }
+      ]
+    },
+    "y": {
+      "label": "pH, IN STANDARD UNITS",
+      "unit": "standard units",
+      "scale": "linear",
+      "ticks": [
+        {
+          "px": [
+            493.7,
+            970.6
+          ],
+          "value": 10.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1077.2
+          ],
+          "value": 9.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1183.8
+          ],
+          "value": 8.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1290.4
+          ],
+          "value": 7.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1397.0
+          ],
+          "value": 6.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1503.6
+          ],
+          "value": 5.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1610.2
+          ],
+          "value": 4.0,
+          "confidence": 0.95
+        },
+        {
+          "px": [
+            493.7,
+            1715.4
+          ],
+          "value": 3.0,
+          "confidence": 0.95
+        }
+      ]
+    }
+  },
+  "calibration": {
+    "x": {
+      "scale": "linear",
+      "p1": {
+        "px": [
+          493.7,
+          1715.4
+        ],
+        "value": 0.0
+      },
+      "p2": {
+        "px": [
+          1126.3,
+          1715.4
+        ],
+        "value": 1200.0
+      }
+    },
+    "y": {
+      "scale": "linear",
+      "p1": {
+        "px": [
+          493.7,
+          1715.4
+        ],
+        "value": 3.0
+      },
+      "p2": {
+        "px": [
+          493.7,
+          970.6
+        ],
+        "value": 10.0
+      }
+    }
+  },
+  "series": [
+    {
+      "id": "A",
+      "label": "Titration data",
+      "color": "#000000",
+      "marker": "o",
+      "confidence": 0.95
+    },
+    {
+      "id": "B",
+      "label": "Slope of titration curve",
+      "color": "#000000",
+      "marker": "^",
+      "confidence": 0.95
+    }
+  ],
+  "warnings": [],
+  "chart": {
+    "type": "titration_curve",
+    "x_quantity": "VOLUME OF TITRANT, IN DIGITAL COUNTS",
+    "y_quantity": "pH, IN STANDARD UNITS",
+    "titrant": null,
+    "analyte": null
+  },
+  "engine": {
+    "vlm": "glm-5.3-flash",
+    "cached": false
+  }
+}
