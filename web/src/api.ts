@@ -58,7 +58,11 @@ export const api = {
     if (figure) form.append("figure", figure);
     return request<Figure>("/api/m2/figures", { method: "POST", body: form });
   },
-  detectFigure: (id: string) => request<FigureDetection>(`/api/m2/figures/${encodeURIComponent(id)}/detect`, { method: "POST" }),
+  detectFigure: (id: string, contextId?: string) =>
+    request<FigureDetection>(
+      `/api/m2/figures/${encodeURIComponent(id)}/detect`
+      + (contextId ? `?context_id=${encodeURIComponent(contextId)}` : ""),
+      { method: "POST" }),
   extractFigure: (id: string, body: {
     calibration: { x: AxisCalibration; y: AxisCalibration };
     mode: "auto" | "manual";

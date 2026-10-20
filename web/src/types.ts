@@ -216,6 +216,13 @@ export interface AxisCalibration {
 // 识别建议里某个轴刻度不足时为 null，由用户在画布上手动放点
 export interface Calibration { x: AxisCalibration | null; y: AxisCalibration | null }
 
+// 0.9.0：图与实验是否同类的确定性裁决（VLM 只读图，判断在服务端代码里）
+export interface FigureIntent {
+  verdict: "same" | "related" | "different";
+  reasons: string[];
+  chart?: { type: string; x_quantity?: string; y_quantity?: string; titrant?: string | null; analyte?: string | null } | null;
+}
+
 export interface FigureDetection {
   schema_version: string;
   figure_id: string;
@@ -224,6 +231,7 @@ export interface FigureDetection {
   calibration: Calibration;
   series: { id: string; label: string; color: string | null; marker: string | null; confidence: number }[];
   warnings: string[];
+  intent?: FigureIntent;
   engine?: { vlm?: string; cached?: boolean };
 }
 

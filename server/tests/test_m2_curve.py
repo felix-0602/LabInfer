@@ -11,7 +11,7 @@ from app.services.calibration import (CalibrationError, px_to_value, residual_px
                                       suggest_calibration, to_data, validate_calibration,
                                       value_to_px)
 from app.services.curve_extract import extract_points
-from app.services.figure_detect import normalize_detection
+from app.services.figure_detect import assess_intent, normalize_detection
 from app.sqlstore import SqlStore
 from app.storage import Store
 
@@ -132,8 +132,54 @@ def test_normalize_detection_rescales_pixels():
     assert det["plot_area"] == PLOT_AREA
     assert det["calibration"]["x"]["p2"]["px"] == [500.0, 350.0]
     assert det["series"][0]["id"] == "A"
+    assert "intent" not in det                     # 不带 ctx 不出意图裁决，门保持惰性
     with pytest.raises(ValueError):
         normalize_detection({"axes": {"x": {"ticks": []}, "y": {}}}, 1.0)
+
+
+# ---------- 意图裁决（0.9.0：VLM 只读图，判断在代码里）----------
+
+_TITR = {"model": "titration_standardization"}
+
+
+def test_assess_intent_titration_matrix():
+    same = {"type": "titration_curve", "x_quantity": "V(HCl) / mL", "y_quantity": "pH",
+            "titrant": "HCl", "analyte": "Na2CO3"}
+    assert assess_intent(same, _TITR)["verdict"] == "same"
+    emf = {"type": "titration_curve", "x_quantity": "mass of HCl added / g",
+           "y_quantity": "e.m.f. / mV", "titrant": "HCl", "analyte": "sea water"}
+    assert assess_intent(emf, _TITR)["verdict"] == "related"        # Dickson：电位滴定
+    gran = {"type": "gran_plot", "x_quantity": "V / mL", "y_quantity": "F1",
+            "titrant": "HCl", "analyte": None}
+    assert assess_intent(gran, _TITR)["verdict"] == "related"       # Gran 函数图
+    wrong_x = {"type": "titration_curve", "x_quantity": "c / (mg/L)",
+               "y_quantity": "pH", "titrant": None, "analyte": None}
+    assert assess_intent(wrong_x, _TITR)["verdict"] == "different"  # 横轴不是滴定剂量
+    naoh = {"type": "titration_curve", "x_quantity": "V / mL", "y_quantity": "pH",
+            "titrant": "NaOH", "analyte": "H2C2O4"}
+    assert assess_intent(naoh, _TITR)["verdict"] == "related"       # 滴定剂不是盐酸
+    assert assess_intent(None, _TITR)["verdict"] == "related"       # 读不出类型：保守放行
+
+
+def test_assess_intent_calibration_context():
+    ctx = {"model": "linear_calibration"}
+    same = {"type": "calibration_curve", "x_quantity": "c / mg·L⁻¹", "y_quantity": "A"}
+    assert assess_intent(same, ctx)["verdict"] == "same"
+    other = {"type": "titration_curve", "x_quantity": "V / mL", "y_quantity": "pH"}
+    assert assess_intent(other, ctx)["verdict"] == "related"
+
+
+def test_detect_with_context_id_carries_intent(client, monkeypatch):
+    c, _ = client
+    chart = {"type": "titration_curve", "x_quantity": "V / mL", "y_quantity": "pH",
+             "titrant": "HCl", "analyte": "Na2CO3"}
+    _fake_vlm(monkeypatch, [], chart=chart)
+    ctx_id = c.post("/api/m3/contexts", json={"template_id": "tpl_alkali_titration"}).json()["id"]
+    fig = _upload(c, doi="10.1/x").json()
+    det = c.post(f"/api/m2/figures/{fig['id']}/detect", params={"context_id": ctx_id}).json()
+    assert det["intent"]["verdict"] == "same"
+    assert det["intent"]["chart"]["type"] == "titration_curve"
+    assert det["intent"]["reasons"]
 
 
 # ---------- 颜色提取 ----------
@@ -188,13 +234,14 @@ def _upload(c, data=None, **form):
                   files={"image": ("fig.png", io.BytesIO(data or _synthetic_png()), "image/png")})
 
 
-def _fake_vlm(monkeypatch, calls):
+def _fake_vlm(monkeypatch, calls, chart=None):
     monkeypatch.setattr(settings, "glm_base_url", "https://api.example.com")
     monkeypatch.setattr(settings, "glm_api_key", "test-key")
 
-    async def fake_detect(data):
+    async def fake_detect(data, ctx=None):
         calls.append(1)
-        det = normalize_detection(DETECTION, 1.0)
+        obj = {**DETECTION, **({"chart": chart} if chart is not None else {})}
+        det = normalize_detection(obj, 1.0, ctx)
         det["engine"] = {"vlm": "fake", "cached": False}
         return det
     monkeypatch.setattr("app.routers.m2.detect_figure", fake_detect)
@@ -228,7 +275,7 @@ def test_detect_503_when_vlm_fails(client, monkeypatch):
     monkeypatch.setattr(settings, "glm_base_url", "https://api.example.com")
     monkeypatch.setattr(settings, "glm_api_key", "test-key")
 
-    async def broken(data):
+    async def broken(data, ctx=None):
         raise ValueError("识别结果缺少 axes")
     monkeypatch.setattr("app.routers.m2.detect_figure", broken)
     fig = _upload(c).json()
