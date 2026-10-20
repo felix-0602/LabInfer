@@ -8,6 +8,7 @@ import { pxToValue } from "../charts/calib";
 import { fmt } from "../charts/scale";
 import type { AxisCalibration, AxisScale, ExtractResult, Figure, FigureDetection, Px, ReferenceDataset } from "../types";
 import { stagger } from "../motion";
+import { GuideEntry } from "../guide";
 import { Vignette } from "../vignette";
 import { errorText, useWorkbench } from "../workbench";
 
@@ -250,6 +251,7 @@ export function Literature() {
           {s.shadow && <div className="actions">{skip}</div>}
           {error && <p className="bad small">{error}</p>}
           {!s.analysis && <p className="mono dim small">{s.busy ?? "等待 M4 计算结果"}</p>}
+          <GuideEntry page="literature" />
         </section>
       </div>
     );
@@ -389,6 +391,7 @@ export function Literature() {
       </section>
 
       <aside className="pane rp">
+        <GuideEntry page="literature" />
         <div className="panel-h"><b>提取结果</b><span className="mono id">{result?.dataset.id ?? "—"}</span></div>
         <dl className="kv-mini">
           <dt>来源</dt><dd>{fig.meta.doi ?? <span className="warn">未填 DOI</span>}</dd>

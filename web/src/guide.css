@@ -1,0 +1,160 @@
+/* 教学导读层（guide.tsx）：术语与数字标记、浮卡、右侧阅读面板、导读入口、01 页字段人话 */
+
+/* ---------- 标记 ---------- */
+.term {
+  all: unset; cursor: pointer; color: inherit;
+  text-decoration: underline dotted var(--cobalt); text-decoration-thickness: 1.5px; text-underline-offset: 3px;
+  transition: color var(--dur-quick), background var(--dur-quick);
+  border-radius: 2px;
+}
+.term:hover { color: var(--cobalt); background: var(--cobalt-wash); }
+.term:focus-visible { outline: 1px solid var(--cobalt); outline-offset: 1px; }
+.num-mark {
+  all: unset; cursor: pointer; font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid transparent; transition: border-color var(--dur-quick), color var(--dur-quick);
+}
+.num-mark:hover { border-bottom-color: var(--silver); }
+.num-mark.open { color: var(--cobalt); border-bottom-color: var(--cobalt-soft); }
+.num-mark > span { display: inline-block; animation: num-flip var(--dur-quick) var(--ease-out) both; }
+@keyframes num-flip { from { opacity: 0; transform: translateY(-3px); } }
+.num-mark:focus-visible { outline: 1px solid var(--cobalt); outline-offset: 1px; }
+
+/* ---------- 浮卡 ---------- */
+.float-card {
+  position: fixed; z-index: 60; width: min(320px, calc(100vw - 24px));
+  padding: 14px 16px 12px; background: var(--paper-0); border-radius: var(--r-panel);
+  box-shadow: 0 0 0 0.5px rgba(10, 11, 16, 0.2), 0 12px 32px -8px rgba(10, 11, 16, 0.28);
+  transform-origin: top center; animation: card-pop var(--dur-quick) var(--ease-spring) both;
+}
+.float-card.above { transform-origin: bottom center; }
+.float-card::before { /* 顶边钴蓝短线：和锚点构图的刻度语言一致 */
+  content: ""; position: absolute; left: 16px; top: 0; width: 28px; height: 2px; background: var(--cobalt);
+}
+.float-card.leaving { animation: card-out 160ms var(--ease-out) both; }
+@keyframes card-pop { from { opacity: 0; transform: scale(0.96) translateY(-4px); } }
+@keyframes card-out { to { opacity: 0; transform: scale(0.98); } }
+.float-card .kicker { font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3); margin-bottom: 4px; }
+.float-card .fc-title { display: block; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.float-card p { margin: 0 0 6px; font-size: 13px; line-height: 1.65; color: var(--ink-2); }
+.float-card .help { color: var(--cobalt-deep); padding-left: 10px; border-left: 2px solid var(--cobalt-soft); }
+.float-card .src { margin-top: 8px; padding-top: 8px; border-top: var(--hair); font-size: 10.5px; color: var(--ink-3); line-height: 1.5; }
+
+/* ---------- 阅读面板：叠在工作区右侧，盖住右栏 ---------- */
+/* 面板与工作区同占第 2 列；其余格子写明列号，免得自动排布把它们挤到新列 */
+.shell > .topbar, .shell > .notice, .shell > .stage, .shell > .statusbar { grid-column: 2; }
+.guide-layer { grid-row: 2 / 4; grid-column: 2; position: relative; z-index: 40; pointer-events: none; overflow: hidden; }
+.guide-scrim {
+  position: absolute; inset: 0; pointer-events: auto; background: rgba(10, 11, 16, 0.18);
+  animation: rv-fade var(--dur-base) var(--ease-out) both;
+}
+.guide-panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(600px, 100%);
+  pointer-events: auto; display: flex; flex-direction: column;
+  background: var(--paper-0); border-left: var(--hair-strong);
+  box-shadow: -24px 0 48px -24px rgba(10, 11, 16, 0.35);
+  animation: panel-in 520ms var(--ease-spring) both;
+}
+@keyframes panel-in { from { transform: translateX(48px); opacity: 0; } }
+.guide-layer.leaving .guide-scrim { animation: card-out 180ms var(--ease-out) both; }
+.guide-layer.leaving .guide-panel { animation: panel-out 180ms var(--ease-out) both; }
+@keyframes panel-out { to { transform: translateX(32px); opacity: 0; } }
+
+.gp-head { display: flex; align-items: center; gap: 10px; padding: 18px 28px 10px; }
+.gp-head .eyebrow { color: var(--cobalt); }
+.gp-x { all: unset; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; font-size: 22px; line-height: 1; color: var(--ink-3); border-radius: var(--r-btn); transition: background var(--dur-quick), color var(--dur-quick); }
+.gp-x:hover { background: var(--paper-2); color: var(--ink); }
+.gp-x:focus-visible { outline: 1px solid var(--cobalt); }
+
+.gp-progress { display: flex; align-items: center; gap: 14px; padding: 0 28px 12px; border-bottom: var(--hair); }
+.gp-toc-btn { all: unset; cursor: pointer; font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.gp-toc-btn:hover, .gp-toc-btn.on { color: var(--cobalt); }
+.gp-toc-btn:focus-visible { outline: 1px solid var(--cobalt); outline-offset: 2px; }
+.gp-ticks { flex: 1; display: flex; gap: 4px; }
+.gp-ticks button { all: unset; cursor: pointer; flex: 1; height: 14px; position: relative; }
+.gp-ticks button::after { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--paper-3); transition: background var(--dur-base) var(--ease-out); }
+.gp-ticks button.read::after { background: var(--cobalt-soft); }
+.gp-ticks button.on::after { background: var(--cobalt); top: 5px; height: 4px; }
+.gp-ticks button:hover::after { background: var(--ink-3); }
+.gp-ticks button:focus-visible { outline: 1px solid var(--cobalt); }
+
+.gp-toc, .guide-entry ol { list-style: none; margin: 0; padding: 0; }
+.gp-toc { padding: 6px 16px 10px; border-bottom: var(--hair); max-height: 46%; overflow-y: auto; background: var(--paper-1); }
+.gp-toc li, .guide-entry li { animation: rv-up var(--dur-base) var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 10) * 30ms); }
+.gp-toc button, .guide-entry li button {
+  all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+  display: grid; grid-template-columns: 28px 1fr; gap: 8px; padding: 9px 12px; border-radius: var(--r-btn);
+  transition: background var(--dur-quick);
+}
+.gp-toc button:hover, .guide-entry li button:hover { background: var(--paper-2); }
+.gp-toc button:focus-visible, .guide-entry li button:focus-visible { outline: 1px solid var(--cobalt); }
+.gp-toc .mono, .guide-entry li .mono { font-size: 11px; color: var(--ink-3); padding-top: 2px; }
+.gp-toc b, .guide-entry li b { display: block; font-size: 13.5px; font-weight: 600; }
+.gp-toc .dim, .guide-entry li .dim { display: block; font-size: 12px; line-height: 1.55; margin-top: 2px; }
+.gp-toc li.on .mono, .gp-toc li.on b { color: var(--cobalt); }
+
+.gp-body { flex: 1; overflow-y: auto; padding: 28px 28px 40px; scroll-behavior: smooth; }
+.gp-section { position: relative; max-width: 34em; animation: rv-up var(--dur-base) var(--ease-out) both; }
+.gp-num { position: absolute; right: -8px; top: -18px; font-size: 96px; line-height: 1; color: var(--paper-2); pointer-events: none; z-index: 0; }
+.gp-section > :not(.gp-num) { position: relative; }
+.gp-section h2 { font-size: 22px; font-weight: 600; line-height: 1.35; margin: 0 0 12px; }
+.gp-lead { font-size: 15px; line-height: 1.7; color: var(--ink); margin: 0 0 18px; padding-left: 12px; border-left: 2px solid var(--cobalt); }
+.gp-text p { font-family: var(--f-serif); font-size: 15.5px; line-height: 1.95; color: var(--ink-2); margin: 0 0 14px; }
+.gp-text p { animation: rv-up var(--dur-base) var(--ease-out) both; }
+.gp-text p:nth-child(2) { animation-delay: 60ms; }
+.gp-text p:nth-child(n+3) { animation-delay: 120ms; }
+.gp-src { margin: 22px 0 0; padding: 12px 0 0; border-top: var(--hair); list-style: none; font-size: 10.5px; line-height: 1.7; color: var(--ink-3); }
+
+.gp-foot { display: grid; grid-template-columns: 1fr 1fr; border-top: var(--hair); }
+.gp-nav { all: unset; box-sizing: border-box; cursor: pointer; padding: 14px 28px; display: flex; flex-direction: column; gap: 3px; min-width: 0; transition: background var(--dur-quick); }
+.gp-nav span:last-child { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gp-nav .mono { font-size: 10.5px; }
+.gp-nav.next { text-align: right; border-left: var(--hair); }
+.gp-nav:hover:not(:disabled) { background: var(--paper-1); }
+.gp-nav:hover:not(:disabled) span:last-child { color: var(--cobalt); }
+.gp-nav:disabled { cursor: default; opacity: 0.45; }
+.gp-nav:focus-visible { outline: 1px solid var(--cobalt); outline-offset: -1px; }
+
+/* ---------- 入口 ---------- */
+.guide-entry { position: relative; z-index: 1; border-top: var(--hair-strong); padding-top: 12px; }
+.ge-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.ge-head .eyebrow { color: var(--cobalt); }
+.guide-entry li button { padding: 8px 8px; }
+
+/* 01：右栏，锚点之下、模板库之上 */
+.side-pane .guide-entry { margin-bottom: 28px; }
+/* 03 空状态：居中卡片，左对齐 */
+.lit-empty .guide-entry {
+  width: min(520px, 100%); margin-top: 22px; text-align: left; padding: 12px 14px 8px;
+  background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(6px); border-radius: var(--r-panel);
+  border-top: 0; box-shadow: 0 0 0 0.5px rgba(10, 11, 16, 0.16);
+}
+.s3b .rp .guide-entry { margin-top: 8px; }
+
+/* ---------- 01 页字段人话 ---------- */
+.field {
+  all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; flex-direction: column; gap: 1px;
+  border-radius: 4px; transition: background var(--dur-quick);
+}
+.field:hover { background: var(--cobalt-wash); }
+.field:focus-visible { outline: 1px solid var(--cobalt); outline-offset: 2px; }
+.field .f-label { font-size: 14px; color: var(--ink); }
+.field .f-key { font-size: 10px; color: var(--ink-3); letter-spacing: 0.02em; }
+.field .q {
+  display: inline-grid; place-items: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: 1px;
+  font: 600 9px var(--f-mono); font-style: normal; color: var(--cobalt); border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--cobalt-soft); transition: background var(--dur-quick), color var(--dur-quick);
+}
+.field:hover .q { background: var(--cobalt); color: #fff; box-shadow: none; }
+.field.raw { cursor: default; font-size: 13px; }
+.chips .field { padding: 5px 9px; background: var(--paper-1); box-shadow: inset 0 0 0 0.5px rgba(10, 11, 16, 0.18); }
+.chips .field:hover { background: var(--cobalt-wash); }
+.chips .field .f-label { font-size: 13px; }
+.chips .field .val { font-family: var(--f-mono); color: var(--cobalt-deep); margin-left: 6px; font-size: 12px; }
+.qc-row + .qc-row { margin-top: 8px; }
+
+@media (max-width: 900px) {
+  .guide-panel { width: 100%; }
+  .gp-head, .gp-progress, .gp-body { padding-left: 16px; padding-right: 16px; }
+  .gp-nav { padding: 12px 16px; }
+}
+.ladder-more { display: block; margin: 4px 0 0; font-size: 11px; color: var(--cobalt); animation: rv-fade var(--dur-base) var(--ease-out) 120ms both; }

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { GuideProvider } from "./guide";
 import { STEPS, useWorkbench } from "./workbench";
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -13,6 +14,8 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="shell">
+      {/* 导读面板与浮卡作为 shell 的网格子元素，叠在工作区上 */}
+      <GuideProvider guide={s.ctx?.guide ?? null}>
       <nav className="rail">
         <button className="logo" onClick={() => dispatch({ type: "go", step: 0 })} title="回到封面">L<i>I</i></button>
         {railIndex >= 0 && <span className="rail-ind" style={{ transform: `translateY(${railIndex * 72}px)` }} />}
@@ -53,6 +56,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <span className="spacer" />
         <span>{s.online === false ? "后端离线" : s.online ? "后端在线" : "探测后端中"}</span>
       </footer>
+      </GuideProvider>
     </div>
   );
 }
