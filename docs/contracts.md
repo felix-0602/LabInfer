@@ -1,6 +1,6 @@
 # 数据契约
 
-**当前版本：0.8.0（ExperimentContext 新增教学导读层 guide）**
+**当前版本：0.9.0（M2 意图裁决：文献图先判同类再加入对比）**
 
 模块之间只通过本文件定义的数据结构交互。修改规则见 [versioning.md](versioning.md#契约版本)。
 
@@ -21,7 +21,7 @@ M1、M2 输出，M4 读取。列不限制名称，行用 `series` 标注类别�
 
 ```jsonc
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "id": "ds_mine_01",
   "source": "my_experiment",          // my_experiment | literature
   "meta": {
@@ -56,7 +56,7 @@ M3 输出，M4、M5 读取。
 
 ```jsonc
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "id": "ctx_01",
   "name": "HCl 标定与碱灰总碱度（GB/T 601-2016 无水碳酸钠法）",
   "purpose": "以基准无水碳酸钠标定 HCl 浓度，测定碱灰总碱度（以 Na₂O 计），检查平行测定精密度",
@@ -166,7 +166,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
 
 ```jsonc
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "context_id": "ctx_01",
   "model": "linear_calibration",
   "transformed": [                     // 拟合空间的作图数据（linear 为恒等；M8 直接绘制）
@@ -219,7 +219,7 @@ M4 输出，M5、M6、M8 读取。下面第一个例子是通用形态（linear_
 
 ```jsonc
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "context_id": "ctx_demo",
   "model": "titration_standardization",
   "transformed": [                     // V–m 平面，M8 画散点 + 过原点拟合线
@@ -296,7 +296,7 @@ M5 输出一个数组，M6、M7、M8 读取。
 
 ```jsonc
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "id": "f1",
   "type": "anomaly",                   // pattern | conclusion | anomaly | suggestion
   "text": "标曲第 5 点（c=0.80）残差 0.0038，格拉布斯检验未判为离群……",
@@ -401,7 +401,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 201：Figure
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "id": "fig_01",
   "image_url": "/api/m2/figures/fig_01/image",
   "width": 1280, "height": 960,                // 原图像素
@@ -417,7 +417,7 @@ M6 的请求和返回，M8 调用。`param` 取值以[模型注册表](#模型�
 ```jsonc
 // 返回 200：FigureDetection
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "figure_id": "fig_01",
   "plot_area": { "u0": 96, "v0": 40, "u1": 680, "v1": 512 },  // 绘图区边框
   "axes": {
@@ -467,7 +467,7 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 请求：ExtractRequest
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "calibration": { /* Calibration */ },
   "mode": "auto",                  // auto：按曲线颜色自动提取；manual：使用 points_px
   "series_id": "A",                // auto 时必填
@@ -482,9 +482,9 @@ y 轴相同，把 u 换成 v。两个参考点的像素坐标相同（u₁ = u�
 ```jsonc
 // 返回 200：ExtractResult
 {
-  "schema_version": "0.8.0",
+  "schema_version": "0.9.0",
   "dataset": {                     // Dataset，source = literature，已写入共享存储
-    "schema_version": "0.8.0",
+    "schema_version": "0.9.0",
     "id": "ds_lit_01",
     "source": "literature",
     "meta": { "title": "图1(b) · 纳氏试剂法标准曲线", "doi": "10.3866/PKU.DXHX201807034", "figure": "图1(b)",
@@ -534,6 +534,15 @@ M5 的 SSE 事件载荷都是单行 JSON。断流时 M8 按 503 兜底处理。
 ---
 
 ## 变更记录
+
+### 0.9.0（2026-10-20）
+
+文献取数的意图裁决——丢进来的图先判断与本实验是否同类，再加入对比。兼容新增，全部可选：
+
+- FigureDetection：新增可选 `intent`：`{verdict: "same"|"related"|"different", reasons: [...], chart: {...}}`。`chart` 是 VLM 从图上读到的语义（`type`、`x_quantity`、`y_quantity`、`titrant`、`analyte`，全部来自轴标签/图例/图题的可见文字）；`verdict` 由服务端确定性规则比对 `chart` 与 ExperimentContext 得出（**VLM 只读不判**，规则在 `figure_detect.assess_intent`，可单测）：`same` 可直接对比；`related` 口径不同（电位滴定 e.m.f. 曲线、Gran 图、非盐酸滴定剂、纵轴非 pH）——讲解参照可用，按轴叠加要谨慎；`different` 不同实验（如横轴不是滴定剂量）。
+- `POST /api/m2/figures/{id}/detect` 新增可选查询参数 `context_id`：带它才计算并返回 `intent`，不带保持 0.8.0 行为。缓存命中的旧检测无 `intent`，字段缺省、前端按无门处理。
+- `Dataset.meta.doi` 语义放宽：DOI、链接或报告号/标准号均可（字符串原样存）；提取时空来源的警告改为可行动指引。
+- M8（03 页）：识别后显示「与你的实验对比」面板；`different` 禁用加入对比并给理由，`related` 需二次确认。服务端在绑定参照时复核 verdict 属 Could 级（未做，见 wiki 待办）。
 
 ### 0.8.0（2026-10-19）
 

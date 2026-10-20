@@ -101,7 +101,8 @@ def get_figure_image(id: str, request: Request):
 
 
 @router.post("/figures/{id}/detect")
-async def detect(id: str, request: Request):
+async def detect(id: str, request: Request, context_id: str | None = None):
+    """识别坐标轴与图例。带 context_id 时附 intent（0.9.0）：图与该实验是否同类的确定性裁决。"""
     store = request.app.state.store
     rec = _load_figure(store, id)
     if rec is None:
@@ -112,9 +113,10 @@ async def detect(id: str, request: Request):
         det = cached
         det.setdefault("engine", {})["cached"] = True
     elif llm_configured():
+        ctx = store.get_context(context_id) if context_id else None
         data = Path(rec["path"]).read_bytes()
         try:
-            det = await detect_figure(data)
+            det = await detect_figure(data, ctx)
         except (LlmError, ValueError) as e:
             return _error(503, "VLM_UNAVAILABLE", f"图表识别失败: {e}")
         cache_put("m2", rec["sha256"], dict(det))
@@ -216,7 +218,8 @@ def extract(id: str, request: Request, body: dict):
 
     meta = rec["meta"]
     if not meta.get("doi"):
-        warnings.append("缺少 DOI，文献数据集的来源不完整")
+        warnings.append("来源为空：DOI、链接或报告号/标准号（如 USGS TWRI 9-A6.6）任填一个，"
+                        "文献数据集才算有出处；填过再重新提取即可")
     label = (series or {}).get("label") or series_id or "手动点取"
     title = " · ".join(t for t in (meta.get("figure"), label) if t)
     ds = {

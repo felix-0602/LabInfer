@@ -300,7 +300,18 @@ h1, h2, h3 { margin: 0; }
 .overlay .handle line { stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .overlay .handle .guide { stroke: rgba(30, 59, 255, 0.45); stroke-dasharray: 4 4; pointer-events: none; }
 .overlay .handle.active circle { stroke-width: 2; fill: rgba(30, 59, 255, 0.2); }
-.overlay .handle text { font-family: var(--f-mono); fill: #fff; paint-order: stroke; stroke: var(--cobalt); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+/* 深字 + 白粗衬：白底扫描件和深色底图上都可读（白字白底曾与图片刻度糊成一片） */
+.overlay .handle text { font-family: var(--f-mono); fill: var(--ink); font-weight: 600; paint-order: stroke; stroke: rgba(255, 255, 255, 0.92); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+
+/* 意图裁决面板（0.9.0）：same 可对比 / related 口径不同 / different 不匹配 */
+.intent { border-radius: var(--r-panel); padding: 10px 12px; font-size: 12px; border: 0.5px solid var(--silver-2); }
+.intent.v-same { background: rgba(43, 122, 80, 0.08); border-color: rgba(43, 122, 80, 0.35); }
+.intent.v-related { background: rgba(191, 132, 29, 0.08); border-color: rgba(191, 132, 29, 0.4); }
+.intent.v-different { background: rgba(178, 58, 46, 0.08); border-color: rgba(178, 58, 46, 0.4); }
+.intent b { display: block; margin-bottom: 6px; }
+.intent ul { margin: 0 0 6px; padding-left: 18px; }
+.intent li { margin: 2px 0; color: var(--ink-2); }
+.intent li::marker { color: var(--ink-3); }
 .s3b .banner {
   margin: 8px 24px 0; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 14px;
   background: var(--ink); color: #fff; border-radius: var(--r-panel); font-size: 13px;

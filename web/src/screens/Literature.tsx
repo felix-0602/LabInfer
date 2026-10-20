@@ -64,6 +64,8 @@ export function Literature() {
   const [cursor, setCursor] = useState<Px | null>(null);
   const [view, setView] = useState<"both" | "image" | "layer">("both");
   const [vEq, setVEq] = useState("");
+  // related（口径不同）加入对比前的二次确认：第一次点击只点亮，再点才真正加入
+  const [armRelated, setArmRelated] = useState(false);
   const drag = useRef<Drag | null>(null);
 
   const ctx = s.ctx;
@@ -73,6 +75,9 @@ export function Literature() {
   const placed = HANDLES.filter((h) => cal[axisOf(h)][pointOf(h)].px).length;
   const series = det?.series.find((x) => x.id === seriesId) ?? null;
   const canAuto = !!series?.color;
+  const intent = det?.intent ?? null;
+  const intentBlocked = intent?.verdict === "different";
+  const needsRelatedConfirm = intent?.verdict === "related" && !armRelated;
 
   const upload = async (file: Blob, name: string) => {
     setBusy("正在上传截图");
@@ -82,10 +87,11 @@ export function Literature() {
       setFig(f);
       setResult(null);
       setPoints([]);
+      setArmRelated(false);
       setBusy(null);
       setDetecting(true);
       try {
-        const d = await api.detectFigure(f.id);
+        const d = await api.detectFigure(f.id, ctx?.id);
         setDet(d);
         setCal({ x: fromSuggestion(d.calibration.x), y: fromSuggestion(d.calibration.y) });
         const first = d.series.find((x) => x.color) ?? d.series[0] ?? null;
@@ -184,6 +190,7 @@ export function Literature() {
 
   const attach = () => {
     if (!result || !ctx) return;
+    if (needsRelatedConfirm) { setArmRelated(true); return; }   // 口径不同：第一次点击只确认
     const v = Number(vEq);
     const entry: ReferenceDataset = {
       dataset_id: result.dataset.id,
@@ -195,6 +202,7 @@ export function Literature() {
         ...(isTitration && vEq.trim() !== "" && Number.isFinite(v) ? { v_eq_ml: v } : {}),
       },
     };
+    setArmRelated(false);
     void attachReference(entry);
   };
 
@@ -235,7 +243,7 @@ export function Literature() {
               tabIndex={0}
             >
               <div className="meta-in">
-                <input className="input" placeholder={isTitration ? "DOI / ISBN" : "DOI"} value={doi} onChange={(e) => setDoi(e.target.value)} />
+                <input className="input" placeholder="来源：DOI / 链接 / 报告号" value={doi} onChange={(e) => setDoi(e.target.value)} />
                 <input className="input" placeholder="图号，如 图1(b)" value={figNo} onChange={(e) => setFigNo(e.target.value)} />
               </div>
               <div className="actions center">
@@ -310,6 +318,20 @@ export function Literature() {
               {!det?.series.length && <div className="dim small">没有识别到曲线，用手动点取。</div>}
             </div>
           </li>
+          {intent && (
+            <li className={intent.verdict === "same" ? "on" : ""}>
+              <h4>与你的实验对比</h4>
+              <div className={"intent v-" + intent.verdict}>
+                <b>{{ same: "同类，可直接对比", related: "相关，口径不同", different: "不匹配" }[intent.verdict]}</b>
+                <ul>
+                  {intent.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+                {intent.chart && (intent.chart.x_quantity || intent.chart.y_quantity) && (
+                  <p className="dim small mono">图上读到的：{intent.chart.type} · x={intent.chart.x_quantity || "?"} · y={intent.chart.y_quantity || "?"}{intent.chart.titrant ? ` · 滴定剂=${intent.chart.titrant}` : ""}</p>
+                )}
+              </div>
+            </li>
+          )}
           <li className={result ? "on" : ""}>
             <h4>提取数据点</h4>
             <div className="scale-row small">
@@ -358,6 +380,9 @@ export function Literature() {
                 const px = cal[axisOf(h)][pointOf(h)].px;
                 if (!px) return null;
                 const a = axisOf(h);
+                // 标签避让：贴右侧改放左下并右对齐、贴底部改放点上方——不压图片刻度和相邻标签
+                const nearRight = px[0] > fig.width * 0.8;
+                const nearBottom = px[1] > fig.height * 0.85;
                 return (
                   <g key={h} className={"handle" + (active === h ? " active" : "")}
                     onPointerDown={(e) => { e.stopPropagation(); drag.current = { kind: "handle", h }; }}>
@@ -367,7 +392,10 @@ export function Literature() {
                     <circle cx={px[0]} cy={px[1]} r={9 * k} />
                     <line x1={px[0] - 11 * k} x2={px[0] + 11 * k} y1={px[1]} y2={px[1]} />
                     <line y1={px[1] - 11 * k} y2={px[1] + 11 * k} x1={px[0]} x2={px[0]} />
-                    <text x={px[0] + 12 * k} y={px[1] + 22 * k} style={{ fontSize: 12 * k }}>
+                    <text x={nearRight ? px[0] - 12 * k : px[0] + 12 * k}
+                      y={nearBottom ? px[1] - 12 * k : px[1] + 22 * k}
+                      textAnchor={nearRight ? "end" : "start"}
+                      style={{ fontSize: 12 * k }}>
                       {h.toUpperCase()} · {cal[a][pointOf(h)].value || "?"}
                     </text>
                   </g>
@@ -413,6 +441,15 @@ export function Literature() {
         {result?.warnings.map((w) => <p key={w} className="warn small">{w}</p>)}
         {dirty && result && <p className="warn small">点位有修改，提交修正后才会写回数据集。</p>}
         {error && <p className="bad small">{error}</p>}
+        {isTitration && result && !(Number(vEq) > 0) && (
+          <p className="warn small">滴定实验要先在上方填文献图的计量点体积 v_eq（曲线最陡一段中点对应的体积），加入对比才会启用。</p>
+        )}
+        {intentBlocked && (
+          <p className="bad small">这张图与你的实验不匹配（见左侧「与你的实验对比」），不能加入对比。</p>
+        )}
+        {needsRelatedConfirm && result && (
+          <p className="warn small">这张图口径不同（见左侧说明）。确认对比有意义的话，再点一次加入对比。</p>
+        )}
         {isTitration && (
           <label className="field small">
             <span className="dim">文献图的计量点体积 v_eq（mL），M4 按它换到滴定分数</span>
@@ -422,8 +459,9 @@ export function Literature() {
         <Vignette id="GEN-08" className="s3-anchor" src={prism} caption="OBJ. 03 · PRISM · 分离：把曲线从图里剥离出来" />
         <div className="actions end">
           {skip}
-          <button className="btn primary" disabled={!result || !result.dataset.rows.length || dirty || !!s.busy || (isTitration && !(Number(vEq) > 0))} onClick={attach}>
-            加入对比 →
+          <button className="btn primary" disabled={!result || !result.dataset.rows.length || dirty || !!s.busy || intentBlocked
+            || (isTitration && !(Number(vEq) > 0))} onClick={attach}>
+            {needsRelatedConfirm ? "口径不同，确认加入 →" : "加入对比 →"}
           </button>
         </div>
       </aside>

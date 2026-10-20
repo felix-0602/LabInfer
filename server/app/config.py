@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.environ.get("LABINFER_DATA", BASE_DIR / "data"))
 DEMO_CACHE_DIR = Path(os.environ.get("LABINFER_DEMO_CACHE", BASE_DIR / "demo_cache"))
 RUNTIME_CACHE_DIR = Path(os.environ.get("LABINFER_RUNTIME_CACHE", BASE_DIR / "data" / "runtime_cache"))
-CONTRACT_VERSION = "0.8.0"
+CONTRACT_VERSION = "0.9.0"
 
 
 class Settings:
