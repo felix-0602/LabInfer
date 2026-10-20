@@ -30,6 +30,9 @@ venv/
 # 用户上传的临时文件
 uploads/
 
+# 演示素材的源 PDF 本地留存（10MB，仓库只放提取出的 PNG/GIF 素材）
+design/assets/lit-candidates/*.pdf
+
 # 系统与编辑器
 .DS_Store
 .idea/
