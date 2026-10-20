@@ -8,6 +8,7 @@ import { TitrationChart } from "../charts/TitrationChart";
 import type { AnalysisResult, Finding, Simulation } from "../types";
 import { CountUp, STREAM_GAP, Segmented, reducedMotion, stagger } from "../motion";
 import { loadShadowSims } from "../shadow";
+import { Rich, useGuide } from "../guide";
 import { Vignette } from "../vignette";
 import { errorText, useWorkbench } from "../workbench";
 
@@ -55,6 +56,7 @@ export function Analysis() {
   const [simError, setSimError] = useState<string | null>(null);
   // 推演面板展开的是哪条结论；折叠时图上的推演曲线 / 投影一起收起，结果留着，再展开不用重算
   const [simOpen, setSimOpen] = useState<string | null>(null);
+  const { openGuide, sectionFor } = useGuide();
 
   useEffect(() => { if (!tab || !tabs.includes(tab)) setTab(tabs[0] ?? null); }, [tabs, tab]);
 
@@ -214,7 +216,7 @@ export function Analysis() {
                 }}
               >
                 <div className="type mono"><i />{TYPE_LABEL[f.type] ?? f.type}{canSim ? " · 可推演" : ""}</div>
-                <p>{f.text}</p>
+                <p><Rich text={f.text} /></p>
                 <div className="ev">{f.evidence.map((e, i) => <span key={i} className="chip-ev mono">{evidenceLabel(e)}</span>)}</div>
                 {f.verification && f.verification.status !== "unverified" && (
                   <div className={"verify " + f.verification.status}>
@@ -228,7 +230,12 @@ export function Analysis() {
                     if (n.has(r.rung_id + f.id)) n.delete(r.rung_id + f.id); else n.add(r.rung_id + f.id);
                     setOpenLadder(n);
                   }}>
-                    <b>↑ {r.level} 级</b> {openLadder.has(r.rung_id + f.id) ? <span className="ladder-text">{r.text}</span> : "展开讲解"}
+                    <b>↑ {r.level} 级</b> {openLadder.has(r.rung_id + f.id) ? <span className="ladder-text"><Rich text={r.text} /></span> : "展开讲解"}
+                    {openLadder.has(r.rung_id + f.id) && sectionFor(r.rung_id) && (
+                      <button className="link ladder-more mono" onClick={(e) => { e.stopPropagation(); openGuide("all", sectionFor(r.rung_id)!.section_id); }}>
+                        在导读里读全文 →
+                      </button>
+                    )}
                   </div>
                 ))}
                 {canSim && (() => {

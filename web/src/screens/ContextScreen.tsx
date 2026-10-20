@@ -1,4 +1,5 @@
 import anchor from "../../../design/assets/GEN-06.webp";
+import { FieldLabel, GuideEntry } from "../guide";
 import { stagger } from "../motion";
 import { Vignette } from "../vignette";
 import { useWorkbench } from "../workbench";
@@ -34,32 +35,42 @@ export function ContextScreen() {
         {sub && <div className="h-sub display rv" style={stagger(2)}>{sub.replace("）", "")}</div>}
         <dl className="kv rv-lines">
           <dt>目的</dt><dd>{ctx.purpose}</dd>
-          <dt>模型</dt><dd className="mono">{ctx.model}</dd>
+          <dt>模型</dt><dd><FieldLabel path="model" fallback={ctx.model} /></dd>
           {tpl && (<><dt>公式</dt><dd className="mono cobalt">{tpl.formula}</dd></>)}
           <dt>变量</dt>
           <dd className="chips">
             {ctx.variables.columns.map((c) => (
-              <span key={c.key} className="chip mono">{c.key} · {c.role} · {c.unit}{c.optional ? " · 可选" : ""}</span>
+              <FieldLabel key={c.key} path={`variables.${c.key}`} fallback={`${c.key} · ${c.role}`}>
+                <span className="val">{c.unit}{c.optional ? " · 可选" : ""}</span>
+              </FieldLabel>
             ))}
           </dd>
           <dt>模型常数</dt>
           <dd className="chips">
             {Object.entries(ctx.model_params ?? {}).map(([k, v]) => (
-              <span key={k} className="chip mono">{k} = {paramText(v)}</span>
+              <FieldLabel key={k} path={`model_params.${k}`} fallback={k}>
+                <span className="val">{paramText(v)}</span>
+              </FieldLabel>
             ))}
           </dd>
           <dt>参照</dt>
           <dd>
-            {ctx.reference.limits.map((l) => (
-              <div key={l.label}>{l.label} <span className="mono">{l.operator} {l.value}{l.unit}</span></div>
+            {ctx.reference.limits.map((l, i) => (
+              <div key={l.label}>
+                <FieldLabel path={`reference.limits[${i}]`} fallback={l.label}>
+                  <span className="mono"> {l.operator} {l.value}{l.unit}</span>
+                </FieldLabel>
+              </div>
             ))}
             {ctx.reference.datasets.length === 0 && <div className="dim">无文献数据集（参照为理论值与标准条文）</div>}
           </dd>
           <dt>质控规则</dt>
           <dd>
             {ctx.qc_rules.map((r) => (
-              <div key={r.rule_id}>
-                {RULE_NAMES[r.rule_id] ?? r.rule_id} <span className="mono dim">{r.rule_id}</span>
+              <div key={r.rule_id} className="qc-row">
+                <FieldLabel path={`qc_rules.${r.rule_id}`} fallback={r.rule_id}>
+                  {!ctx.guide?.field_notes[`qc_rules.${r.rule_id}`] && RULE_NAMES[r.rule_id] ? ` ${RULE_NAMES[r.rule_id]}` : null}
+                </FieldLabel>
                 {r.citation && <div className="dim small">{r.citation}</div>}
               </div>
             ))}
@@ -73,11 +84,12 @@ export function ContextScreen() {
       </section>
       <aside className="pane side-pane tex-grain">
         <Vignette id="GEN-06" className="s1-anchor" src={anchor} caption="OBJ. 01 · MOLECULAR MODEL · 建模：把实验抽象成结构与公式" />
+        <GuideEntry page="context" className="rv" style={stagger(3)} />
         <div className="eyebrow mono rv" style={stagger(3)}>实验模板库 · {s.templates.length} 项</div>
         <ul className="tpl-list">
           {s.templates.map((t, i) => (
             <li key={t.id} className={"rv" + (t.model === ctx.model ? " on" : "")} style={stagger(4 + i)}>
-              <div><b>{t.name}</b> <span className={"tag mono" + (t.status === "演示" ? " cobalt" : "")}>{t.status}</span></div>
+              <div><b>{t.name}</b> <span className={"tag mono" + (t.status === "演示" ? " cobalt" : "")}>{t.status}</span>{t.has_guide && <span className="tag mono">有导读</span>}</div>
               <div className="mono dim small">{t.formula}</div>
             </li>
           ))}

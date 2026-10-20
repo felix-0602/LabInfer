@@ -38,7 +38,36 @@ export interface ExperimentContext {
   reference: { datasets: ReferenceDataset[]; crm: Json | null; limits: Limit[] };
   qc_rules: { rule_id: string; params: Json; citation?: string }[];
   datasets: { mine: string | null };
+  // 0.8.0 可选：教学导读层（docs/wiki.md#表达标准）
+  guide?: Guide;
   [k: string]: unknown;
+}
+
+export interface GuideSource { source_id: string; title: string; locator?: string; quote?: string; verified: boolean }
+export interface GlossaryTerm { term_id: string; term: string; plain: string; help?: string; aliases?: string[]; source?: string }
+export interface FieldNote { label: string; plain: string; term_id?: string | null }
+export interface GuideSection {
+  section_id: string;
+  title: string;
+  // context = 01 页，literature = 03 页
+  show_in: ("context" | "literature")[];
+  order: number;
+  summary: string;
+  // 段落之间空一行；术语用 [文字](term:term_id) 标记
+  body: string;
+  terms?: string[];
+  sources?: string[];
+  rung_id?: string | null;
+}
+export interface Guide {
+  status: "draft" | "reviewed";
+  audience_level?: number;
+  generated_at?: string;
+  sources: GuideSource[];
+  glossary: GlossaryTerm[];
+  // 键 = 上下文字段路径：model、model_params.x、variables.<key>、qc_rules.<rule_id>、reference.limits[i]
+  field_notes: Record<string, FieldNote>;
+  sections: GuideSection[];
 }
 
 export interface ReferenceDataset {
@@ -56,6 +85,7 @@ export interface Template {
   formula: string;
   reference_preview: { n_datasets: number; crm: Json | null; limits: Limit[] };
   status: "演示" | "规划" | "自定义";
+  has_guide?: boolean;
 }
 
 export interface PointRef { dataset_id: string; point_id: string }
