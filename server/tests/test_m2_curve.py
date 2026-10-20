@@ -157,7 +157,11 @@ def test_assess_intent_titration_matrix():
     assert assess_intent(wrong_x, _TITR)["verdict"] == "different"  # 横轴不是滴定剂量
     naoh = {"type": "titration_curve", "x_quantity": "V / mL", "y_quantity": "pH",
             "titrant": "NaOH", "analyte": "H2C2O4"}
-    assert assess_intent(naoh, _TITR)["verdict"] == "related"       # 滴定剂不是盐酸
+    assert assess_intent(naoh, _TITR)["verdict"] == "related"       # 点名的另一种滴定剂
+    generic = {"type": "titration_curve", "x_quantity": "VOLUME OF TITRANT, IN DIGITAL COUNTS",
+               "y_quantity": "pH, IN STANDARD UNITS", "titrant": "titrant (digital counts)",
+               "analyte": None}
+    assert assess_intent(generic, _TITR)["verdict"] == "same"       # 泛称不算负面证据（USGS 实测）
     assert assess_intent(None, _TITR)["verdict"] == "related"       # 读不出类型：保守放行
 
 

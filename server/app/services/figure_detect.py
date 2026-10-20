@@ -34,7 +34,10 @@ _X_VOLUME = ("volume", "counts", "体积", "滴定", "v(", " v ", "ml", "mass", 
 _Y_PH = ("ph",)
 _Y_EMF = ("e.m.f", "emf", "mv", "电位", "potential", "毫伏", "mv)")
 _GRAN = ("gran", "10^-ph", "10ph", "(v0+ve)·10")
-_ACID = ("hcl", "盐酸", "hydrochloric")
+# 明确点名的「另一种滴定剂」：读到这些才降档 related；泛称（如 "titrant (counts)"）
+# 或读不出试剂名按未知放行——x/y 轴检查已把关，不靠滴定剂字段的缺席做负面推断
+_OTHER_TITRANT = ("naoh", "sodium hydroxide", "氢氧化钠", "na2co3", "碳酸钠",
+                  "koh", "氢氧化钾", "edta", "硝酸银", "agno3")
 _SIGNAL = ("a", "absorbance", "吸光度", "signal", "荧光", "fluorescence", "峰")
 _CONC = ("c", "concentration", "浓度")
 
@@ -72,7 +75,7 @@ def assess_intent(chart: dict | None, ctx: dict) -> dict:
         if not _hit(y, _Y_PH):
             return {"verdict": "related",
                     "reasons": [f"纵轴是「{y or '未知量'}」，不是 pH。只有 pH 对体积的曲线能直接和你的终点叠加。"]}
-        if titrant and not _hit(titrant, _ACID):
+        if titrant and _hit(titrant, _OTHER_TITRANT):
             return {"verdict": "related",
                     "reasons": [f"滴定剂是「{titrant}」，不是盐酸。曲线形状相似，但计量点位置不同，"
                                 "叠加前要意识到口径差异。"]}
